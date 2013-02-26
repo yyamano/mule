@@ -10,9 +10,11 @@
 
 package org.mule.transport.tcp.integration;
 
+import org.mule.transport.tcp.LegacyIoTest;
 import org.mule.transport.tcp.TcpProtocol;
 import org.mule.transport.tcp.protocols.DirectProtocol;
 
+@LegacyIoTest
 public class MuleMessageDirectProtocolReadTestCase extends AbstractMuleMessageProtocolReadTestCase
 {
 

@@ -22,14 +22,14 @@ public class CustomSerializationProtocol extends DirectProtocol
 {
 
     @Override
-    public void write(OutputStream os, Object data) throws IOException
+    public void write(final OutputStream os, final Object data) throws IOException
     {
         if (data instanceof NonSerializableMessageObject)
         {
-            NonSerializableMessageObject in = (NonSerializableMessageObject)data;
+            final NonSerializableMessageObject in = (NonSerializableMessageObject) data;
 
             // do serialization... will use normal Serialization to simplify code...
-            MessageObject serializableObject = new MessageObject(in.i, in.s, in.b);
+            final MessageObject serializableObject = new MessageObject(in.i, in.s, in.b);
 
             write(os, SerializationUtils.serialize(serializableObject));
         }
@@ -40,9 +40,9 @@ public class CustomSerializationProtocol extends DirectProtocol
     }
 
     @Override
-    public Object read(InputStream is) throws IOException
+    public Object read(final InputStream is) throws IOException
     {
-        byte[] tmp = (byte[]) super.read(is);
+        final byte[] tmp = (byte[]) super.read(is);
 
         if (tmp == null)
         {
@@ -50,7 +50,7 @@ public class CustomSerializationProtocol extends DirectProtocol
         }
         else
         {
-            MessageObject serializableObject = (MessageObject)SerializationUtils.deserialize(tmp);
+            final MessageObject serializableObject = (MessageObject) SerializationUtils.deserialize(tmp);
             return new NonSerializableMessageObject(serializableObject.i, serializableObject.s,
                 serializableObject.b);
         }

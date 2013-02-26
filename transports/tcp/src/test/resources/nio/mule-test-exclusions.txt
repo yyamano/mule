@@ -1,0 +1,14 @@
+#
+# Test cases listed in this file are not run.
+#
+
+# MULE-2067
+org.mule.transport.nio.tcp.issues.LingerExperimentMule2067TestCase
+org.mule.transport.nio.tcp.issues.ReuseExperimentMule2067TestCase
+
+# Disable this long-running test to speed up testing during development
+org.mule.transport.nio.tcp.integration.StreamingCapacityTestCase
+
+# testCustomObject() fails sporadically? for 2.1
+# MULE-3660
+#org.mule.transport.nio.tcp.integration.MuleMessageProtocolChunkingTestCase

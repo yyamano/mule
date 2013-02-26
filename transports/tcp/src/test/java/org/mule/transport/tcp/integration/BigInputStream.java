@@ -10,8 +10,8 @@
 
 package org.mule.transport.tcp.integration;
 
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.MessageFormat;
 
 import org.apache.commons.logging.Log;
@@ -21,24 +21,23 @@ public class BigInputStream extends InputStream
 {
 
     private static final int SUMMARY_SIZE = 4;
-    private static final MessageFormat FORMAT  =
-            new MessageFormat("Sent {0,number,#} bytes, {1,number,###.##}% (free {2,number,#}/{3,number,#})");
+    private static final MessageFormat FORMAT = new MessageFormat(
+        "Sent {0,number,#} bytes, {1,number,###.##}% (free {2,number,#}/{3,number,#})");
     private final Log logger = LogFactory.getLog(getClass());
-    private long size;
-    private int messages;
+    private final long size;
+    private final int messages;
 
     private long sent = 0;
-    private byte[] data;
+    private final byte[] data;
     private int dataIndex = 0;
     private long printedMessages = 0;
     private long nextMessage = 0;
-
 
     /**
      * @param size Number of bytes to transfer
      * @param messages Number of mesagges logged as INFO
      */
-    public BigInputStream(long size, int messages)
+    public BigInputStream(final long size, final int messages)
     {
         this.size = size;
         this.messages = messages;
@@ -46,21 +45,22 @@ public class BigInputStream extends InputStream
     }
 
     /**
-     * @return String matching {@link org.mule.tck.functional.FunctionalStreamingTestComponent}
+     * @return String matching
+     *         {@link org.mule.tck.functional.FunctionalStreamingTestComponent}
      */
     public String summary()
     {
 
-        byte[] tail = new byte[SUMMARY_SIZE];
+        final byte[] tail = new byte[SUMMARY_SIZE];
         for (int i = 0; i < SUMMARY_SIZE; ++i)
         {
             tail[i] = data[(int) ((sent - SUMMARY_SIZE + i) % data.length)];
         }
-        return "Received stream; length: " + sent + "; '" +
-                new String(data, 0, 4) + "..." + new String(tail) +
-                "'";
+        return "Received stream; length: " + sent + "; '" + new String(data, 0, 4) + "..." + new String(tail)
+               + "'";
     }
 
+    @Override
     public int read() throws IOException
     {
         if (sent == size)
@@ -71,13 +71,11 @@ public class BigInputStream extends InputStream
         {
             if (++sent > nextMessage)
             {
-                double percent = 100l * sent / ((double) size);
-                Runtime runtime = Runtime.getRuntime();
-                logger.info(FORMAT.format(new Object[]{
-                        new Long(sent), new Double(percent),
-                        new Long(runtime.freeMemory()), new Long(runtime.maxMemory())}));
-                nextMessage = ++printedMessages *
-                        ((int) Math.floor(((double) size) / (messages - 1)) - 1);
+                final double percent = 100l * sent / ((double) size);
+                final Runtime runtime = Runtime.getRuntime();
+                logger.info(FORMAT.format(new Object[]{Long.valueOf(sent), Double.valueOf(percent),
+                    Long.valueOf(runtime.freeMemory()), Long.valueOf(runtime.maxMemory())}));
+                nextMessage = ++printedMessages * ((int) Math.floor(((double) size) / (messages - 1)) - 1);
             }
             if (dataIndex == data.length)
             {
@@ -87,11 +85,10 @@ public class BigInputStream extends InputStream
         }
     }
 
+    @Override
     public int available() throws IOException
     {
         return (int) Math.min(size - sent, Integer.MAX_VALUE);
     }
 
 }
-
-

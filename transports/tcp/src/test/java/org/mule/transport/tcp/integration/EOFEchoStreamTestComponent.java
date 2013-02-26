@@ -30,5 +30,3 @@ public class EOFEchoStreamTestComponent
         return new String(buf);
     }
 }
-
-

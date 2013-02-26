@@ -20,6 +20,7 @@ import org.mule.api.transformer.wire.WireFormat;
 import org.mule.tck.junit4.FunctionalTestCase;
 import org.mule.tck.junit4.rule.DynamicPort;
 import org.mule.transformer.wire.SerializedMuleMessageWireFormat;
+import org.mule.transport.tcp.LegacyIoTest;
 import org.mule.transport.tcp.TcpProtocol;
 
 import java.io.ByteArrayOutputStream;
@@ -30,6 +31,7 @@ import java.net.Socket;
 import org.junit.Rule;
 import org.junit.Test;
 
+@LegacyIoTest
 public abstract class AbstractMuleMessageProtocolReadTestCase extends FunctionalTestCase
 {
 

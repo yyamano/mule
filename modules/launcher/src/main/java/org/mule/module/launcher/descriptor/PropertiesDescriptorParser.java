@@ -33,6 +33,7 @@ public class PropertiesDescriptorParser implements DescriptorParser
     protected static final String PROPERTY_REDEPLOYMENT_ENABLED = "redeployment.enabled";
     protected static final String PROPERTY_LOADER_OVERRIDE = "loader.override";
     protected static final String PROPERTY_SCAN_PACKAGES = "scan.packages";
+    protected static final String PROPERTY_TRANSPORT_NIO_ENABLED = "transport.nio.enabled";
 
     public ApplicationDescriptor parse(File descriptor) throws IOException
     {
@@ -43,6 +44,7 @@ public class PropertiesDescriptorParser implements DescriptorParser
         d.setConfigurationBuilder(p.getProperty(PROPERTY_CONFIG_BUILDER));
         d.setDomain(p.getProperty(PROPERTY_DOMAIN));
         d.setPackagesToScan(p.getProperty(PROPERTY_SCAN_PACKAGES));
+        d.setIsNioTransportEnabled(BooleanUtils.toBoolean(p.getProperty(PROPERTY_TRANSPORT_NIO_ENABLED, Boolean.FALSE.toString())));
 
         final String resProps = p.getProperty(PROPERTY_CONFIG_RESOURCES);
         String[] urls;

@@ -62,6 +62,7 @@ public class TcpMessageReceiver extends AbstractMessageReceiver implements Work
             throws CreateException
     {
         super(connector, flowConstruct, endpoint);
+        System.out.println("ORIGINAL TcpMessageReceiver");
     }
 
     @Override

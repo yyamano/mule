@@ -40,19 +40,52 @@ public class TcpNamespaceHandler extends AbstractMuleNamespaceHandler
     public void init()
     {
         registerStandardTransportEndpoints(TcpConnector.TCP, URIBuilder.SOCKET_ATTRIBUTES);
-        registerConnectorDefinitionParser(TcpConnector.class);
 
-        registerBeanDefinitionParser("polling-connector", new MuleOrphanDefinitionParser(PollingTcpConnector.class, true));
-        registerBeanDefinitionParser("custom-protocol", new ChildDefinitionParser("tcpProtocol", null, TcpProtocol.class, true));
-        registerBeanDefinitionParser("xml-protocol", new ChildDefinitionParser("tcpProtocol", XmlMessageProtocol.class));
-        registerBeanDefinitionParser("xml-eof-protocol", new ChildDefinitionParser("tcpProtocol", XmlMessageEOFProtocol.class));
-        registerBeanDefinitionParser("safe-protocol", new ByteOrMessageProtocolDefinitionParser(SafeProtocol.class, MuleMessageSafeProtocol.class));
-        registerBeanDefinitionParser("length-protocol", new ByteOrMessageProtocolDefinitionParser(LengthProtocol.class, MuleMessageLengthProtocol.class));
-        registerBeanDefinitionParser("eof-protocol", new ByteOrMessageProtocolDefinitionParser(EOFProtocol.class, MuleMessageEOFProtocol.class));
-        registerBeanDefinitionParser("direct-protocol", new ByteOrMessageProtocolDefinitionParser(DirectProtocol.class, MuleMessageDirectProtocol.class));
-        registerBeanDefinitionParser("streaming-protocol", new ByteOrMessageProtocolDefinitionParser(StreamingProtocol.class, MuleMessageDirectProtocol.class));
+        registerConnectorDefinitionParser(new NioSelectorDelegatingDefinitionParser(
+                new MuleOrphanDefinitionParser(org.mule.transport.nio.tcp.TcpConnector.class, true), 
+                new MuleOrphanDefinitionParser(TcpConnector.class, true)));
+
+        registerBeanDefinitionParser("polling-connector", new NioSelectorDelegatingDefinitionParser(
+            new MuleOrphanDefinitionParser(org.mule.transport.nio.tcp.PollingTcpConnector.class, true),
+            new MuleOrphanDefinitionParser(PollingTcpConnector.class, true)));
+        
+        registerBeanDefinitionParser("custom-protocol", new NioSelectorDelegatingDefinitionParser(
+            new ChildDefinitionParser("tcpProtocol", null, org.mule.transport.nio.tcp.TcpProtocol.class, true),
+            new ChildDefinitionParser("tcpProtocol", null, TcpProtocol.class, true)));
+        
+        registerBeanDefinitionParser("xml-protocol", new NioSelectorDelegatingDefinitionParser(
+            new ChildDefinitionParser("tcpProtocol", org.mule.transport.nio.tcp.protocols.XmlMessageProtocol.class),
+            new ChildDefinitionParser("tcpProtocol", XmlMessageProtocol.class)));
+        
+        registerBeanDefinitionParser("xml-eof-protocol", new NioSelectorDelegatingDefinitionParser(
+            new ChildDefinitionParser("tcpProtocol", org.mule.transport.nio.tcp.protocols.XmlMessageEOFProtocol.class),
+            new ChildDefinitionParser("tcpProtocol", XmlMessageEOFProtocol.class)));
+        
+        registerBeanDefinitionParser("safe-protocol", new NioSelectorDelegatingDefinitionParser(
+            new ByteOrMessageProtocolDefinitionParser(org.mule.transport.nio.tcp.protocols.SafeProtocol.class, org.mule.transport.nio.tcp.protocols.MuleMessageSafeProtocol.class),
+            new ByteOrMessageProtocolDefinitionParser(SafeProtocol.class, MuleMessageSafeProtocol.class)));
+        
+        registerBeanDefinitionParser("length-protocol", new NioSelectorDelegatingDefinitionParser(
+            new ByteOrMessageProtocolDefinitionParser(org.mule.transport.nio.tcp.protocols.LengthProtocol.class, org.mule.transport.nio.tcp.protocols.MuleMessageLengthProtocol.class),
+            new ByteOrMessageProtocolDefinitionParser(LengthProtocol.class, MuleMessageLengthProtocol.class)));
+        
+        registerBeanDefinitionParser("eof-protocol", new NioSelectorDelegatingDefinitionParser(
+            new ByteOrMessageProtocolDefinitionParser(org.mule.transport.nio.tcp.protocols.EOFProtocol.class, org.mule.transport.nio.tcp.protocols.MuleMessageEOFProtocol.class),
+            new ByteOrMessageProtocolDefinitionParser(EOFProtocol.class, MuleMessageEOFProtocol.class)));
+        
+        registerBeanDefinitionParser("direct-protocol", new NioSelectorDelegatingDefinitionParser(
+            new ByteOrMessageProtocolDefinitionParser(org.mule.transport.nio.tcp.protocols.DirectProtocol.class, org.mule.transport.nio.tcp.protocols.MuleMessageDirectProtocol.class),
+            new ByteOrMessageProtocolDefinitionParser(DirectProtocol.class, MuleMessageDirectProtocol.class)));
+        
+        registerBeanDefinitionParser("streaming-protocol", new NioSelectorDelegatingDefinitionParser(
+            new ByteOrMessageProtocolDefinitionParser(org.mule.transport.nio.tcp.protocols.StreamingProtocol.class, org.mule.transport.nio.tcp.protocols.MuleMessageDirectProtocol.class),
+            new ByteOrMessageProtocolDefinitionParser(StreamingProtocol.class, MuleMessageDirectProtocol.class)));
+        
         registerBeanDefinitionParser("custom-protocol", new ClassOrRefDefinitionParser(TCP_PROTOCOL_PROPERTY));
-        registerBeanDefinitionParser("custom-class-loading-protocol", new ByteOrMessageProtocolDefinitionParser(CustomClassLoadingLengthProtocol.class, CustomClassLoadingLengthProtocol.class));
+        
+        registerBeanDefinitionParser("custom-class-loading-protocol", new NioSelectorDelegatingDefinitionParser(
+            new ByteOrMessageProtocolDefinitionParser(org.mule.transport.nio.tcp.protocols.CustomClassLoadingLengthProtocol.class, org.mule.transport.nio.tcp.protocols.CustomClassLoadingLengthProtocol.class),
+            new ByteOrMessageProtocolDefinitionParser(CustomClassLoadingLengthProtocol.class, CustomClassLoadingLengthProtocol.class)));
     }
 
 }

@@ -32,10 +32,12 @@ import org.mule.tck.AbstractServiceAndFlowTestCase;
 import org.mule.tck.functional.EventCallback;
 import org.mule.tck.functional.FunctionalStreamingTestComponent;
 import org.mule.tck.junit4.rule.DynamicPort;
+import org.mule.transport.tcp.LegacyIoTest;
 
 /**
  * This test is more about testing the streaming model than the TCP provider, really.
  */
+@LegacyIoTest
 public class StreamingTestCase extends AbstractServiceAndFlowTestCase
 {
 

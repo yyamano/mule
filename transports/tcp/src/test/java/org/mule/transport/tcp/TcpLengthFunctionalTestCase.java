@@ -10,6 +10,9 @@
 
 package org.mule.transport.tcp;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import org.mule.api.MuleMessage;
 import org.mule.module.client.MuleClient;
 import org.mule.tck.AbstractServiceAndFlowTestCase;
@@ -21,9 +24,6 @@ import java.util.Collection;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class TcpLengthFunctionalTestCase extends AbstractServiceAndFlowTestCase
 {

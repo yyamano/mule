@@ -106,14 +106,14 @@
                 <xsd:attribute name="clientSoTimeout" type="mule:substitutableInt">
                     <xsd:annotation>
                         <xsd:documentation>
-                            This sets the SO_TIMEOUT value when the socket is used as a client. Reading from the socket will block for up to this long (in milliseconds) before the read fails. A value of 0 (the default) causes the read to wait indefinitely (if no data arrives).
+                            ** No longer supported in NIO ** This sets the SO_TIMEOUT value when the socket is used as a client. Reading from the socket will block for up to this long (in milliseconds) before the read fails. A value of 0 (the default) causes the read to wait indefinitely (if no data arrives).
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
                 <xsd:attribute name="serverSoTimeout" type="mule:substitutableInt">
                     <xsd:annotation>
                         <xsd:documentation>
-                            This sets the SO_TIMEOUT value when the socket is used as a server. Reading from the socket will block for up to this long (in milliseconds) before the read fails. A value of 0 (the default) causes the read to wait indefinitely (if no data arrives).
+                            ** No longer supported in NIO ** This sets the SO_TIMEOUT value when the socket is used as a server. Reading from the socket will block for up to this long (in milliseconds) before the read fails. A value of 0 (the default) causes the read to wait indefinitely (if no data arrives).
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
@@ -165,6 +165,13 @@
                     <xsd:annotation>
                         <xsd:documentation>
                             Allows to define a custom message dispatcher factory
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="serverGreeting" type="xsd:string">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            ** Only supported in NIO ** Allows to define a custom greeting message that is immediately sent to a client connecting to an inbound endpoint. Supports expressions.
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>

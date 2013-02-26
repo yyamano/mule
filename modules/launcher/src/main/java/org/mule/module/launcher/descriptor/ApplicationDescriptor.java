@@ -37,6 +37,7 @@ public class ApplicationDescriptor
     private String packagesToScan;
     private String[] configResources = new String[] {DEFAULT_CONFIGURATION_RESOURCE};
     private Map<String, String> appProperties = new HashMap<String, String>();
+    private boolean isNioTransportEnabled;
 
     private boolean redeploymentEnabled = true;
 
@@ -149,5 +150,15 @@ public class ApplicationDescriptor
     public void setPackagesToScan(String packages)
     {
         this.packagesToScan = packages;
+    }
+    
+    public boolean isNioTransportEnabled()
+    {
+        return isNioTransportEnabled;
+    }
+    
+    public void setIsNioTransportEnabled(boolean isNioTransportEnabled)
+    {
+        this.isNioTransportEnabled = isNioTransportEnabled;
     }
 }

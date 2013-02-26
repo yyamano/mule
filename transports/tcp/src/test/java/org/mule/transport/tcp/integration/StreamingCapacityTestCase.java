@@ -11,6 +11,7 @@
 package org.mule.transport.tcp.integration;
 
 import org.mule.tck.junit4.rule.DynamicPort;
+import org.mule.transport.tcp.LegacyIoTest;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,6 +29,7 @@ import org.junit.runners.Parameterized.Parameters;
  * DIAGNOSTICS.  OTHERWISE THE CONSOLE OUTPUT WILL BE SIMILAR SIZE TO DATA TRANSFERRED,
  * CAUSING CONFUSNG AND PROBABLY FATAL MEMORY USE.
  */
+@LegacyIoTest
 public class StreamingCapacityTestCase extends AbstractStreamingCapacityTestCase
 {
     @Rule

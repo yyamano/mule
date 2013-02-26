@@ -12,11 +12,11 @@ package org.mule.transport.tcp.issues;
 
 import org.mule.api.MuleException;
 import org.mule.module.client.MuleClient;
-import org.mule.transport.tcp.protocols.SafeProtocolTestCase;
+import org.mule.transport.tcp.protocols.AbstractSafeProtocolTestCase;
 
 import org.junit.Test;
 
-public class SafeProtocolMule2227TestCase extends SafeProtocolTestCase
+public class SafeProtocolMule2227TestCase extends AbstractSafeProtocolTestCase
 {
 
     // this actually "works" much of the time, in that a response is received that looks reasonable.

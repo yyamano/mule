@@ -10,9 +10,11 @@
 
 package org.mule.transport.tcp.integration;
 
+import org.mule.transport.tcp.LegacyIoTest;
 import org.mule.transport.tcp.TcpProtocol;
 import org.mule.transport.tcp.protocols.LengthProtocol;
 
+@LegacyIoTest
 public class MuleMessageLengthProtocolReadTestCase extends AbstractMuleMessageProtocolReadTestCase
 {
 

@@ -30,7 +30,9 @@ import org.mule.tck.AbstractServiceAndFlowTestCase;
 import org.mule.tck.functional.EventCallback;
 import org.mule.tck.functional.FunctionalStreamingTestComponent;
 import org.mule.tck.junit4.rule.DynamicPort;
+import org.mule.transport.tcp.LegacyIoTest;
 
+@LegacyIoTest
 public class MultiStreamMule1692TestCase extends AbstractServiceAndFlowTestCase
 {
     

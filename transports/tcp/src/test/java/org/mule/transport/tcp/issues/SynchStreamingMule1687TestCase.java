@@ -16,6 +16,7 @@ import org.mule.api.endpoint.InboundEndpoint;
 import org.mule.module.client.MuleClient;
 import org.mule.tck.junit4.FunctionalTestCase;
 import org.mule.tck.junit4.rule.DynamicPort;
+import org.mule.transport.tcp.LegacyIoTest;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -27,6 +28,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+@LegacyIoTest
 public class SynchStreamingMule1687TestCase extends FunctionalTestCase
 {
 

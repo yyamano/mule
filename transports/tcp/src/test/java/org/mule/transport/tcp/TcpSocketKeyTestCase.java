@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
 
+@LegacyIoTest
 public class TcpSocketKeyTestCase extends FunctionalTestCase
 {
 

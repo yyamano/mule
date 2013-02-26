@@ -5,7 +5,7 @@
        xmlns:tcp="http://www.mulesoft.org/schema/mule/tcp"
        xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
        xsi:schemaLocation="
-               http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+               http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
                http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
                http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
                http://www.mulesoft.org/schema/mule/tcp http://www.mulesoft.org/schema/mule/tcp/current/mule-tcp.xsd">
@@ -26,7 +26,7 @@
             <outbound>
                 <pass-through-router>
                     <tcp:outbound-endpoint host="localhost" port="${port1}" exchange-pattern="one-way">
-                        <custom-transformer class="org.mule.tck.transformer.NoActionTransformer"/>
+                        <transformer ref="NoAction"/>
                     </tcp:outbound-endpoint>
                 </pass-through-router>
             </outbound>

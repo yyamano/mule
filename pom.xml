@@ -140,6 +140,7 @@
         <mqSeriesVersion>6.0</mqSeriesVersion>
         <mvelVersion>2.1.3.Final</mvelVersion>
         <mx4jVersion>2.1.1</mx4jVersion>
+        <nettyVersion>3.4.5.Final</nettyVersion>
         <ognlVersion>2.7.3</ognlVersion>
         <oroVersion>2.0.8</oroVersion>
         <quartzVersion>1.8.5</quartzVersion>
@@ -1223,6 +1224,11 @@
                 <groupId>org.aspectj</groupId>
                 <artifactId>aspectjweaver</artifactId>
                 <version>${aspectjVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty</artifactId>
+                <version>${nettyVersion}</version>
             </dependency>
 
         </dependencies>

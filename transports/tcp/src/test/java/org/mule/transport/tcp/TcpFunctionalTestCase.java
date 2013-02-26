@@ -69,15 +69,16 @@ public class TcpFunctionalTestCase extends AbstractServiceAndFlowTestCase
         assertEquals(TEST_MESSAGE + " Received Async", result.getPayloadAsString());
     }
 
-    public void timeMultipleSend() throws Exception
+	@Test
+    public void testMultipleSend() throws Exception
     {
         MuleClient client = new MuleClient(muleContext);
         long now = System.currentTimeMillis();
         int count = 1000;
         for (int i = 0; i < count; i++)
         {
-            MuleMessage result = client.send("clientEndpoint", TEST_MESSAGE, null);
-            assertEquals(TEST_MESSAGE + " Received", result.getPayloadAsString());
+            MuleMessage result = client.send("clientEndpoint", TEST_MESSAGE +i, null);
+            assertEquals(TEST_MESSAGE + i + " Received", result.getPayloadAsString());
         }
         long later = System.currentTimeMillis();
         double speed = count * 1000.0 / (later - now);

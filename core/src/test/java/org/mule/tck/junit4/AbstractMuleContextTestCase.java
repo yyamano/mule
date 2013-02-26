@@ -18,6 +18,7 @@ import org.mule.api.MuleException;
 import org.mule.api.MuleSession;
 import org.mule.api.config.ConfigurationBuilder;
 import org.mule.api.config.MuleConfiguration;
+import org.mule.api.config.MuleProperties;
 import org.mule.api.construct.FlowConstruct;
 import org.mule.api.context.MuleContextBuilder;
 import org.mule.api.context.MuleContextFactory;
@@ -189,7 +190,16 @@ public abstract class AbstractMuleContextTestCase extends AbstractMuleTestCase
         {
             MuleContextFactory muleContextFactory = new DefaultMuleContextFactory();
             List<ConfigurationBuilder> builders = new ArrayList<ConfigurationBuilder>();
-            builders.add(new SimpleConfigurationBuilder(getStartUpProperties()));
+            Properties props = getStartUpProperties();
+            if (props == null)
+            {
+                props = new Properties();
+            }
+            if (!props.containsKey(MuleProperties.NIO_TRANSPORT_ENABLED_PROPERTY))
+            {
+                props.put(MuleProperties.NIO_TRANSPORT_ENABLED_PROPERTY, Boolean.FALSE.toString());
+            }
+            builders.add(new SimpleConfigurationBuilder(props));
             //If the annotations module is on the classpath, add the annotations config builder to the list
             //This will enable annotations config for this instance
             if (ClassUtils.isClassOnPath(CLASSNAME_ANNOTATIONS_CONFIG_BUILDER, getClass()))

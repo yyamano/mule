@@ -10,6 +10,7 @@
 
 package org.mule.transport.tcp.issues;
 
+import org.mule.transport.tcp.LegacyIoTest;
 import org.mule.transport.tcp.TcpConnector;
 import org.mule.transport.tcp.TcpFunctionalTestCase;
 
@@ -24,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * This is just to check that the Boolean (rather than boolean) doesn't cause any problems
  */
+@LegacyIoTest
 public class ReuseMule2069TestCase extends TcpFunctionalTestCase
 {
     public ReuseMule2069TestCase(ConfigVariant variant, String configResources)

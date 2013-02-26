@@ -17,6 +17,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
+@LegacyIoTest
 public class TcpConnectorTestCase extends AbstractConnectorTestCase
 {
     public Connector createConnector() throws Exception

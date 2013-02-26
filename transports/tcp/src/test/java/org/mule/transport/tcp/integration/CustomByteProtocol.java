@@ -32,7 +32,7 @@ public class CustomByteProtocol extends AbstractByteProtocol
      * Write the message's bytes to the socket, then terminate each message with '>>>'.
      */
     @Override
-    protected void writeByteArray(OutputStream os, byte[] data) throws IOException
+    protected void writeByteArray(final OutputStream os, final byte[] data) throws IOException
     {
         super.writeByteArray(os, data);
         os.write('>');
@@ -43,12 +43,12 @@ public class CustomByteProtocol extends AbstractByteProtocol
 
     /**
      * Read bytes until we see '>>>', which ends the message
-     * */
-    public Object read(InputStream is) throws IOException
+     */
+    public Object read(final InputStream is) throws IOException
     {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         int count = 0;
-        byte read[] = new byte[1];
+        final byte read[] = new byte[1];
 
         while (true)
         {
@@ -59,7 +59,7 @@ public class CustomByteProtocol extends AbstractByteProtocol
                 // remaining messages
                 return null;
             }
-            byte b = read[0];
+            final byte b = read[0];
             if (b == '>')
             {
                 count++;

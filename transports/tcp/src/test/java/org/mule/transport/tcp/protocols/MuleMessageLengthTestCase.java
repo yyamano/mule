@@ -10,10 +10,7 @@
 
 package org.mule.transport.tcp.protocols;
 
-import org.mule.api.MuleMessage;
-import org.mule.module.client.MuleClient;
-import org.mule.tck.AbstractServiceAndFlowTestCase;
-import org.mule.tck.junit4.rule.DynamicPort;
+import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -21,8 +18,10 @@ import java.util.Collection;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
-
-import static org.junit.Assert.assertEquals;
+import org.mule.api.MuleMessage;
+import org.mule.module.client.MuleClient;
+import org.mule.tck.AbstractServiceAndFlowTestCase;
+import org.mule.tck.junit4.rule.DynamicPort;
 
 public class MuleMessageLengthTestCase extends AbstractServiceAndFlowTestCase
 {
@@ -30,7 +29,6 @@ public class MuleMessageLengthTestCase extends AbstractServiceAndFlowTestCase
 
     @Rule
     public DynamicPort port1 = new DynamicPort("port1");
-
 
     @Parameters
     public static Collection<Object[]> parameters()

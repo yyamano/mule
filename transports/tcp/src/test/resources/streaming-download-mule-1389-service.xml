@@ -4,7 +4,7 @@
       xmlns:spring="http://www.springframework.org/schema/beans"
       xmlns:tcp="http://www.mulesoft.org/schema/mule/tcp"
       xsi:schemaLocation="
-               http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+               http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
                http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
                http://www.mulesoft.org/schema/mule/tcp http://www.mulesoft.org/schema/mule/tcp/current/mule-tcp.xsd">
 
@@ -22,7 +22,7 @@
                 we can't send any headers with the TCP transport unless we use a customised protocol. In http the
                 REMOTE_SYNC header is set since the MuleClient.send(...) will automatically set it for us.
                  (REMOTE_SYNC from the client implies 'synchronsous' on the server)-->
-                <tcp:inbound-endpoint host="localhost" port="${port1}" exchange-pattern="request-response"/>
+                <tcp:inbound-endpoint name="inTestComponent" host="localhost" port="${port1}" exchange-pattern="request-response"/>
             </inbound>
             <component>
                 <singleton-object class="org.mule.transport.tcp.issues.InputStreamSource"/>

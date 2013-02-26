@@ -99,6 +99,7 @@ public class TcpConnector extends AbstractConnector
         setSocketFactory(new TcpSocketFactory());
         setServerSocketFactory(new TcpServerSocketFactory());
         setTcpProtocol(new SafeProtocol());
+        System.out.println("ORIGINAL TcpConnector");
     }
 
     public void configureSocket(boolean client, Socket socket) throws SocketException
