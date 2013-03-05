@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: HttpMultipleCookiesInEndpointTestCase.java 22518 2011-07-22 07:00:22Z claude.mamo $
  * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -17,6 +17,7 @@ import org.mule.api.MuleMessage;
 import org.mule.module.client.MuleClient;
 import org.mule.tck.AbstractServiceAndFlowTestCase;
 import org.mule.tck.junit4.rule.DynamicPort;
+import org.mule.transport.tcp.LegacyIoTest;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -25,6 +26,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
 
+@LegacyIoTest
 public class HttpMultipleCookiesInEndpointTestCase extends AbstractServiceAndFlowTestCase
 {
 

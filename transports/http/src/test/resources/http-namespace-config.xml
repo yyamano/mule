@@ -4,7 +4,7 @@
        xmlns:spring="http://www.springframework.org/schema/beans"
        xmlns:http="http://www.mulesoft.org/schema/mule/http"
     xsi:schemaLocation="
-       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 
@@ -46,5 +46,9 @@
     
     <endpoint name="ep5" address="test://ep5" exchange-pattern="one-way">
         <http:request-wildcard-filter pattern="foo*"/>
+    </endpoint>
+    
+    <endpoint name="ep6" address="test://ep6" exchange-pattern="one-way">
+        <http:object-to-http-response-transformer ignoreBadInput="true" name="test5" returnClass="java.lang.Object"/>
     </endpoint>
 </mule>

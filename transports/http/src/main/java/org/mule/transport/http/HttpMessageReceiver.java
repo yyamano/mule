@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: HttpMessageReceiver.java 25222 2013-01-22 14:26:07Z pablo.lagreca $
  * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -38,6 +38,7 @@ public class HttpMessageReceiver extends AbstractMessageReceiver
             throws CreateException
     {
         super(connector, flowConstruct, endpoint);
+        System.out.println("Original HttpMessageReceiver");
     }
 
     @Override

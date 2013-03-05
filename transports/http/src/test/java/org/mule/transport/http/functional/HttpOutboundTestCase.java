@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: HttpOutboundTestCase.java 24336 2012-04-23 18:57:41Z dirk.olmes $
  * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -105,7 +105,7 @@ public class HttpOutboundTestCase extends AbstractMockHttpServerTestCase
         sendHttpRequest("vm://doPatch", HttpConstants.METHOD_PATCH);
     }
 
-    private void sendHttpRequest(String endpoint, String expectedHttpMethod) throws Exception
+    protected void sendHttpRequest(String endpoint, String expectedHttpMethod) throws Exception
     {
         muleContext.getClient().dispatch(endpoint, TEST_MESSAGE, null);
 

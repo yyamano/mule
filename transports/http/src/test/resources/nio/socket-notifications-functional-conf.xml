@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:test="http://www.mulesoft.org/schema/mule/test"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+      xmlns:quartz="http://www.mulesoft.org/schema/mule/quartz"
+      xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting"
+      xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+
+                  http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+                  http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+                  http://www.mulesoft.org/schema/mule/quartz http://www.mulesoft.org/schema/mule/quartz/current/mule-quartz.xsd
+                  http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd
+                  http://www.mulesoft.org/schema/mule/test http://www.mulesoft.org/schema/mule/test/current/mule-test.xsd">
+
+    <global-property name="dynamic-port1" value="${port1}" />
+
+    <http:connector name="httpConnector" keepSendSocketOpen="false" />
+
+    <flow name="ws-inbound-rr">
+        <http:inbound-endpoint address="http://localhost:${port1}/websockets/rr"
+                               exchange-pattern="request-response" connector-ref="httpConnector">
+            <http:websocket group="ws.rr" />
+        </http:inbound-endpoint>
+        <append-string-transformer message=" received on /rr" />
+    </flow>
+
+
+    <flow name="ws-inbound-ow">
+        <http:inbound-endpoint address="http://localhost:${port1}/websockets/ow"
+            exchange-pattern="one-way" connector-ref="httpConnector">
+            <http:websocket group="ws.ow" />
+        </http:inbound-endpoint>
+        <append-string-transformer message=" received on /ow" />
+        <test:component />
+    </flow>
+
+</mule>

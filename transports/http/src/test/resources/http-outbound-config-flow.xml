@@ -10,7 +10,14 @@
           http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
           http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
 
-    <!-- HTTP method CONNECT is missing here because it's not supported by the HttpClientMessageDispatcher -->
+    <!-- HTTP method CONNECT was missing here because it's not supported by the HttpClientMessageDispatcher -->
+    <!-- This will probably fail with the original http connectors -->
+    <flow name="OutboundConnect">
+        <vm:inbound-endpoint path="doConnect"
+            exchange-pattern="one-way" />
+        <http:outbound-endpoint address="http://localhost:${port1}/"
+            method="CONNECT" exchange-pattern="one-way" />
+    </flow>
 
     <flow name="OutboundDelete">
         <vm:inbound-endpoint path="doDelete" exchange-pattern="one-way" />

@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: HttpRequestDispatcherWorkTestCase.java 25222 2013-01-22 14:26:07Z pablo.lagreca $
  * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 import org.mule.api.transport.NoReceiverForEndpointException;
 import org.mule.config.i18n.CoreMessages;
 import org.mule.tck.size.SmallTest;
+import org.mule.transport.tcp.LegacyIoTest;
 import org.mule.message.processing.MessageProcessContext;
 
 import java.io.ByteArrayInputStream;
@@ -38,6 +39,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 @SmallTest
+@LegacyIoTest
 public class HttpRequestDispatcherWorkTestCase
 {
 

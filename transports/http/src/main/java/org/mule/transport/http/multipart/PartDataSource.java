@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: PartDataSource.java 20320 2010-11-24 15:03:31Z dfeist $
  * -------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -7,6 +7,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
+
 package org.mule.transport.http.multipart;
 
 import java.io.IOException;
@@ -16,13 +17,13 @@ import java.io.OutputStream;
 import javax.activation.DataSource;
 
 /**
- * TODO
+ * A {@link DataSource} for {@link Part}s.
  */
 public class PartDataSource implements DataSource
 {
-    private Part part;
+    private final Part part;
 
-    public PartDataSource(Part part)
+    public PartDataSource(final Part part)
     {
         this.part = part;
     }

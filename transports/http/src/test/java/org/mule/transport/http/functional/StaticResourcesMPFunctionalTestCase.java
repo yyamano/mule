@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: StaticResourcesMPFunctionalTestCase.java 24300 2012-04-19 03:14:08Z dirk.olmes $
  * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSource, Inc.  All rights reserved.  http://www.mulesource.com
  *
@@ -10,6 +10,8 @@
 
 package org.mule.transport.http.functional;
 
+import org.mule.api.MuleContext;
+import org.mule.config.DefaultMuleConfiguration;
 import org.mule.tck.junit4.FunctionalTestCase;
 import org.mule.tck.junit4.rule.DynamicPort;
 import org.mule.transport.http.HttpConstants;
@@ -46,6 +48,27 @@ public class StaticResourcesMPFunctionalTestCase extends FunctionalTestCase
     protected String getConfigResources()
     {
         return "http-static-resource-test.xml";
+    }
+
+    @Override
+    public int getTestTimeoutSecs()
+    {
+        return 9999999;
+    }
+    
+    @Override
+    protected int getTimeoutSystemProperty()
+    {
+        return 9999999;
+    }
+    
+    @Override
+    protected MuleContext createMuleContext() throws Exception
+    {
+        MuleContext mc = super.createMuleContext();
+        ((DefaultMuleConfiguration)mc.getConfiguration()).setDefaultResponseTimeout(999999);
+        
+        return mc;
     }
 
     @Test

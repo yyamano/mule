@@ -21,8 +21,7 @@
 
     <flow name="HttpProxyService">
         <inbound-endpoint ref="clientEndpoint"/>
-        <outbound-endpoint ref="serverEndpoint">
-        </outbound-endpoint>
+        <outbound-endpoint ref="serverEndpoint" />
     </flow>
     
 </mule>

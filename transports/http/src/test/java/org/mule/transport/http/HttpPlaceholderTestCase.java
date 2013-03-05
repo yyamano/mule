@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: HttpPlaceholderTestCase.java 22431 2011-07-18 07:40:35Z dirk.olmes $
  * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -10,8 +10,11 @@
 
 package org.mule.transport.http;
 
+import org.mule.transport.tcp.LegacyIoTest;
+
 import org.junit.Test;
 
+@LegacyIoTest
 public class HttpPlaceholderTestCase extends AbstractNamespaceHandlerTestCase
 {
 

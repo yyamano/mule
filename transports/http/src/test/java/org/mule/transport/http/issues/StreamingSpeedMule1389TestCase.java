@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: StreamingSpeedMule1389TestCase.java 22451 2011-07-19 08:41:15Z justin.calleja $
  * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -11,6 +11,7 @@
 package org.mule.transport.http.issues;
 
 import org.mule.tck.junit4.rule.DynamicPort;
+import org.mule.transport.tcp.LegacyIoTest;
 import org.mule.transport.tcp.integration.AbstractStreamingCapacityTestCase;
 import org.mule.util.SystemUtils;
 
@@ -20,6 +21,7 @@ import java.util.Collection;
 import org.junit.Rule;
 import org.junit.runners.Parameterized.Parameters;
 
+@LegacyIoTest
 public class StreamingSpeedMule1389TestCase extends AbstractStreamingCapacityTestCase
 {
 

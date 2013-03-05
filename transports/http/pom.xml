@@ -129,6 +129,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.mule.transports</groupId>
+            <artifactId>mule-transport-quartz</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-all</artifactId>
             <scope>test</scope>
@@ -136,6 +142,19 @@
         <dependency>
             <groupId>org.mortbay.jetty</groupId>
             <artifactId>jetty</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+	        <!-- Needed for websocket tests -->
+            <groupId>com.ning</groupId>
+            <artifactId>async-http-client</artifactId>
+            <version>1.7.4</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty</artifactId>
+                </exclusion>
+            </exclusions>
             <scope>test</scope>
         </dependency>
     </dependencies>

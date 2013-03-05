@@ -26,8 +26,7 @@
             </inbound>
             <outbound>
                 <pass-through-router>
-                    <outbound-endpoint ref="serverEndpoint">
-                    </outbound-endpoint>
+                    <outbound-endpoint ref="serverEndpoint" />
                 </pass-through-router>
             </outbound>
         </service>

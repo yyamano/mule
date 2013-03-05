@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: HttpNamespaceHandlerTestCase.java 22431 2011-07-18 07:40:35Z dirk.olmes $
  * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -17,6 +17,7 @@ import org.mule.transport.http.transformers.HttpClientMethodResponseToObject;
 import org.mule.transport.http.transformers.HttpResponseToString;
 import org.mule.transport.http.transformers.MuleMessageToHttpResponse;
 import org.mule.transport.http.transformers.ObjectToHttpClientMethodRequest;
+import org.mule.transport.tcp.LegacyIoTest;
 
 import org.junit.Test;
 
@@ -24,6 +25,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
+@LegacyIoTest
 public class HttpNamespaceHandlerTestCase extends AbstractNamespaceHandlerTestCase
 {
 

@@ -10,103 +10,28 @@
 
 package org.mule.transport.http.functional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import org.mule.api.MuleMessage;
 import org.mule.api.endpoint.InboundEndpoint;
-import org.mule.api.transport.DispatchException;
-import org.mule.module.client.MuleClient;
-import org.mule.tck.AbstractServiceAndFlowTestCase;
-import org.mule.tck.junit4.rule.DynamicPort;
+import org.mule.transport.tcp.LegacyIoTest;
 import org.mule.util.ExceptionUtils;
 
 import java.net.SocketTimeoutException;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runners.Parameterized.Parameters;
 
-/**
- * See MULE-4491 "Http outbound endpoint does not use responseTimeout attribute"
- * See MULE-4743 "MuleClient.send() timeout is not respected with http transport"
- */
-public class HttpResponseTimeoutTestCase extends AbstractServiceAndFlowTestCase
+@LegacyIoTest
+public class HttpResponseTimeoutTestCase extends AbstractHttpResponseTimeoutTestCase
 {
-
-    protected static String PAYLOAD = "Eugene";
-    protected static int DEFAULT_RESPONSE_TIMEOUT = 2000;
-    protected MuleClient muleClient;
-
-    @Rule
-    public DynamicPort dynamicPort = new DynamicPort("port1");
-
+    /**
+     * @param variant
+     * @param configResources
+     */
     public HttpResponseTimeoutTestCase(ConfigVariant variant, String configResources)
     {
         super(variant, configResources);
-    }
-
-    @Parameters
-    public static Collection<Object[]> parameters()
-    {
-        return Arrays.asList(new Object[][]{
-            {ConfigVariant.SERVICE, "http-response-timeout-config-service.xml"},
-            {ConfigVariant.FLOW, "http-response-timeout-config-flow.xml"}
-        });
-    }      
-        
-    protected String getPayload()
-    {
-        return PAYLOAD;
-    }
-
-    protected String getProcessedPayload()
-    {
-        return getPayload() + " processed";
-    }
-    
-    @Override
-    protected void doSetUp() throws Exception
-    {
-        super.doSetUp();
-        muleClient = new MuleClient(muleContext);
-    }
-
-    @Test
-    public void testDecreaseOutboundEndpointResponseTimeout() throws Exception
-    {
-        Date beforeCall = new Date();
-        MuleMessage result = muleClient.send("vm://decreaseTimeoutRequest", getPayload(), null);
-        assertNotNull(result);
-        assertNotNull(result.getExceptionPayload());
-        assertEquals(DispatchException.class, result.getExceptionPayload().getException().getClass());
-
-        // If everything is good the connection will timeout after 5s and throw an
-        // exception. The original unprocessed message is returned in the response
-        // message.
-        Date afterCall = new Date();
-        assertTrue((afterCall.getTime() - beforeCall.getTime()) < DEFAULT_RESPONSE_TIMEOUT);
-    }
-
-    @Test
-    public void testIncreaseOutboundEndpointResponseTimeout() throws Exception
-    {
-        Date beforeCall = new Date();
-        MuleMessage message = muleClient.send("vm://increaseTimeoutRequest", getPayload(), null);
-        Date afterCall = new Date();
-
-        // If everything is good the connection will not timeout and the processed
-        // message will be returned as the response. There is no exception payload.
-        assertNotNull(message);
-        assertNull(message.getExceptionPayload());
-        assertNotNull(message.getPayloadAsString());
-        assertTrue((afterCall.getTime() - beforeCall.getTime()) > DEFAULT_RESPONSE_TIMEOUT);
     }
 
     @Test
@@ -130,19 +55,6 @@ public class HttpResponseTimeoutTestCase extends AbstractServiceAndFlowTestCase
         afterCall = new Date();
         assertTrue((afterCall.getTime() - beforeCall.getTime()) < DEFAULT_RESPONSE_TIMEOUT);
     }
-
-    @Test
-    public void testIncreaseMuleClientSendResponseTimeout() throws Exception
-    {
-        Date beforeCall = new Date();
-        MuleMessage message = muleClient.send(((InboundEndpoint) muleClient.getMuleContext().getRegistry().lookupObject("inDelayService")).getAddress(), getPayload(), null, 3000);
-        Date afterCall = new Date();
-
-        // If everything is good the we'll have received a result after more than 10s
-        assertNotNull(message);
-        assertNull(message.getExceptionPayload());
-        assertNotNull(getProcessedPayload(), message.getPayloadAsString());
-        assertTrue((afterCall.getTime() - beforeCall.getTime()) > DEFAULT_RESPONSE_TIMEOUT);
-    }
-
 }
+
+

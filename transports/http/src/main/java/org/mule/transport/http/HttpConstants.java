@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: HttpConstants.java 24336 2012-04-23 18:57:41Z dirk.olmes $
  * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -47,6 +47,10 @@ public class HttpConstants
     // Date header format
     public static final String DATE_FORMAT = "EEE, dd MMM yyyy hh:mm:ss zzz";
 
+    // Default for encoding
+    public static final String FORM_URL_ENCODED_CONTENT_TYPE = "application/x-www-form-urlencoded";
+    public static final String MULTIPART_FORM_DATA_CONTENT_TYPE = "multipart/form-data";
+
     // Newline
     public static final String CRLF = "\r\n";
     // Mime/Content separator
@@ -66,6 +70,8 @@ public class HttpConstants
     public static final String HEADER_AUTHORIZATION = "Authorization"; // [Request]
     public static final String HEADER_CACHE_CONTROL = "Cache-Control"; // [General]
     public static final String HEADER_CONNECTION = "Connection"; // [General]
+    public static final String HEADER_CONNECTION_CLOSE = "close"; // possible value for Connection header
+    public static final String HEADER_CONNECTION_KEEP_ALIVE = "Keep-Alive"; // possible value for Connection header for http < 1.1
     public static final String HEADER_CONTENT_ENCODING = "Content-Encoding"; // [Entity]
     public static final String HEADER_CONTENT_DISPOSITION = "Content-Disposition"; // [Entity]
     public static final String HEADER_CONTENT_LANGUAGE = "Content-Language"; // [Entity]
@@ -115,6 +121,9 @@ public class HttpConstants
     // Chunked transfer encoding indicator
     public static final String TRANSFER_ENCODING_CHUNKED = "chunked";
 
+    // WebSocket upgrade type
+    public static final String WEBSOCKET_UPGRADE = "WebSocket";
+
     // Custom http header prefix
     public static final String CUSTOM_HEADER_PREFIX = "X-";
 
@@ -124,13 +133,13 @@ public class HttpConstants
     // Custom mule http header
     public static final String HEADER_MULE_SESSION = CUSTOM_HEADER_PREFIX + MuleProperties.MULE_SESSION_PROPERTY;
 
-    // case-insenitive Maps of header names to their normalized representations
+    // case-insensitive Maps of header names to their normalized representations
     public static final Map<String, String> REQUEST_HEADER_NAMES;
     public static final Map<String, String> RESPONSE_HEADER_NAMES;
     public static final Map<String, String> GENERAL_AND_ENTITY_HEADER_NAMES;
     public static final Map<String, String> ALL_HEADER_NAMES;
 
-    // Status codes
+    // HTTP Status codes
     public static final int SC_CONTINUE = 100;
     public static final int SC_SWITCHING_PROTOCOLS = 101;
     public static final int SC_PROCESSING = 102;
@@ -180,6 +189,10 @@ public class HttpConstants
     public static final int SC_HTTP_VERSION_NOT_SUPPORTED = 505;
     public static final int SC_INSUFFICIENT_STORAGE = 507;
 
+    // WebSockets Status codes
+    public static final int WS_POLICY_VIOLATION = 1008;
+    // TODO add WebSockets Status codes 1000-1007, 1009-1015
+
     static
     {
         String[] strings = new String[]{HEADER_ACCEPT, HEADER_ACCEPT_CHARSET, HEADER_ACCEPT_ENCODING,
@@ -198,10 +211,10 @@ public class HttpConstants
         RESPONSE_HEADER_NAMES = Collections.unmodifiableMap(MapUtils.mapWithKeysAndValues(
             CaseInsensitiveMap.class, strings, strings));
 
-        strings = new String[]{HEADER_ALLOW, HEADER_CACHE_CONTROL, HEADER_CONNECTION, HEADER_CONTENT_ENCODING,
-            HEADER_CONTENT_LANGUAGE, HEADER_CONTENT_LENGTH, HEADER_CONTENT_LOCATION, HEADER_CONTENT_MD5,
-            HEADER_CONTENT_RANGE, HEADER_CONTENT_TYPE, HEADER_DATE, HEADER_EXPIRES, HEADER_KEEP_ALIVE,
-            HEADER_LAST_MODIFIED, HEADER_PRAGMA, HEADER_TRAILER, /*HEADER_TRANSFER_ENCODING, */ HEADER_UPGRADE,
+        strings = new String[]{HEADER_ALLOW, HEADER_CACHE_CONTROL, HEADER_CONNECTION,
+            HEADER_CONTENT_ENCODING, HEADER_CONTENT_LANGUAGE, HEADER_CONTENT_LENGTH, HEADER_CONTENT_LOCATION,
+            HEADER_CONTENT_MD5, HEADER_CONTENT_RANGE, HEADER_CONTENT_TYPE, HEADER_DATE, HEADER_EXPIRES,
+            HEADER_KEEP_ALIVE, HEADER_LAST_MODIFIED, HEADER_PRAGMA, HEADER_TRAILER, HEADER_UPGRADE,
             HEADER_VIA, HEADER_WARNING};
 
         GENERAL_AND_ENTITY_HEADER_NAMES = Collections.unmodifiableMap(MapUtils.mapWithKeysAndValues(

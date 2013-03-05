@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: HttpMethodTestCase.java 24336 2012-04-23 18:57:41Z dirk.olmes $
  * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -15,6 +15,7 @@ import org.mule.tck.AbstractServiceAndFlowTestCase;
 import org.mule.tck.junit4.rule.DynamicPort;
 import org.mule.transport.http.HttpConstants;
 import org.mule.transport.http.PatchMethod;
+import org.mule.transport.tcp.LegacyIoTest;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,6 +34,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import static org.junit.Assert.assertEquals;
 
+@LegacyIoTest
 public class HttpMethodTestCase extends AbstractServiceAndFlowTestCase
 {
     @ClassRule
@@ -117,10 +119,15 @@ public class HttpMethodTestCase extends AbstractServiceAndFlowTestCase
     {
         CustomHttpMethod method = new CustomHttpMethod("FOO", getHttpEndpointAddress());
         int statusCode = client.executeMethod(method);
+        validateBadMethod(statusCode);
+    }
+    
+    protected void validateBadMethod(int statusCode)
+    {
         assertEquals(HttpStatus.SC_BAD_REQUEST, statusCode);
     }
 
-    private String getHttpEndpointAddress()
+    protected String getHttpEndpointAddress()
     {
         InboundEndpoint httpEndpoint = muleContext.getRegistry().lookupObject("inHttpIn");
         return httpEndpoint.getAddress();

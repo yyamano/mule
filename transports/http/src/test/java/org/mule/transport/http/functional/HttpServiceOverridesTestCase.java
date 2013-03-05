@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: HttpServiceOverridesTestCase.java 22431 2011-07-18 07:40:35Z dirk.olmes $
  * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -14,11 +14,13 @@ import org.mule.api.transport.Connector;
 import org.mule.api.transport.SessionHandler;
 import org.mule.tck.junit4.FunctionalTestCase;
 import org.mule.transport.http.HttpConnector;
+import org.mule.transport.tcp.LegacyIoTest;
 
 import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
 
+@LegacyIoTest
 public class HttpServiceOverridesTestCase extends FunctionalTestCase
 {
 

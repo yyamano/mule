@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:tcp="http://www.mulesoft.org/schema/mule/tcp" xmlns:test="http://www.mulesoft.org/schema/mule/test"
+    xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+    xmlns:quartz="http://www.mulesoft.org/schema/mule/quartz" xmlns:scripting="http://www.mulesoft.org/schema/mule/scripting"
+    xsi:schemaLocation="
+                  http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+                  http://www.mulesoft.org/schema/mule/tcp http://www.mulesoft.org/schema/mule/tcp/current/mule-tcp.xsd
+                  http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+                  http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+                  http://www.mulesoft.org/schema/mule/quartz http://www.mulesoft.org/schema/mule/quartz/current/mule-quartz.xsd
+                  http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mule/scripting/current/mule-scripting.xsd
+                  http://www.mulesoft.org/schema/mule/test http://www.mulesoft.org/schema/mule/test/current/mule-test.xsd
+                  ">
+
+    <global-property name="dynamic-port1" value="${port1}" />
+
+    <http:connector name="httpConnector" keepSendSocketOpen="false" />
+    <http:connector name="httpConnectorKeepOpen"
+        keepSendSocketOpen="true" />
+
+    <flow name="main-http">
+        <http:inbound-endpoint address="http://localhost:${port1}"
+            exchange-pattern="request-response" connector-ref="httpConnector" />
+        <http:static-resource-handler resourceBase="${test.root}/dummy-docroot/" />
+    </flow>
+
+    <flow name="ws-inbound-rr">
+        <http:inbound-endpoint address="http://localhost:${port1}/websockets/rr"
+            exchange-pattern="request-response" connector-ref="httpConnector">
+            <http:websocket group="ws.rr" />
+        </http:inbound-endpoint>
+
+        <append-string-transformer message=" received on /rr" />
+    </flow>
+
+    <flow name="ws-inbound-ow">
+        <http:inbound-endpoint address="http://localhost:${port1}/websockets/ow"
+            exchange-pattern="one-way" connector-ref="httpConnector">
+            <http:websocket group="ws.ow" />
+        </http:inbound-endpoint>
+        <append-string-transformer message=" received on /ow" />
+        <test:component />
+    </flow>
+
+    <flow name="ws-generator">
+        <quartz:inbound-endpoint name="wsgEP"
+            cronExpression="*/3 * * * * ?" jobName="wsgJob">
+            <quartz:event-generator-job>
+                <quartz:payload>General Ping</quartz:payload>
+            </quartz:event-generator-job>
+        </quartz:inbound-endpoint>
+
+        <http:websocket-writer group="ws.ow" connector-ref="httpConnector" />
+    </flow>
+
+    <flow name="ws-inbound-sw">
+        <http:inbound-endpoint address="http://localhost:${port1}/websockets/sw"
+            exchange-pattern="one-way" connector-ref="httpConnector">
+            <http:websocket group="ws.sw" />
+        </http:inbound-endpoint>
+        <append-string-transformer message=" received on /sw" />
+        <!-- simulate a request-response flow by writing the response to the websocket channel directly using the ad hoc message processor -->
+        <http:websocket-writer group="ws.sw"
+            channelId="#[header:INBOUND:nio.channel.id]" failIfNoWrite="true"
+            connector-ref="httpConnector" />
+    </flow>
+
+    <flow name="ws-inbound-code-sw">
+        <http:inbound-endpoint address="http://localhost:${port1}/websockets/code-sw"
+            exchange-pattern="one-way" connector-ref="httpConnector">
+            <http:websocket group="ws.code-sw" />
+        </http:inbound-endpoint>
+        <!-- simulate a request-response flow by writing the response to the websocket channel directly by code -->
+        <scripting:component>
+            <scripting:script engine="groovy">
+                def httpConnector =
+                registry.lookupConnector('httpConnector')
+                def channelId =
+                message.getInboundProperty('nio.channel.id')
+                message.payload =
+                "${payload} received on /code-sw"
+                httpConnector.writeToWebSocket(message, 'ws.code-sw', channelId)
+            </scripting:script>
+        </scripting:component>
+    </flow>
+
+    <flow name="ws-outbound-close">
+        <vm:inbound-endpoint path="ws.out.close"
+            exchange-pattern="request-response" />
+        <http:outbound-endpoint address="http://localhost:${port1}/websockets/rr"
+            exchange-pattern="request-response" connector-ref="httpConnector">
+            <http:websocket version="V13" />
+        </http:outbound-endpoint>
+    </flow>
+
+    <flow name="ws-outbound-keep-open">
+        <vm:inbound-endpoint path="ws.out.keep-open"
+            exchange-pattern="request-response" />
+        <http:outbound-endpoint address="http://localhost:${port1}/websockets/rr"
+            exchange-pattern="request-response" connector-ref="httpConnectorKeepOpen">
+            <http:websocket version="V13" />
+        </http:outbound-endpoint>
+    </flow>
+
+    <http:polling-connector name="pollingHttpConnector" />
+    <flow name="ws-polling">
+        <http:inbound-endpoint address="http://localhost:${port1}/websockets/ow"
+            connector-ref="pollingHttpConnector">
+            <http:websocket group="client-websocket" />
+        </http:inbound-endpoint>
+        <test:component />
+    </flow>
+
+    <http:polling-connector name="pollingHttpConnectorKeepOpen"
+        keepSendSocketOpen="true" />
+    <flow name="ws-polling-keep-open">
+        <http:inbound-endpoint address="http://localhost:${port1}/websockets/ow"
+            connector-ref="pollingHttpConnectorKeepOpen">
+            <http:websocket group="client-websocket" />
+        </http:inbound-endpoint>
+        <test:component />
+    </flow>
+
+    <http:websocket-listening-connector name="listeningWebSocketConnectorOW" />
+    <flow name="ws-listening-ow">
+        <http:inbound-endpoint address="http://localhost:${port1}/websockets/ow"
+            connector-ref="listeningWebSocketConnectorOW" exchange-pattern="one-way">
+            <http:websocket group="listener-websocket" />
+        </http:inbound-endpoint>
+        <test:component />
+    </flow>
+
+    <http:websocket-listening-connector name="listeningWebSocketConnectorRR" />
+    <flow name="ws-listening-rr">
+        <http:inbound-endpoint address="http://localhost:${port1}/websockets/ow"
+            connector-ref="listeningWebSocketConnectorRR" exchange-pattern="request-response">
+            <http:websocket group="listener-websocket" />
+        </http:inbound-endpoint>
+        <test:component />
+        <append-string-transformer message=" received on /listening-rr" />
+    </flow>
+</mule>

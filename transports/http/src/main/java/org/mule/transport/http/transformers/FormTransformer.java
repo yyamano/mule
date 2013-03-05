@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: FormTransformer.java 22409 2011-07-14 05:14:27Z dirk.olmes $
  * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -28,19 +28,19 @@ import java.util.StringTokenizer;
  */
 public class FormTransformer extends AbstractMessageTransformer
 {
-
     @Override
-    public Object transformMessage(MuleMessage message, String outputEncoding) throws TransformerException
+    public Object transformMessage(final MuleMessage message, final String outputEncoding)
+        throws TransformerException
     {
         try
         {
-            String v = message.getPayloadAsString();
-            Map<String, Object> values = new HashMap<String, Object>();
+            final String v = message.getPayloadAsString();
+            final Map<String, Object> values = new HashMap<String, Object>();
 
-            for (StringTokenizer st = new StringTokenizer(v, "&"); st.hasMoreTokens();)
+            for (final StringTokenizer st = new StringTokenizer(v, "&"); st.hasMoreTokens();)
             {
-                String token = st.nextToken();
-                int idx = token.indexOf('=');
+                final String token = st.nextToken();
+                final int idx = token.indexOf('=');
                 if (idx < 0)
                 {
                     add(values, URLDecoder.decode(token, outputEncoding), null);
@@ -53,28 +53,28 @@ public class FormTransformer extends AbstractMessageTransformer
             }
             return values;
         }
-        catch (Exception e)
+        catch (final Exception e)
         {
             throw new TransformerException(this, e);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private void add(Map<String, Object> values, String key, String value)
+    private void add(final Map<String, Object> values, final String key, final String value)
     {
-        Object existingValue = values.get(key);
+        final Object existingValue = values.get(key);
         if (existingValue == null)
         {
             values.put(key, value);
         }
         else if (existingValue instanceof List)
         {
-            List<String> list = (List<String>) existingValue;
+            final List<String> list = (List<String>) existingValue;
             list.add(value);
         }
         else if (existingValue instanceof String)
         {
-            List<String> list = new ArrayList<String>();
+            final List<String> list = new ArrayList<String>();
             list.add((String) existingValue);
             list.add(value);
             values.put(key, list);

@@ -1,0 +1,68 @@
+/*
+ * $Id: HttpContentLengthPropagationTestCase.java 22431 2011-07-18 07:40:35Z dirk.olmes $
+ * --------------------------------------------------------------------------------------
+ * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
+ *
+ * The software in this package is published under the terms of the CPAL v1.0
+ * license, a copy of which has been included with this distribution in the
+ * LICENSE.txt file.
+ */
+
+package org.mule.transport.http.functional;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import org.mule.DefaultMuleMessage;
+import org.mule.api.MuleMessage;
+import org.mule.api.endpoint.InboundEndpoint;
+import org.mule.module.client.MuleClient;
+import org.mule.module.xml.transformer.XsltTransformer;
+import org.mule.tck.AbstractServiceAndFlowTestCase;
+import org.mule.util.IOUtils;
+
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collection;
+
+import org.junit.Test;
+import org.junit.runners.Parameterized.Parameters;
+
+public class HttpContentLengthPropagationTestCase extends AbstractServiceAndFlowTestCase
+{
+
+    public HttpContentLengthPropagationTestCase(ConfigVariant variant, String configResources)
+    {
+        super(variant, configResources);
+    }
+
+    private static final String NAME_PAYLOAD = "test-xml-payload.xml";
+    private static final String NAME_STYLESHEET = "stylesheet.xsl";
+
+    @Parameters
+    public static Collection<Object[]> parameters()
+    {
+        return Arrays.asList(new Object[][]{{ConfigVariant.SERVICE, "http-content-length-propagation-conf-service.xml"},
+            {ConfigVariant.FLOW, "http-content-length-propagation-conf-flow.xml"}});
+    }
+
+    @Test
+    public void testContentLengthPropagation() throws Exception
+    {
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(NAME_PAYLOAD);
+        assertNotNull("Payload test file not found.", is);
+        byte[] fileContents = IOUtils.toByteArray(is);
+
+        MuleClient client = new MuleClient(muleContext);
+        MuleMessage result = client.send(((InboundEndpoint) client.getMuleContext().getRegistry().lookupObject("httpEndpoint")).getAddress(),
+            new DefaultMuleMessage(fileContents, muleContext));
+
+        XsltTransformer trans = new XsltTransformer();
+        trans.setMuleContext(muleContext);
+        trans.setXslFile(NAME_STYLESHEET);
+        trans.initialise();
+        final byte[] locallyTransformedBytes = (byte[]) trans.doTransform(fileContents, "UTF-8");
+
+        assertEquals(new String(locallyTransformedBytes), result.getPayloadAsString());
+    }
+}

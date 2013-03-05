@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: HttpOutboundHeadersPropagationComponent.java 24173 2012-03-26 15:40:11Z saveli.vassiliev $
  * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -10,15 +10,13 @@
 
 package org.mule.transport.http.functional;
 
-import java.util.Map;
-import java.util.TreeMap;
-
 import org.mule.api.MuleEventContext;
 import org.mule.api.MuleMessage;
 import org.mule.api.lifecycle.Callable;
-import org.mule.transport.http.CookieHelper;
 
-import org.apache.commons.httpclient.Cookie;
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

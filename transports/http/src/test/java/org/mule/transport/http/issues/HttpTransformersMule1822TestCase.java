@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: HttpTransformersMule1822TestCase.java 22518 2011-07-22 07:00:22Z claude.mamo $
  * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -13,19 +13,19 @@ package org.mule.transport.http.issues;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import org.mule.api.MuleException;
-import org.mule.api.MuleMessage;
-import org.mule.module.client.MuleClient;
-import org.mule.tck.AbstractServiceAndFlowTestCase;
-import org.mule.tck.functional.StringAppendTestTransformer;
-import org.mule.tck.junit4.rule.DynamicPort;
-
 import java.util.Arrays;
 import java.util.Collection;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
+import org.mule.api.MuleException;
+import org.mule.api.MuleMessage;
+import org.mule.module.client.MuleClient;
+import org.mule.tck.AbstractServiceAndFlowTestCase;
+import org.mule.tck.functional.StringAppendTestTransformer;
+import org.mule.tck.junit4.rule.DynamicPort;
+import org.mule.transformer.simple.StringAppendTransformer;
 
 public class HttpTransformersMule1822TestCase extends AbstractServiceAndFlowTestCase
 {
@@ -40,7 +40,7 @@ public class HttpTransformersMule1822TestCase extends AbstractServiceAndFlowTest
     @Rule
     public DynamicPort dynamicPort3 = new DynamicPort("port3");
 
-    public HttpTransformersMule1822TestCase(ConfigVariant variant, String configResources)
+    public HttpTransformersMule1822TestCase(final ConfigVariant variant, final String configResources)
     {
         super(variant, configResources);
     }
@@ -50,14 +50,13 @@ public class HttpTransformersMule1822TestCase extends AbstractServiceAndFlowTest
     {
         return Arrays.asList(new Object[][]{
             {ConfigVariant.SERVICE, "http-transformers-mule-1822-test-service.xml"},
-            {ConfigVariant.FLOW, "http-transformers-mule-1822-test-flow.xml"}
-        });
-    }      
+            {ConfigVariant.FLOW, "http-transformers-mule-1822-test-flow.xml"}});
+    }
 
-    private MuleMessage sendTo(String uri) throws MuleException
+    private MuleMessage sendTo(final String uri) throws MuleException
     {
-        MuleClient client = new MuleClient(muleContext);
-        MuleMessage message = client.send(uri, OUTBOUND_MESSAGE, null);
+        final MuleClient client = new MuleClient(muleContext);
+        final MuleMessage message = client.send(uri, OUTBOUND_MESSAGE, null);
         assertNotNull(message);
         return message;
     }
@@ -68,7 +67,7 @@ public class HttpTransformersMule1822TestCase extends AbstractServiceAndFlowTest
     @Test
     public void testBase() throws Exception
     {
-        assertEquals(OUTBOUND_MESSAGE  + " Received", sendTo("base").getPayloadAsString());
+        assertEquals(OUTBOUND_MESSAGE + " Received", sendTo("base").getPayloadAsString());
     }
 
     /**
@@ -78,10 +77,9 @@ public class HttpTransformersMule1822TestCase extends AbstractServiceAndFlowTest
     public void testResponse() throws Exception
     {
         assertEquals(
-                StringAppendTestTransformer.append(" response",
-                        StringAppendTestTransformer.append(" response 2",
-                                        OUTBOUND_MESSAGE + " Received")),
-                sendTo("response").getPayloadAsString());
+            StringAppendTransformer.append(" response",
+                StringAppendTransformer.append(" response 2", OUTBOUND_MESSAGE + " Received")),
+            sendTo("response").getPayloadAsString());
     }
 
     /**
@@ -91,11 +89,13 @@ public class HttpTransformersMule1822TestCase extends AbstractServiceAndFlowTest
     public void testBoth() throws Exception
     {
         assertEquals(
-            StringAppendTestTransformer.append(" response",
-                StringAppendTestTransformer.append(" response 2",
-                    StringAppendTestTransformer.append(" transformed 2",
-                        StringAppendTestTransformer.appendDefault(OUTBOUND_MESSAGE)) + " Received")),
-                sendTo("both").getPayloadAsString());
+            StringAppendTransformer.append(
+                " response",
+                StringAppendTransformer.append(
+                    " response 2",
+                    StringAppendTransformer.append(" transformed 2",
+                        StringAppendTestTransformer.appendDefault(OUTBOUND_MESSAGE))
+                                    + " Received")), sendTo("both").getPayloadAsString());
     }
 
 }

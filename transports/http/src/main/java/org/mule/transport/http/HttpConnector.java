@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: HttpConnector.java 25231 2013-01-28 15:50:41Z pablo.lagreca $
  * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -201,6 +201,7 @@ public class HttpConnector extends TcpConnector
     public HttpConnector(MuleContext context)
     {
         super(context);
+        System.out.println("Original HttpConnector");
     }
 
     @Override

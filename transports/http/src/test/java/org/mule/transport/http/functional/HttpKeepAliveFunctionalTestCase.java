@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: HttpKeepAliveFunctionalTestCase.java 22518 2011-07-22 07:00:22Z claude.mamo $
  * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -18,6 +18,7 @@ import org.mule.module.client.MuleClient;
 import org.mule.tck.AbstractServiceAndFlowTestCase;
 import org.mule.tck.junit4.rule.DynamicPort;
 import org.mule.transport.http.HttpConstants;
+import org.mule.transport.tcp.LegacyIoTest;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,6 +37,7 @@ import org.junit.runners.Parameterized.Parameters;
 /**
  * Tests as per http://www.io.com/~maus/HttpKeepAlive.html
  */
+@LegacyIoTest
 public class HttpKeepAliveFunctionalTestCase extends AbstractServiceAndFlowTestCase
 {
     

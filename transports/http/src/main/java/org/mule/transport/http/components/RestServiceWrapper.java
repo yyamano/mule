@@ -10,6 +10,13 @@
 
 package org.mule.transport.http.components;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import org.mule.DefaultMuleEventContext;
 import org.mule.DefaultMuleMessage;
 import org.mule.MessageExchangePattern;
@@ -31,16 +38,6 @@ import org.mule.transport.http.HttpConnector;
 import org.mule.transport.http.HttpConstants;
 import org.mule.util.StringUtils;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 /**
  * This service can used to proxy REST style services as local Mule Components. It
  * can be configured with a service URL plus a number of properties that allow you to
@@ -48,21 +45,11 @@ import org.apache.commons.logging.LogFactory;
  */
 public class RestServiceWrapper extends AbstractComponent
 {
-    public static final String DELETE = HttpConstants.METHOD_DELETE;
-    public static final String GET = HttpConstants.METHOD_GET;
-    public static final String CONTENT_TYPE_VALUE = "application/x-www-form-urlencoded";
-    public static final String HTTP_METHOD = "http.method";
-
-    /**
-     * logger used by this class
-     */
-    protected transient Log logger = LogFactory.getLog(getClass());
-
     private String serviceUrl;
-    private Map requiredParams = new HashMap();
-    private Map optionalParams = new HashMap();
-    private String httpMethod = GET;
-    private List payloadParameterNames;
+    private Map<String, String> requiredParams = new HashMap<String, String>();
+    private Map<String, String> optionalParams = new HashMap<String, String>();
+    private String httpMethod = HttpConstants.METHOD_GET;
+    private List<String> payloadParameterNames;
     private Filter errorFilter;
 
     public String getServiceUrl()
@@ -70,12 +57,12 @@ public class RestServiceWrapper extends AbstractComponent
         return serviceUrl;
     }
 
-    public void setServiceUrl(String serviceUrl)
+    public void setServiceUrl(final String serviceUrl)
     {
         this.serviceUrl = serviceUrl;
     }
 
-    public Map getRequiredParams()
+    public Map<String, String> getRequiredParams()
     {
         return requiredParams;
     }
@@ -83,12 +70,12 @@ public class RestServiceWrapper extends AbstractComponent
     /**
      * Required params that are pulled from the message. If these params don't exist
      * the call will fail Note that you can use
-     * {@link org.mule.api.expression.ExpressionEvaluator} expressions such as
-     * xpath, header, xquery, etc
-     *
+     * {@link org.mule.api.expression.ExpressionEvaluator} expressions such as xpath,
+     * header, xquery, etc
+     * 
      * @param requiredParams
      */
-    public void setRequiredParams(Map requiredParams)
+    public void setRequiredParams(final Map<String, String> requiredParams)
     {
         this.requiredParams = requiredParams;
     }
@@ -98,12 +85,12 @@ public class RestServiceWrapper extends AbstractComponent
      * execution will continue. Note that you can use {@link ExpressionEvaluator}
      * expressions such as xpath, header, xquery, etc
      */
-    public Map getOptionalParams()
+    public Map<String, String> getOptionalParams()
     {
         return optionalParams;
     }
 
-    public void setOptionalParams(Map optionalParams)
+    public void setOptionalParams(final Map<String, String> optionalParams)
     {
         this.optionalParams = optionalParams;
     }
@@ -113,17 +100,17 @@ public class RestServiceWrapper extends AbstractComponent
         return httpMethod;
     }
 
-    public void setHttpMethod(String httpMethod)
+    public void setHttpMethod(final String httpMethod)
     {
         this.httpMethod = httpMethod;
     }
 
-    public List getPayloadParameterNames()
+    public List<String> getPayloadParameterNames()
     {
         return payloadParameterNames;
     }
 
-    public void setPayloadParameterNames(List payloadParameterNames)
+    public void setPayloadParameterNames(final List<String> payloadParameterNames)
     {
         this.payloadParameterNames = payloadParameterNames;
     }
@@ -133,7 +120,7 @@ public class RestServiceWrapper extends AbstractComponent
         return errorFilter;
     }
 
-    public void setFilter(Filter errorFilter)
+    public void setFilter(final Filter errorFilter)
     {
         this.errorFilter = errorFilter;
     }
@@ -145,15 +132,16 @@ public class RestServiceWrapper extends AbstractComponent
         {
             throw new InitialisationException(CoreMessages.objectIsNull("serviceUrl"), this);
         }
-        else if (!muleContext.getExpressionManager().isExpression(serviceUrl))
+
+        if (!muleContext.getExpressionManager().isExpression(serviceUrl))
         {
             try
             {
-                new URL(serviceUrl);
+                new URI(serviceUrl);
             }
-            catch (MalformedURLException e)
+            catch (final URISyntaxException urise)
             {
-                throw new InitialisationException(e, this);
+                throw new InitialisationException(urise, this);
             }
         }
 
@@ -166,11 +154,11 @@ public class RestServiceWrapper extends AbstractComponent
     }
 
     @Override
-    public Object doInvoke(MuleEvent event) throws Exception
+    public Object doInvoke(final MuleEvent event) throws Exception
     {
         Object requestBody;
 
-        Object request = event.getMessage().getPayload();
+        final Object request = event.getMessage().getPayload();
         String tempUrl = serviceUrl;
         MuleMessage result;
         if (muleContext.getExpressionManager().isExpression(serviceUrl))
@@ -179,26 +167,26 @@ public class RestServiceWrapper extends AbstractComponent
             tempUrl = muleContext.getExpressionManager().parse(serviceUrl, event, true);
         }
 
-        StringBuffer urlBuffer = new StringBuffer(tempUrl);
+        final StringBuilder urlBuffer = new StringBuilder(tempUrl);
 
-        if (GET.equalsIgnoreCase(this.httpMethod) || DELETE.equalsIgnoreCase(this.httpMethod))
+        if (HttpConstants.METHOD_GET.equalsIgnoreCase(httpMethod)
+            || HttpConstants.METHOD_DELETE.equalsIgnoreCase(httpMethod))
         {
             requestBody = NullPayload.getInstance();
 
-            setRESTParams(urlBuffer, event.getMessage(), request, requiredParams, false, null);
-            setRESTParams(urlBuffer, event.getMessage(), request, optionalParams, true, null);
+            setRESTParams(urlBuffer, event, request, requiredParams, false, null);
+            setRESTParams(urlBuffer, event, request, optionalParams, true, null);
         }
-        // if post
         else
         {
+            final StringBuffer requestBodyBuffer = new StringBuffer();
             if (event.getMessage().getOutboundProperty(HttpConstants.HEADER_CONTENT_TYPE) == null)
             {
-                event.getMessage().setOutboundProperty(HttpConstants.HEADER_CONTENT_TYPE, CONTENT_TYPE_VALUE);
+            	event.getMessage().setOutboundProperty(HttpConstants.HEADER_CONTENT_TYPE,
+                	HttpConstants.FORM_URL_ENCODED_CONTENT_TYPE);
             }
-
-            StringBuffer requestBodyBuffer = new StringBuffer();
-            setRESTParams(urlBuffer, event.getMessage(), request, requiredParams, false, requestBodyBuffer);
-            setRESTParams(urlBuffer, event.getMessage(), request, optionalParams, true, requestBodyBuffer);
+            setRESTParams(urlBuffer, event, request, requiredParams, false, requestBodyBuffer);
+            setRESTParams(urlBuffer, event, request, optionalParams, true, requestBodyBuffer);
             requestBody = requestBodyBuffer.toString();
         }
 
@@ -207,58 +195,41 @@ public class RestServiceWrapper extends AbstractComponent
 
         event.getMessage().setOutboundProperty(HttpConnector.HTTP_METHOD_PROPERTY, httpMethod);
 
-        EndpointBuilder endpointBuilder = new EndpointURIEndpointBuilder(tempUrl, muleContext);
+        final EndpointBuilder endpointBuilder = new EndpointURIEndpointBuilder(tempUrl, muleContext);
         endpointBuilder.setExchangePattern(MessageExchangePattern.REQUEST_RESPONSE);
-        OutboundEndpoint outboundEndpoint = endpointBuilder.buildOutboundEndpoint();
+        final OutboundEndpoint outboundEndpoint = endpointBuilder.buildOutboundEndpoint();
 
-        MuleEventContext eventContext = new DefaultMuleEventContext(event);
-        result = eventContext.sendEvent(
-            new DefaultMuleMessage(requestBody, event.getMessage(), muleContext), outboundEndpoint);
+        final MuleEventContext eventContext = new DefaultMuleEventContext(event);
+        result = eventContext.sendEvent(new DefaultMuleMessage(requestBody, event.getMessage(), muleContext),
+            outboundEndpoint);
         if (isErrorPayload(result))
         {
-            handleException(new RestServiceException(CoreMessages.failedToInvokeRestService(tempUrl),
-                event), result);
+            handleException(new RestServiceException(CoreMessages.failedToInvokeRestService(tempUrl), event),
+                result);
         }
 
         return result;
     }
 
-    private String getSeparator(String url)
+    protected String getSeparator(final String url)
     {
-        String sep;
-
-        if (url.indexOf("?") > -1)
-        {
-            sep = "&";
-        }
-        else
-        {
-            sep = "?";
-        }
-
-        return sep;
+        return (url.indexOf("?") > -1) ? "&" : "?";
     }
 
-    private String updateSeparator(String sep)
+    protected String updateSeparator(final String sep)
     {
-        if (sep.compareTo("?") == 0 || sep.compareTo("") == 0)
-        {
-            return ("&");
-        }
-
-        return sep;
+        return ("?".equals(sep) || StringUtils.EMPTY.equals(sep)) ? "&" : sep;
     }
 
     // if requestBodyBuffer is null, it means that the request is a GET, otherwise it
-    // is a POST and
-    // requestBodyBuffer must contain the body of the http method at the end of this
-    // function call
-    private void setRESTParams(StringBuffer url,
-                               MuleMessage msg,
-                               Object body,
-                               Map args,
-                               boolean optional,
-                               StringBuffer requestBodyBuffer)
+    // is a POST and requestBodyBuffer must contain the body of the http method at
+    // the end of this function call
+    protected void setRESTParams(final StringBuilder url,
+                                 final MuleEvent event,
+                                 final Object body,
+                                 final Map<String, String> args,
+                                 final boolean optional,
+                                 final StringBuffer requestBodyBuffer)
     {
         String sep;
 
@@ -266,7 +237,7 @@ public class RestServiceWrapper extends AbstractComponent
         {
             sep = getSeparator(url.toString());
         }
-        else if(requestBodyBuffer.length() > 0)
+        else if (requestBodyBuffer.length() > 0)
         {
             sep = "&";
         }
@@ -275,11 +246,10 @@ public class RestServiceWrapper extends AbstractComponent
             sep = StringUtils.EMPTY;
         }
 
-        for (Iterator iterator = args.entrySet().iterator(); iterator.hasNext();)
+        for (final Entry<String, String> entry : args.entrySet())
         {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            String name = (String) entry.getKey();
-            String exp = (String) entry.getValue();
+            final String name = entry.getKey();
+            final String exp = entry.getValue();
             Object value = null;
 
             if (muleContext.getExpressionManager().isExpression(exp))
@@ -287,11 +257,11 @@ public class RestServiceWrapper extends AbstractComponent
                 muleContext.getExpressionManager().validateExpression(exp);
                 try
                 {
-                    value = muleContext.getExpressionManager().evaluate(exp, msg);
+                    value = muleContext.getExpressionManager().evaluate(exp, event);
                 }
-                catch (RequiredValueException e)
+                catch (final RequiredValueException e)
                 {
-                    //ignore
+                    // ignore
                 }
             }
             else
@@ -324,18 +294,22 @@ public class RestServiceWrapper extends AbstractComponent
         {
             if (body instanceof Object[])
             {
-                Object[] requestArray = (Object[]) body;
+                final Object[] requestArray = (Object[]) body;
                 for (int i = 0; i < payloadParameterNames.size(); i++)
                 {
                     if (requestBodyBuffer != null)
                     {
-                        requestBodyBuffer.append(sep).append(payloadParameterNames.get(i)).append('=').append(
-                                requestArray[i].toString());
+                        requestBodyBuffer.append(sep)
+                            .append(payloadParameterNames.get(i))
+                            .append('=')
+                            .append(requestArray[i].toString());
                     }
                     else
                     {
-                        url.append(sep).append(payloadParameterNames.get(i)).append('=').append(
-                                requestArray[i].toString());
+                        url.append(sep)
+                            .append(payloadParameterNames.get(i))
+                            .append('=')
+                            .append(requestArray[i].toString());
                     }
 
                     sep = updateSeparator(sep);
@@ -347,25 +321,29 @@ public class RestServiceWrapper extends AbstractComponent
                 {
                     if (requestBodyBuffer != null)
                     {
-                        requestBodyBuffer.append(payloadParameterNames.get(0)).append('=').append(body.toString());
+                        requestBodyBuffer.append(payloadParameterNames.get(0))
+                            .append('=')
+                            .append(body.toString());
                     }
                     else
                     {
-                        url.append(sep).append(payloadParameterNames.get(0)).append('=').append(body.toString());
+                        url.append(sep)
+                            .append(payloadParameterNames.get(0))
+                            .append('=')
+                            .append(body.toString());
                     }
                 }
             }
         }
     }
 
-    protected boolean isErrorPayload(MuleMessage message)
+    protected boolean isErrorPayload(final MuleMessage message)
     {
         return errorFilter != null && errorFilter.accept(message);
     }
 
-    protected void handleException(RestServiceException e, MuleMessage result) throws Exception
+    protected void handleException(final RestServiceException e, final MuleMessage result) throws Exception
     {
         throw e;
     }
-
 }

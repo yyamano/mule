@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: MultiMap.java 20320 2010-11-24 15:03:31Z dfeist $
  * -------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -7,6 +7,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
+
 package org.mule.transport.http.multipart;
 
 // ========================================================================
@@ -22,11 +23,9 @@ package org.mule.transport.http.multipart;
 // You may elect to redistribute this code under either of these licenses.
 // ========================================================================
 
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,246 +33,252 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /* ------------------------------------------------------------ */
-/** A multi valued Map.
- * This Map specializes HashMap and provides methods
- * that operate on multi valued items.
+/**
+ * A multi valued Map. This Map specializes HashMap and provides methods that operate
+ * on multi valued items.
  * <P>
  * Implemented as a map of LazyList values
- *
+ * 
  * @see LazyList
- *
  */
-public class MultiMap<K> implements ConcurrentMap<K,Object>
+public class MultiMap<K> implements ConcurrentMap<K, Object>
 {
-    Map<K,Object> _map;
+    Map<K, Object> _map;
     ConcurrentMap<K, Object> _cmap;
 
     public MultiMap()
     {
-        _map=new HashMap<K, Object>();
+        _map = new HashMap<K, Object>();
     }
 
-    public MultiMap(Map map)
+    public MultiMap(final Map<K, Object> map)
     {
         if (map instanceof ConcurrentMap)
-            _map=_cmap=new ConcurrentHashMap<K, Object>(map);
+            _map = _cmap = new ConcurrentHashMap<K, Object>(map);
         else
-            _map=new HashMap<K, Object>(map);
+            _map = new HashMap<K, Object>(map);
     }
 
-    public MultiMap(int capacity)
+    public MultiMap(final int capacity)
     {
-        _map=new HashMap<K, Object>(capacity);
+        _map = new HashMap<K, Object>(capacity);
     }
 
-    public MultiMap(boolean concurrent)
+    public MultiMap(final boolean concurrent)
     {
         if (concurrent)
-            _map=_cmap=new ConcurrentHashMap<K, Object>();
+            _map = _cmap = new ConcurrentHashMap<K, Object>();
         else
-            _map=new HashMap<K, Object>();
+            _map = new HashMap<K, Object>();
     }
 
-
     /* ------------------------------------------------------------ */
-    /** Get multiple values.
-     * Single valued entries are converted to singleton lists.
+    /**
+     * Get multiple values. Single valued entries are converted to singleton lists.
+     * 
      * @param name The entry key.
      * @return Unmodifieable List of values.
      */
-    public List getValues(Object name)
+    public <E> List<E> getValues(final Object name)
     {
-        return LazyList.getList(_map.get(name),true);
+        return LazyList.getList(_map.get(name), true);
     }
 
     /* ------------------------------------------------------------ */
-    /** Get a value from a multiple value.
-     * If the value is not a multivalue, then index 0 retrieves the
-     * value or null.
+    /**
+     * Get a value from a multiple value. If the value is not a multivalue, then
+     * index 0 retrieves the value or null.
+     * 
      * @param name The entry key.
      * @param i Index of element to get.
      * @return Unmodifieable List of values.
      */
-    public Object getValue(Object name,int i)
+    public Object getValue(final Object name, final int i)
     {
-        Object l=_map.get(name);
-        if (i==0 && LazyList.size(l)==0)
-            return null;
-        return LazyList.get(l,i);
+        final Object l = _map.get(name);
+        if (i == 0 && LazyList.size(l) == 0) return null;
+        return LazyList.get(l, i);
     }
 
-
     /* ------------------------------------------------------------ */
-    /** Get value as String.
-     * Single valued items are converted to a String with the toString()
-     * Object method. Multi valued entries are converted to a comma separated
-     * List.  No quoting of commas within values is performed.
+    /**
+     * Get value as String. Single valued items are converted to a String with the
+     * toString() Object method. Multi valued entries are converted to a comma
+     * separated List. No quoting of commas within values is performed.
+     * 
      * @param name The entry key.
      * @return String value.
      */
-    public String getString(Object name)
+    public String getString(final Object name)
     {
-        Object l=_map.get(name);
-        switch(LazyList.size(l))
+        final Object l = _map.get(name);
+        switch (LazyList.size(l))
         {
-          case 0:
-              return null;
-          case 1:
-              Object o=LazyList.get(l,0);
-              return o==null?null:o.toString();
-          default:
-          {
-              StringBuilder values=new StringBuilder(128);
-              for (int i=0; i<LazyList.size(l); i++)
-              {
-                  Object e=LazyList.get(l,i);
-                  if (e!=null)
-                  {
-                      if (values.length()>0)
-                          values.append(',');
-                      values.append(e.toString());
-                  }
-              }
-              return values.toString();
-          }
+            case 0 :
+                return null;
+            case 1 :
+                final Object o = LazyList.get(l, 0);
+                return o == null ? null : o.toString();
+            default :
+            {
+                final StringBuilder values = new StringBuilder(128);
+                for (int i = 0; i < LazyList.size(l); i++)
+                {
+                    final Object e = LazyList.get(l, i);
+                    if (e != null)
+                    {
+                        if (values.length() > 0) values.append(',');
+                        values.append(e.toString());
+                    }
+                }
+                return values.toString();
+            }
         }
     }
 
     /* ------------------------------------------------------------ */
-    public Object get(Object name)
+    public Object get(final Object name)
     {
-        Object l=_map.get(name);
-        switch(LazyList.size(l))
+        final Object l = _map.get(name);
+        switch (LazyList.size(l))
         {
-          case 0:
-              return null;
-          case 1:
-              Object o=LazyList.get(l,0);
-              return o;
-          default:
-              return LazyList.getList(l,true);
+            case 0 :
+                return null;
+            case 1 :
+                final Object o = LazyList.get(l, 0);
+                return o;
+            default :
+                return LazyList.getList(l, true);
         }
     }
 
     /* ------------------------------------------------------------ */
-    /** Put and entry into the map.
+    /**
+     * Put and entry into the map.
+     * 
      * @param name The entry key.
      * @param value The entry value.
      * @return The previous value or null.
      */
-    public Object put(K name, Object value)
+    public Object put(final K name, final Object value)
     {
-        return _map.put(name,LazyList.add(null,value));
+        return _map.put(name, LazyList.add(null, value));
     }
 
     /* ------------------------------------------------------------ */
-    /** Put multi valued entry.
+    /**
+     * Put multi valued entry.
+     * 
      * @param name The entry key.
      * @param values The List of multiple values.
      * @return The previous value or null.
      */
-    public Object putValues(K name, List values)
+    public Object putValues(final K name, final List<Object> values)
     {
-        return _map.put(name,values);
+        return _map.put(name, values);
     }
 
     /* ------------------------------------------------------------ */
-    /** Put multi valued entry.
+    /**
+     * Put multi valued entry.
+     * 
      * @param name The entry key.
      * @param values The String array of multiple values.
      * @return The previous value or null.
      */
-    public Object putValues(K name, String[] values)
+    public Object putValues(final K name, final String[] values)
     {
-        Object list=null;
-        for (int i=0;i<values.length;i++)
-            list=LazyList.add(list,values[i]);
-        return put(name,list);
+        Object list = null;
+        for (int i = 0; i < values.length; i++)
+            list = LazyList.add(list, values[i]);
+        return put(name, list);
     }
 
-
     /* ------------------------------------------------------------ */
-    /** Add value to multi valued entry.
-     * If the entry is single valued, it is converted to the first
-     * value of a multi valued entry.
+    /**
+     * Add value to multi valued entry. If the entry is single valued, it is
+     * converted to the first value of a multi valued entry.
+     * 
      * @param name The entry key.
      * @param value The entry value.
      */
-    public void add(K name, Object value)
+    public void add(final K name, final Object value)
     {
-        Object lo = _map.get(name);
-        Object ln = LazyList.add(lo,value);
-        if (lo!=ln)
-            _map.put(name,ln);
+        final Object lo = _map.get(name);
+        final Object ln = LazyList.add(lo, value);
+        if (lo != ln) _map.put(name, ln);
     }
 
     /* ------------------------------------------------------------ */
-    /** Add values to multi valued entry.
-     * If the entry is single valued, it is converted to the first
-     * value of a multi valued entry.
+    /**
+     * Add values to multi valued entry. If the entry is single valued, it is
+     * converted to the first value of a multi valued entry.
+     * 
      * @param name The entry key.
      * @param values The List of multiple values.
      */
-    public void addValues(K name, List values)
+    public void addValues(final K name, final List<Object> values)
     {
-        Object lo = _map.get(name);
-        Object ln = LazyList.addCollection(lo,values);
-        if (lo!=ln)
-            _map.put(name,ln);
+        final Object lo = _map.get(name);
+        final Object ln = LazyList.addCollection(lo, values);
+        if (lo != ln) _map.put(name, ln);
     }
 
     /* ------------------------------------------------------------ */
-    /** Add values to multi valued entry.
-     * If the entry is single valued, it is converted to the first
-     * value of a multi valued entry.
+    /**
+     * Add values to multi valued entry. If the entry is single valued, it is
+     * converted to the first value of a multi valued entry.
+     * 
      * @param name The entry key.
      * @param values The String array of multiple values.
      */
-    public void addValues(K name, String[] values)
+    public void addValues(final K name, final String[] values)
     {
-        Object lo = _map.get(name);
-        Object ln = LazyList.addCollection(lo,Arrays.asList(values));
-        if (lo!=ln)
-            _map.put(name,ln);
+        final Object lo = _map.get(name);
+        final Object ln = LazyList.addCollection(lo, Arrays.asList(values));
+        if (lo != ln) _map.put(name, ln);
     }
 
     /* ------------------------------------------------------------ */
-    /** Remove value.
+    /**
+     * Remove value.
+     * 
      * @param name The entry key.
      * @param value The entry value.
      * @return true if it was removed.
      */
-    public boolean removeValue(K name,Object value)
+    public boolean removeValue(final K name, final Object value)
     {
-        Object lo = _map.get(name);
-        Object ln=lo;
-        int s=LazyList.size(lo);
-        if (s>0)
+        final Object lo = _map.get(name);
+        Object ln = lo;
+        final int s = LazyList.size(lo);
+        if (s > 0)
         {
-            ln=LazyList.remove(lo,value);
-            if (ln==null)
+            ln = LazyList.remove(lo, value);
+            if (ln == null)
                 _map.remove(name);
             else
                 _map.put(name, ln);
         }
-        return LazyList.size(ln)!=s;
+        return LazyList.size(ln) != s;
     }
 
     /* ------------------------------------------------------------ */
-    /** Put all contents of map.
+    /**
+     * Put all contents of map.
+     * 
      * @param m Map
      */
-    public void putAll(Map m)
+    public void putAll(final Map<? extends K, ? extends Object> m)
     {
-        Iterator i = m.entrySet().iterator();
-        boolean multi=m instanceof MultiMap;
-        while(i.hasNext())
+        final boolean multi = m instanceof MultiMap;
+
+        for (final Map.Entry<? extends K, ? extends Object> entry : m.entrySet())
         {
-            Map.Entry entry = (Map.Entry)i.next();
             if (multi)
-                _map.put((K)(entry.getKey()),LazyList.clone(entry.getValue()));
+                _map.put(entry.getKey(), LazyList.clone(entry.getValue()));
             else
-                put((K)(entry.getKey()),entry.getValue());
+                put(entry.getKey(), entry.getValue());
         }
     }
 
@@ -281,20 +286,15 @@ public class MultiMap<K> implements ConcurrentMap<K,Object>
     /**
      * @return Map of String arrays
      */
-    public Map toStringArrayMap()
+    public Map<K, String[]> toStringArrayMap()
     {
-        HashMap map = new HashMap(_map.size()*3/2);
+        final Map<K, String[]> map = new HashMap<K, String[]>(_map.size() * 3 / 2);
 
-        Iterator i = _map.entrySet().iterator();
-        while(i.hasNext())
+        for (final Map.Entry<K, Object> entry : _map.entrySet())
         {
-            Map.Entry entry = (Map.Entry)i.next();
-            Object l = entry.getValue();
-            String[] a = LazyList.toStringArray(l);
-            // for (int j=a.length;j-->0;)
-            //    if (a[j]==null)
-            //         a[j]="";
-            map.put(entry.getKey(),a);
+            final Object l = entry.getValue();
+            final String[] a = LazyList.toStringArray(l);
+            map.put(entry.getKey(), a);
         }
         return map;
     }
@@ -304,12 +304,12 @@ public class MultiMap<K> implements ConcurrentMap<K,Object>
         _map.clear();
     }
 
-    public boolean containsKey(Object key)
+    public boolean containsKey(final Object key)
     {
         return _map.containsKey(key);
     }
 
-    public boolean containsValue(Object value)
+    public boolean containsValue(final Object value)
     {
         return _map.containsValue(value);
     }
@@ -320,7 +320,7 @@ public class MultiMap<K> implements ConcurrentMap<K,Object>
     }
 
     @Override
-    public boolean equals(Object o)
+    public boolean equals(final Object o)
     {
         return _map.equals(o);
     }
@@ -341,7 +341,7 @@ public class MultiMap<K> implements ConcurrentMap<K,Object>
         return _map.keySet();
     }
 
-    public Object remove(Object key)
+    public Object remove(final Object key)
     {
         return _map.remove(key);
     }
@@ -356,35 +356,28 @@ public class MultiMap<K> implements ConcurrentMap<K,Object>
         return _map.values();
     }
 
-
-
-    public Object putIfAbsent(K key, Object value)
+    public Object putIfAbsent(final K key, final Object value)
     {
-        if (_cmap==null)
-            throw new UnsupportedOperationException();
-        return _cmap.putIfAbsent(key,value);
+        if (_cmap == null) throw new UnsupportedOperationException();
+        return _cmap.putIfAbsent(key, value);
     }
 
-    public boolean remove(Object key, Object value)
+    public boolean remove(final Object key, final Object value)
     {
-        if (_cmap==null)
-            throw new UnsupportedOperationException();
-        return _cmap.remove(key,value);
+        if (_cmap == null) throw new UnsupportedOperationException();
+        return _cmap.remove(key, value);
     }
 
-    public boolean replace(K key, Object oldValue, Object newValue)
+    public boolean replace(final K key, final Object oldValue, final Object newValue)
     {
-        if (_cmap==null)
-            throw new UnsupportedOperationException();
-        return _cmap.replace(key,oldValue,newValue);
+        if (_cmap == null) throw new UnsupportedOperationException();
+        return _cmap.replace(key, oldValue, newValue);
     }
 
-    public Object replace(K key, Object value)
+    public Object replace(final K key, final Object value)
     {
-        if (_cmap==null)
-            throw new UnsupportedOperationException();
-        return _cmap.replace(key,value);
+        if (_cmap == null) throw new UnsupportedOperationException();
+        return _cmap.replace(key, value);
     }
-
 
 }

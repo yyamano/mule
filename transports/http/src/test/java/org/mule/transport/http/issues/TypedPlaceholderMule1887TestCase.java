@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: TypedPlaceholderMule1887TestCase.java 22431 2011-07-18 07:40:35Z dirk.olmes $
  * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -12,9 +12,11 @@ package org.mule.transport.http.issues;
 
 import org.mule.transport.http.AbstractNamespaceHandlerTestCase;
 import org.mule.transport.http.HttpConnector;
+import org.mule.transport.tcp.LegacyIoTest;
 
 import org.junit.Test;
 
+@LegacyIoTest
 public class TypedPlaceholderMule1887TestCase extends AbstractNamespaceHandlerTestCase
 {
 

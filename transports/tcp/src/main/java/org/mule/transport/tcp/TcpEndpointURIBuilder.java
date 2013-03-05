@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: TcpEndpointURIBuilder.java 25306 2013-02-26 01:26:25Z cmordue $
  * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -21,20 +21,16 @@ import java.net.URISyntaxException;
 
 public class TcpEndpointURIBuilder extends SocketEndpointURIBuilder
 {
-
     @Override
     public EndpointURI build(URI uri, MuleContext muleContext) throws MalformedEndpointException
     {
         if (isNioEnabled(muleContext))
         {
-            if (!"tcp".equalsIgnoreCase(uri.getScheme()))
-            {
-                System.out.println("TcpEndpointURIBuilder is trying build an endpoint for a non-tcp scheme. Is this a bug?");
-            }
-            String scheme = "niotcp";
+            String scheme = getNioSchema(uri);
             try
             {
-                uri = new URI(scheme, uri.getUserInfo(), uri.getHost(), uri.getPort(), uri.getPath(), uri.getQuery(), uri.getFragment());
+                String newUriString = uri.toASCIIString().replaceFirst(uri.getScheme(), scheme);
+                uri = new URI(newUriString);
             }
             catch (URISyntaxException e)
             {
@@ -43,6 +39,16 @@ public class TcpEndpointURIBuilder extends SocketEndpointURIBuilder
         }
         
         return super.build(uri, muleContext);
+    }
+    
+    protected String getNioSchema(URI uri)
+    {
+        String schema = uri.getScheme();
+        if ("tcp".equalsIgnoreCase(schema))
+        {
+            schema = "niotcp";
+        }
+        return schema;
     }
     
     protected boolean isNioEnabled(MuleContext muleContext)

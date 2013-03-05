@@ -45,6 +45,14 @@
         </xsd:annotation>
     </xsd:element>
 
+    <xsd:element name="websocket-listening-connector" type="httpConnectorType" substitutionGroup="mule:abstract-connector">
+        <xsd:annotation>
+            <xsd:documentation>
+                Allows Mule to listen to an external WebSocket server and generate events from the result.
+            </xsd:documentation>
+        </xsd:annotation>
+    </xsd:element>
+    
     <!-- NOTE - it's not very easy to work out what parameters inherited from TCP are actually
          used.  But it appears that the client parameters are used to set the HttpConnectionManager
          while the server parameters are used directly (the server socket appears to come from
@@ -185,7 +193,9 @@
                         <xsd:restriction base="xsd:NMTOKEN">
                             <xsd:enumeration value="DELETE"/>
                             <xsd:enumeration value="GET"/>
+                            <xsd:enumeration value="PATCH"/>
                             <xsd:enumeration value="POST"/>
+                            <xsd:enumeration value="PUT"/>
                         </xsd:restriction>
                     </xsd:simpleType>
                 </xsd:attribute>
@@ -224,6 +234,14 @@
         </xsd:annotation>
     </xsd:element>
     <xsd:element name="message-to-http-response-transformer" type="mule:abstractTransformerType"
+                 substitutionGroup="mule:abstract-transformer">
+        <xsd:annotation>
+            <xsd:documentation>
+                Deprecated: use object-to-http-response-transformer instead.
+            </xsd:documentation>
+        </xsd:annotation>
+    </xsd:element>
+    <xsd:element name="object-to-http-response-transformer" type="mule:abstractTransformerType"
                  substitutionGroup="mule:abstract-transformer">
         <xsd:annotation>
             <xsd:documentation>
@@ -275,6 +293,9 @@
     <xsd:complexType name="inboundEndpointType">
         <xsd:complexContent>
             <xsd:extension base="mule:inboundEndpointType">
+                <xsd:sequence>
+                    <xsd:element name="websocket" type="inboundWebSocketType" minOccurs="0" maxOccurs="1" />
+                </xsd:sequence>
                 <xsd:attributeGroup ref="addressAttributes"/>
                 <xsd:attributeGroup ref="propertyAttributes"/>
             </xsd:extension>
@@ -292,6 +313,9 @@
     <xsd:complexType name="outboundEndpointType">
         <xsd:complexContent>
             <xsd:extension base="mule:outboundEndpointType">
+                <xsd:sequence>
+                    <xsd:element name="websocket" type="outboundWebSocketType" minOccurs="0" maxOccurs="1" />
+                </xsd:sequence>
                 <xsd:attributeGroup ref="addressAttributes"/>
                 <xsd:attributeGroup ref="propertyAttributes"/>
                 <xsd:attribute name="followRedirects" type="xsd:boolean">
@@ -382,6 +406,116 @@
             </xsd:annotation>
         </xsd:attribute>
     </xsd:attributeGroup>
+    
+    <xsd:attributeGroup name="sharedWebSocketAttributes">
+        <xsd:attribute name="subprotocols" type="xsd:string" use="optional">
+            <xsd:annotation>
+                <xsd:documentation>
+                    CSV of supported protocols.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="allowExtensions" type="mule:substitutableBoolean" use="optional" default="false">
+            <xsd:annotation>
+                <xsd:documentation>
+                    Allow extensions to be used in the reserved bits of the web socket frame.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="maxFramePayloadLength" type="mule:substitutableLong" use="optional">
+            <xsd:annotation>
+                <xsd:documentation>
+                    Maximum allowable frame payload length. Setting this value to your application's requirement may reduce denial of service attacks using long data frames.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+    </xsd:attributeGroup>
+    <xsd:complexType name="inboundWebSocketType">
+        <xsd:annotation>
+            <xsd:documentation>
+                Defines additional properties related to an inbound websocket. (Since Mule 3.3)
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:attributeGroup ref="sharedWebSocketAttributes" />
+        <xsd:attribute name="group" type="mule:substitutableName" use="required">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The logical group that will be associated with this websocket.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+    <xsd:complexType name="outboundWebSocketType">
+        <xsd:annotation>
+            <xsd:documentation>
+                Defines additional properties related to an inbound websocket. (Since Mule 3.3)
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:attributeGroup ref="sharedWebSocketAttributes" />
+        <xsd:attribute name="version" use="optional" default="V13">
+            <xsd:annotation>
+                <xsd:documentation>
+                    Version of web socket specification to use to connect to a server.
+                </xsd:documentation>
+            </xsd:annotation>
+            <xsd:simpleType>
+                <xsd:restriction base="xsd:NMTOKEN">
+                    <xsd:enumeration value="V00"/>
+                    <xsd:enumeration value="V08"/>
+                    <xsd:enumeration value="V13"/>
+                </xsd:restriction>
+            </xsd:simpleType>
+        </xsd:attribute>
+        <xsd:attribute name="handshakeHeaders-ref" use="optional">
+            <xsd:annotation>
+                <xsd:documentation>
+                    Map of outbound headers to be used as custom HTTP headers sent during the handshake with a remote websocket server. Properties are supported for values.
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+    </xsd:complexType>
+    
+    <xsd:element name="websocket-writer" type="webSocketWriterType" substitutionGroup="mule:abstract-message-processor">
+        <xsd:annotation>
+            <xsd:documentation>
+                Replies the current message to the designated websocket(s). If the channelId attribute is not specified, all active websockets in the specified group will receive the message. (Since Mule 3.3)
+            </xsd:documentation>
+        </xsd:annotation>
+    </xsd:element>
+    <xsd:complexType name="webSocketWriterType">
+        <xsd:complexContent>
+            <xsd:extension base="mule:abstractInterceptingMessageProcessorType">
+                <xsd:attribute name="group" type="mule:substitutableName" use="required">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            The logical group that will be associated with this websocket.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="channelId" type="xsd:string" use="optional">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            An optional NIO Channel ID that targets a particular web socket connection. Must be an integer or an expression that evaluates to an integer.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="failIfNoWrite" type="mule:substitutableBoolean" use="optional" default="false">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            Specifies if the operation should be considered failed if no connected websocket channel has been found and written to.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="connector-ref" type="xsd:string" use="optional">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            Optionally specifies the HTTP connector that manages the targeted websocket.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
 
     <xsd:simpleType name="httpMethodTypes">
         <xsd:restriction base="xsd:NMTOKEN">

@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: HttpAttachmentsFunctionalTestCase.java 22518 2011-07-22 07:00:22Z claude.mamo $
  * -------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  *
@@ -22,6 +22,7 @@ import org.mule.tck.AbstractServiceAndFlowTestCase;
 import org.mule.tck.functional.EventCallback;
 import org.mule.tck.functional.FunctionalTestComponent;
 import org.mule.tck.junit4.rule.DynamicPort;
+import org.mule.transport.tcp.LegacyIoTest;
 import org.mule.util.IOUtils;
 import org.mule.util.StringDataSource;
 
@@ -34,6 +35,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
 
+@LegacyIoTest
 public class HttpAttachmentsFunctionalTestCase extends AbstractServiceAndFlowTestCase
 {
 
