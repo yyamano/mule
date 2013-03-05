@@ -39,7 +39,7 @@ public class TcpConnectorFactoryTestCase extends org.mule.transport.tcp.TcpConne
         Map<String, String> rewrittenMap = new HashMap<String, String>(map.size());
         for (String inputUri : map.keySet())
         {
-            rewrittenMap.put(inputUri, map.get(inputUri).replaceFirst("tcp", "niotcp"));
+            rewrittenMap.put(inputUri, map.get(inputUri).replaceFirst("tcp", TcpConnector.PROTOCOL));
         }
         return rewrittenMap;
     }

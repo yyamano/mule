@@ -75,7 +75,7 @@ public class HttpConnector extends TcpConnector
     private static final Log LOGGER = LogFactory.getLog(HttpConnector.class);
 
     public static final String HTTP = "http";
-    public static final String PROTOCOL = "niohttp";
+    public static final String PROTOCOL = "http-nio";
     public static final String HTTP_PREFIX = "http.";
 
     public static final String WEBSOCKET = "ws";

@@ -48,7 +48,7 @@ public class HttpEndpointURIBuilder extends TcpEndpointURIBuilder
     {
         if ("http".equalsIgnoreCase(uri.getScheme()))
         {
-            return "niohttp";
+            return org.mule.transport.nio.http.HttpConnector.PROTOCOL;
         }
         else
         {

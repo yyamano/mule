@@ -50,27 +50,6 @@ public class StaticResourcesMPFunctionalTestCase extends FunctionalTestCase
         return "http-static-resource-test.xml";
     }
 
-    @Override
-    public int getTestTimeoutSecs()
-    {
-        return 9999999;
-    }
-    
-    @Override
-    protected int getTimeoutSystemProperty()
-    {
-        return 9999999;
-    }
-    
-    @Override
-    protected MuleContext createMuleContext() throws Exception
-    {
-        MuleContext mc = super.createMuleContext();
-        ((DefaultMuleConfiguration)mc.getConfiguration()).setDefaultResponseTimeout(999999);
-        
-        return mc;
-    }
-
     @Test
     public void httpUrlWithoutExplicitResourceShouldReturnDefaultDocument() throws Exception
     {

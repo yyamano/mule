@@ -45,7 +45,7 @@ import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
  */
 public class TcpConnector extends AbstractConnector
 {
-    public static final String PROTOCOL = "niotcp";
+    public static final String PROTOCOL = "tcp-nio";
     public static final String CHANNEL_ID_PROPERTY = "nio.channel.id";
 
     /** Property can be set on the endpoint to configure how the socket is managed */

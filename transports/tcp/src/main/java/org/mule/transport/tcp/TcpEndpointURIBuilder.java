@@ -46,7 +46,7 @@ public class TcpEndpointURIBuilder extends SocketEndpointURIBuilder
         String schema = uri.getScheme();
         if ("tcp".equalsIgnoreCase(schema))
         {
-            schema = "niotcp";
+            schema = org.mule.transport.nio.tcp.TcpConnector.PROTOCOL;
         }
         return schema;
     }
