@@ -9,6 +9,7 @@
  */
 package org.mule.transport.tcp.config;
 
+import org.mule.api.config.MuleProperties;
 import org.mule.config.spring.handlers.AbstractMuleNamespaceHandler;
 import org.mule.config.spring.parsers.ClassOrRefDefinitionParser;
 import org.mule.config.spring.parsers.generic.ChildDefinitionParser;
@@ -29,6 +30,8 @@ import org.mule.transport.tcp.protocols.SafeProtocol;
 import org.mule.transport.tcp.protocols.StreamingProtocol;
 import org.mule.transport.tcp.protocols.XmlMessageEOFProtocol;
 import org.mule.transport.tcp.protocols.XmlMessageProtocol;
+import org.mule.util.SpiTransposer;
+import org.mule.util.SpiUtils;
 
 /**
  * Registers a Bean Definition Parser for handling <code><tcp:connector></code> elements.
@@ -39,6 +42,31 @@ public class TcpNamespaceHandler extends AbstractMuleNamespaceHandler
 
     public void init()
     {
+        SpiUtils.registerTransposer(new SpiTransposer(){
+            @Override
+            public boolean isNameTransposible(String name)
+            {
+                return "tcp".equalsIgnoreCase(name);
+            }
+
+            @Override
+            public String transposeName(String name)
+            {
+                if (isNioEnabled())
+                {
+                    return "niotcp";
+                }
+                return name;
+            }
+
+            protected boolean isNioEnabled()
+            {
+//                String isNioEnabledStr = muleContext.getRegistry().get(MuleProperties.NIO_TRANSPORT_ENABLED_PROPERTY);
+                return //Boolean.parseBoolean(isNioEnabledStr) || 
+                                Boolean.getBoolean(MuleProperties.NIO_TRANSPORT_ENABLED_PROPERTY);
+            }
+        });
+        
         registerStandardTransportEndpoints(TcpConnector.TCP, URIBuilder.SOCKET_ATTRIBUTES);
 
         registerConnectorDefinitionParser(new NioSelectorDelegatingDefinitionParser(

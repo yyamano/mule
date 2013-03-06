@@ -17,7 +17,9 @@ import org.mule.transport.service.TransportFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.commons.logging.Log;
@@ -32,6 +34,12 @@ public class SpiUtils
 
     public static final String SERVICE_ROOT = "META-INF/services/";
 
+    private static final List<SpiTransposer> transposers = new ArrayList<SpiTransposer>(3);
+    
+    public static synchronized void registerTransposer(SpiTransposer transposer)
+    {
+        transposers.add(transposer);
+    }
 
     public static Properties findServiceDescriptor(ServiceType type, String name)
     {
@@ -70,6 +78,8 @@ public class SpiUtils
      */
     public static Properties findServiceDescriptor(String path, String name, Class currentClass, boolean fallbackToNonPreferred)
     {
+        name = transposeName(name);
+        
         //Preferred name and preferred path - used to construct a URI for alternative or preferred
         //property set.  This enables alternative implementations of a transport to exist side by side
         //in a single Mule VM.  Most transports will not have a preferred property set.
@@ -141,6 +151,8 @@ public class SpiUtils
      */
     public static Properties findServiceDescriptors(String path, String name, Class currentClass)
     {
+        name = transposeName(name);
+        
         if (!name.endsWith(".properties"))
         {
             name += ".properties";
@@ -190,5 +202,18 @@ public class SpiUtils
         {
             return null;
         }
+    }
+    
+    private static String transposeName(String name)
+    {
+        for (SpiTransposer transposer : transposers)
+        {
+            if (transposer.isNameTransposible(name))
+            {
+                return transposer.transposeName(name);
+            }
+        }
+        
+        return name;
     }
 }

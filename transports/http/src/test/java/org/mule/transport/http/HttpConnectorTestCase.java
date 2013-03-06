@@ -22,6 +22,7 @@ import org.mule.api.transport.MessageReceiver;
 import org.mule.api.transport.NoReceiverForEndpointException;
 import org.mule.tck.testmodels.fruit.Orange;
 import org.mule.transport.AbstractConnectorTestCase;
+import org.mule.transport.tcp.LegacyIoTest;
 import org.mule.transport.tcp.TcpConnector;
 
 import java.net.InetSocketAddress;
@@ -39,6 +40,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
+@LegacyIoTest
 public class HttpConnectorTestCase extends AbstractConnectorTestCase
 {
 

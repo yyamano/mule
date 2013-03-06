@@ -11,6 +11,7 @@ package org.mule.transport.http.config;
 
 
 
+import org.mule.api.config.MuleProperties;
 import org.mule.config.spring.handlers.AbstractMuleNamespaceHandler;
 import org.mule.config.spring.parsers.collection.ChildListEntryDefinitionParser;
 import org.mule.config.spring.parsers.collection.ChildMapEntryDefinitionParser;
@@ -46,6 +47,8 @@ import org.mule.transport.nio.http.WebSocketListeningConnector;
 import org.mule.transport.nio.http.WebSocketWriter;
 import org.mule.transport.nio.http.config.WebSocketEndpointConfiguration;
 import org.mule.transport.tcp.config.NioSelectorDelegatingDefinitionParser;
+import org.mule.util.SpiTransposer;
+import org.mule.util.SpiUtils;
 
 /**
  * Reigsters a Bean Definition Parser for handling <code><http:connector></code> elements.
@@ -54,6 +57,31 @@ public class HttpNamespaceHandler extends AbstractMuleNamespaceHandler
 {
     public void init()
     {
+        SpiUtils.registerTransposer(new SpiTransposer() {
+            @Override
+            public boolean isNameTransposible(String name)
+            {
+                return "http".equalsIgnoreCase(name);
+            }
+            
+            @Override
+            public String transposeName(String name)
+            {
+                if (isNioEnabled())
+                {
+                    return "niohttp";
+                }
+                return name;
+            }
+
+            protected boolean isNioEnabled()
+            {
+//                String isNioEnabledStr = muleContext.getRegistry().get(MuleProperties.NIO_TRANSPORT_ENABLED_PROPERTY);
+                return //Boolean.parseBoolean(isNioEnabledStr) || 
+                                Boolean.getBoolean(MuleProperties.NIO_TRANSPORT_ENABLED_PROPERTY);
+            }
+        });
+        
         registerStandardTransportEndpoints(HttpConnector.HTTP, URIBuilder.SOCKET_ATTRIBUTES)
             .addAlias("contentType", HttpConstants.HEADER_CONTENT_TYPE)
             .addAlias("method", HttpConnector.HTTP_METHOD_PROPERTY);
