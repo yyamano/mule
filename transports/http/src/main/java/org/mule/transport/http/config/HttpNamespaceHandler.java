@@ -76,9 +76,7 @@ public class HttpNamespaceHandler extends AbstractMuleNamespaceHandler
 
             protected boolean isNioEnabled()
             {
-//                String isNioEnabledStr = muleContext.getRegistry().get(MuleProperties.NIO_TRANSPORT_ENABLED_PROPERTY);
-                return //Boolean.parseBoolean(isNioEnabledStr) || 
-                                Boolean.getBoolean(MuleProperties.NIO_TRANSPORT_ENABLED_PROPERTY);
+                return Boolean.getBoolean(MuleProperties.NIO_TRANSPORT_ENABLED_PROPERTY);
             }
         });
         

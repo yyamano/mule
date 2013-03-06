@@ -260,8 +260,6 @@ public class DefaultMuleApplication implements Application
         appProperties.put(MuleProperties.APP_HOME_DIRECTORY_PROPERTY, appPath.getAbsolutePath());
 
         appProperties.put(MuleProperties.APP_NAME_PROPERTY, getAppName());
-        
-        appProperties.put(MuleProperties.NIO_TRANSPORT_ENABLED_PROPERTY, Boolean.toString(descriptor.isNioTransportEnabled()));
 
         return new SimpleConfigurationBuilder(appProperties);
     }

@@ -195,10 +195,6 @@ public abstract class AbstractMuleContextTestCase extends AbstractMuleTestCase
             {
                 props = new Properties();
             }
-            if (!props.containsKey(MuleProperties.NIO_TRANSPORT_ENABLED_PROPERTY))
-            {
-                props.put(MuleProperties.NIO_TRANSPORT_ENABLED_PROPERTY, Boolean.FALSE.toString());
-            }
             builders.add(new SimpleConfigurationBuilder(props));
             //If the annotations module is on the classpath, add the annotations config builder to the list
             //This will enable annotations config for this instance

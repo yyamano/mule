@@ -11,7 +11,6 @@
 package org.mule.transport.tcp.config;
 
 import org.mule.api.config.MuleProperties;
-import org.mule.config.spring.MuleApplicationContext;
 import org.mule.config.spring.parsers.MuleDefinitionParser;
 import org.mule.config.spring.parsers.delegate.AbstractParallelDelegatingDefinitionParser;
 
@@ -34,9 +33,7 @@ public class NioSelectorDelegatingDefinitionParser extends AbstractParallelDeleg
     @Override
     protected MuleDefinitionParser getDelegate(Element element, ParserContext parserContext)
     {
-        String isNioEnabledStr = MuleApplicationContext.getCurrentMuleContext().get().getRegistry().get(MuleProperties.NIO_TRANSPORT_ENABLED_PROPERTY);
-        boolean isNioEnabled = Boolean.parseBoolean(isNioEnabledStr) || Boolean.getBoolean(MuleProperties.NIO_TRANSPORT_ENABLED_PROPERTY);
-        if (isNioEnabled)
+        if (Boolean.getBoolean(MuleProperties.NIO_TRANSPORT_ENABLED_PROPERTY))
         {
             return whenTrue;
         }
