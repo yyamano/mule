@@ -53,6 +53,8 @@ import org.mule.util.StringUtils;
 public class HttpMuleMessageFactory extends AbstractMuleMessageFactory
 {
     private static final Log LOG = LogFactory.getLog(HttpMuleMessageFactory.class);
+    private static final String DEFAULT_ENCODING = "UTF-8";
+    
     private boolean enableCookies = false;
     private String cookieSpec;
 
@@ -380,7 +382,7 @@ public class HttpMuleMessageFactory extends AbstractMuleMessageFactory
     protected String getEncoding(final Map<String, Object> headers)
     {
         final String contentType = (String) headers.get(HttpConstants.HEADER_CONTENT_TYPE);
-        return HttpUtils.extractCharset(contentType, Charset.defaultCharset().toString());
+        return HttpUtils.extractCharset(contentType, DEFAULT_ENCODING);
     }
 
     protected void initEncoding(final MuleMessage message, final String encoding)
