@@ -40,7 +40,6 @@ import org.mule.transport.nio.tcp.notifications.TcpSocketNotification;
 import org.mule.transport.nio.tcp.protocols.StreamingProtocol;
 import org.mule.util.ExceptionUtils;
 import org.mule.util.StringUtils;
-import org.mule.util.concurrent.NamedThreadFactory;
 import org.mule.util.concurrent.ThreadNameHelper;
 import org.mule.util.monitor.Expirable;
 
@@ -51,13 +50,11 @@ import java.net.URI;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -470,15 +467,10 @@ public class TcpMessageReceiver extends AbstractMessageReceiver
         receiverChannels = new DefaultChannelGroup(this.getReceiverKey() + ".receiver-channels");
         final MuleContext muleContext = connector.getMuleContext();
 
-        final NamedThreadFactory threadFactory = new NamedThreadFactory(String.format("%s[%s].receiver",
-            ThreadNameHelper.receiver(muleContext, connector.getName()), getReceiverKey()),
-            muleContext.getExecutionClassLoader());
-
         final ThreadingProfile receiverTp = connector.getReceiverThreadingProfile();
 
-        workerExecutor = new ThreadPoolExecutor(receiverTp.getMaxThreadsActive(),
-            receiverTp.getMaxThreadsActive(), receiverTp.getThreadTTL(), TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<Runnable>(1000), threadFactory, new ThreadPoolExecutor.AbortPolicy());
+        workerExecutor = receiverTp.createPool(String.format("%s[%s].receiver",
+                        ThreadNameHelper.receiver(muleContext, connector.getName()), getReceiverKey()));
 
         serverBootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(
             tcpConnector.getBossExecutor(), workerExecutor));
@@ -558,7 +550,10 @@ public class TcpMessageReceiver extends AbstractMessageReceiver
         // It's tempting to call serverBootstrap.releaseExternalResources(); but the bossExecutor is 
         // shared among various receivers and has a different lifecycle since the connector owns it.
         // So we just shutdown the executor we've created here.
-        workerExecutor.shutdown();
+        if (workerExecutor != null)
+        {
+            workerExecutor.shutdown();
+        }
         super.doDispose();
     }
 

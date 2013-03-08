@@ -171,8 +171,9 @@ public class TcpConnector extends AbstractConnector
         tcpClientPool.setTestOnReturn(true);
         final int maxActive = getDispatcherThreadingProfile().getMaxThreadsActive();
         tcpClientPool.setMaxActive(maxActive);
-        tcpClientPool.setMaxIdle(maxActive);
-        tcpClientPool.setWhenExhaustedAction(GenericKeyedObjectPool.WHEN_EXHAUSTED_GROW);
+        final int maxIdle = getDispatcherThreadingProfile().getMaxThreadsIdle();
+        tcpClientPool.setMaxIdle(maxIdle);
+        tcpClientPool.setWhenExhaustedAction(GenericKeyedObjectPool.WHEN_EXHAUSTED_BLOCK);
         tcpClientPool.setMaxWait(socketMaxWait);
     }
 
