@@ -25,6 +25,7 @@ import org.mule.module.client.MuleClient;
 import org.mule.tck.AbstractServiceAndFlowTestCase;
 import org.mule.tck.junit4.rule.DynamicPort;
 
+@LegacyIoTest
 public class TcpEchoDirectProtocolTestCase extends AbstractServiceAndFlowTestCase
 {
     protected static String TEST_MESSAGE = "Test TCP Request";

@@ -61,7 +61,7 @@ public class HttpNamespaceHandler extends AbstractMuleNamespaceHandler
             @Override
             public boolean isNameTransposible(String name)
             {
-                return "http".equalsIgnoreCase(name);
+                return name != null && name.toLowerCase().startsWith("http") && !name.toLowerCase().startsWith("https");
             }
             
             @Override
@@ -69,7 +69,7 @@ public class HttpNamespaceHandler extends AbstractMuleNamespaceHandler
             {
                 if (isNioEnabled())
                 {
-                    return "niohttp";
+                    return name.replaceFirst("http", "niohttp");
                 }
                 return name;
             }

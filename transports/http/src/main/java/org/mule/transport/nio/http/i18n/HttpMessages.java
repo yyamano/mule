@@ -28,7 +28,7 @@ public class HttpMessages extends MessageFactory
 {
     private static final HttpMessages factory = new HttpMessages();
 
-    private static final String BUNDLE_PATH = getBundlePath(HttpConnector.PROTOCOL);
+    private static final String BUNDLE_PATH = getBundlePath(HttpConnector.CONFIG_PREFIX);
 
     public static Message requestFailedWithStatus(final String string)
     {

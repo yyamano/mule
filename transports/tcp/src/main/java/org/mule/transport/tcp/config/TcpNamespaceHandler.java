@@ -46,7 +46,7 @@ public class TcpNamespaceHandler extends AbstractMuleNamespaceHandler
             @Override
             public boolean isNameTransposible(String name)
             {
-                return "tcp".equalsIgnoreCase(name);
+                return name != null && name.toLowerCase().startsWith("tcp");
             }
 
             @Override
@@ -54,7 +54,7 @@ public class TcpNamespaceHandler extends AbstractMuleNamespaceHandler
             {
                 if (isNioEnabled())
                 {
-                    return "niotcp";
+                    return name.replaceFirst("tcp", "niotcp");
                 }
                 return name;
             }

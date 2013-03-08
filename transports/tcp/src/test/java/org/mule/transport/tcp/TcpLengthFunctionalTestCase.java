@@ -25,6 +25,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
 
+@LegacyIoTest
 public class TcpLengthFunctionalTestCase extends AbstractServiceAndFlowTestCase
 {
     protected static String TEST_MESSAGE = "Test TCP Request";

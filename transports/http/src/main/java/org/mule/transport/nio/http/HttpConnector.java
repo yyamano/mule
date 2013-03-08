@@ -76,6 +76,7 @@ public class HttpConnector extends TcpConnector
 
     public static final String HTTP = "http";
     public static final String PROTOCOL = "http";
+    public static final String CONFIG_PREFIX = "niohttp";
     public static final String HTTP_PREFIX = "http.";
 
     public static final String WEBSOCKET = "ws";

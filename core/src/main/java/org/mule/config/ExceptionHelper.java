@@ -195,8 +195,7 @@ public final class ExceptionHelper
         }
         else
         {
-            String name = SpiUtils.SERVICE_ROOT + ServiceType.EXCEPTION.getPath() + "/" + protocol + "-exception-mappings.properties";
-            Properties p = PropertiesUtils.loadAllProperties(name, muleContext.getExecutionClassLoader());
+            Properties p = SpiUtils.findServiceDescriptor(ServiceType.EXCEPTION, protocol + "-exception-mappings.properties");
             errorMappings.put(getErrorMappingCacheKey(protocol, muleContext), p);
             registerAppDisposeListener(muleContext);
             return p;

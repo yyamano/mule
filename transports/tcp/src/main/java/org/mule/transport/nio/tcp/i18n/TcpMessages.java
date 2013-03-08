@@ -27,7 +27,7 @@ import org.mule.transport.nio.tcp.TcpConnector;
 public class TcpMessages extends MessageFactory
 {
     private static final TcpMessages factory = new TcpMessages();
-    private static final String BUNDLE_PATH = getBundlePath(TcpConnector.PROTOCOL);
+    private static final String BUNDLE_PATH = getBundlePath(TcpConnector.CONFIG_PREFIX);
 
     public static Message failedToBindToUri(final URI uri)
     {
