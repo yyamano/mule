@@ -540,7 +540,15 @@ public class TcpMessageReceiver extends AbstractMessageReceiver
     public void doDisconnect() throws ConnectException
     {
         disposing.set(true);
-        receiverChannels.close().awaitUninterruptibly();
+        try
+        {
+            receiverChannels.close().await(4000);
+        }
+        catch (InterruptedException e)
+        {
+            logger.error("Failed to close receiver channels during disconnect", e);
+            Thread.currentThread().interrupt();
+        }
     }
     
     @Override
