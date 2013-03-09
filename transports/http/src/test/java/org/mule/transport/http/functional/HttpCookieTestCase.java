@@ -14,6 +14,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import org.mule.module.client.MuleClient;
+import org.mule.tck.junit4.rule.DynamicPort;
+import org.mule.transport.http.functional.AbstractMockHttpServerTestCase;
+import org.mule.transport.http.functional.MockHttpServer;
+
 import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,24 +29,24 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.jboss.netty.handler.codec.http.Cookie;
+import org.jboss.netty.handler.codec.http.CookieDecoder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
-import org.mule.module.client.MuleClient;
-import org.mule.tck.junit4.rule.DynamicPort;
 
 public class HttpCookieTestCase extends AbstractMockHttpServerTestCase
 {
     private static final String COOKIE_HEADER = "Cookie:";
 
-    private CountDownLatch latch = new CountDownLatch(1);
+    private final CountDownLatch latch = new CountDownLatch(1);
     private boolean cookieFound = false;
-    private List<String> cookieHeaders = new ArrayList<String>();
+    private final List<Cookie> cookies = new ArrayList<Cookie>();
 
     @Rule
     public DynamicPort dynamicPort = new DynamicPort("port1");
 
-    public HttpCookieTestCase(ConfigVariant variant, String configResources)
+    public HttpCookieTestCase(final ConfigVariant variant, final String configResources)
     {
         super(variant, configResources);
     }
@@ -49,13 +54,12 @@ public class HttpCookieTestCase extends AbstractMockHttpServerTestCase
     @Parameters
     public static Collection<Object[]> parameters()
     {
-        return Arrays.asList(new Object[][]{
-            {ConfigVariant.SERVICE, "http-cookie-test-service.xml"},
+        return Arrays.asList(new Object[][]{{ConfigVariant.SERVICE, "http-cookie-test-service.xml"},
             {ConfigVariant.FLOW, "http-cookie-test-flow.xml"}});
     }
 
     @Override
-    protected MockHttpServer getHttpServer(CountDownLatch serverStartLatch)
+    protected MockHttpServer getHttpServer(final CountDownLatch serverStartLatch)
     {
         return new SimpleHttpServer(dynamicPort.getNumber(), serverStartLatch, latch);
     }
@@ -63,42 +67,44 @@ public class HttpCookieTestCase extends AbstractMockHttpServerTestCase
     @Test
     public void testCookies() throws Exception
     {
-        Map<String, String> properties = new HashMap<String, String>();
+        final Map<String, String> properties = new HashMap<String, String>();
         properties.put("COOKIE_HEADER", "MYCOOKIE");
 
-        MuleClient client = new MuleClient(muleContext);
+        final MuleClient client = new MuleClient(muleContext);
         client.dispatch("vm://vm-in", "foobar", properties);
 
         assertTrue(latch.await(RECEIVE_TIMEOUT, TimeUnit.MILLISECONDS));
         assertTrue(cookieFound);
 
-        assertEquals(2, cookieHeaders.size());
-        assertThereIsCookieWithThisContent("Cookie: $Version=0; customCookie=yes", cookieHeaders);
-        assertThereIsCookieWithThisContent("Cookie: $Version=0; expressionCookie=MYCOOKIE", cookieHeaders);
+        assertEquals(2, cookies.size());
+        assertCookiePresence("customCookie", "yes");
+        assertCookiePresence("expressionCookie", "MYCOOKIE");
     }
 
-    private void assertThereIsCookieWithThisContent(String content, List<String> listOfRawCookies)
+    private void assertCookiePresence(final String name, final String value)
     {
-        for (String rawCookie : listOfRawCookies)
+        for (final Cookie cookie : cookies)
         {
-            if (rawCookie != null && rawCookie.contains(content))
+            if (org.apache.commons.lang.StringUtils.equals(cookie.getName(), name)
+                && org.apache.commons.lang.StringUtils.equals(cookie.getValue(), value))
             {
                 return;
             }
         }
-        fail("There should be a cookie with content '" + content + "': " + listOfRawCookies);
-
+        fail("There should be a cookie named: " + name + " with value: " + value);
     }
 
     private class SimpleHttpServer extends MockHttpServer
     {
-        public SimpleHttpServer(int listenPort, CountDownLatch startupLatch, CountDownLatch testCompleteLatch)
+        public SimpleHttpServer(final int listenPort,
+                                final CountDownLatch startupLatch,
+                                final CountDownLatch testCompleteLatch)
         {
             super(listenPort, startupLatch, testCompleteLatch);
         }
 
         @Override
-        protected void readHttpRequest(BufferedReader reader) throws Exception
+        protected void readHttpRequest(final BufferedReader reader) throws Exception
         {
             String line = reader.readLine();
             while (line != null)
@@ -108,7 +114,9 @@ public class HttpCookieTestCase extends AbstractMockHttpServerTestCase
                 if (line.indexOf(COOKIE_HEADER) > -1)
                 {
                     cookieFound = true;
-                    cookieHeaders.add(line);
+                    cookies.addAll(new CookieDecoder(true).decode(org.apache.commons.lang.StringUtils.substringAfter(
+                        line, COOKIE_HEADER)
+                        .trim()));
                 }
 
                 line = reader.readLine();

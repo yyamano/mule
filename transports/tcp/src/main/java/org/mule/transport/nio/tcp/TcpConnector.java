@@ -214,11 +214,16 @@ public class TcpConnector extends AbstractConnector
         }
 
         keepAliveMonitor.dispose();
+        keepAliveMonitor = null;
         
         bossExecutor.shutdown();
+        bossExecutor = null;
         
         requesterClientSocketChannelFactory.releaseExternalResources();
+        requesterClientSocketChannelFactory = null;
         dispatcherClientSocketChannelFactory.releaseExternalResources();
+        dispatcherClientSocketChannelFactory = null;
+        
     }
 
     @Override

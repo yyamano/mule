@@ -25,6 +25,7 @@ import java.util.StringTokenizer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.handler.codec.http.Cookie;
 import org.jboss.netty.handler.codec.http.HttpMessage;
@@ -131,9 +132,16 @@ public class HttpMuleMessageFactory extends AbstractMuleMessageFactory
             // If HTTP method is GET and there's no response, we use the request URI
             // as the payload.
             final StreamableHttpRequest httpRequest = (StreamableHttpRequest) httpMessage;
-            if ((messagePayload == null) && (httpRequest.getMethod().equals(HttpMethod.GET)))
+            if (messagePayload == null)
             {
-                return httpRequest.getUri();
+                if (httpRequest.getMethod().equals(HttpMethod.GET))
+                {
+                    return httpRequest.getUri();
+                }
+                else
+                {
+                    return ChannelBuffers.EMPTY_BUFFER;
+                }
             }
             else
             {
