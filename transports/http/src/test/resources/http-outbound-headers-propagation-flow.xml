@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:http="http://www.mulesoft.org/schema/mule/http" 
+    xmlns:http="http://www.mulesoft.org/schema/mule/http"
     xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
     xsi:schemaLocation="
           http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
@@ -66,11 +66,11 @@
 				<add-message-property key="Allow" value="gzip"/>
 				<add-message-property key="Content-Encoding" value="gzip"/>
 				<add-message-property key="Content-Language" value="gzip"/>
-				<add-message-property key="Content-Length" value="gzip"/>
+				<add-message-property key="Content-Length" value="123456"/>
 				<add-message-property key="Content-Location" value="gzip"/>
 				<add-message-property key="Content-MD5" value="gzip"/>
 				<add-message-property key="Content-Range" value="gzip"/>
-				<add-message-property key="Content-Type" value="gzip"/>
+				<add-message-property key="Content-Type" value="application/gzip"/>
 				<add-message-property key="Expires" value="gzip"/>
 				<add-message-property key="Last-Modified" value="gzip"/>
 				
@@ -83,5 +83,4 @@
 		 <component class="org.mule.transport.http.functional.HttpOutboundHeadersPropagationComponent"/>
 		<vm:outbound-endpoint path="out" exchange-pattern="one-way"/>
 	</flow>
-	
 </mule>

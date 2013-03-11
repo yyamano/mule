@@ -14,10 +14,12 @@ import org.mule.DefaultMuleMessage;
 import org.mule.api.MuleMessage;
 import org.mule.module.client.MuleClient;
 import org.mule.transport.http.HttpConnector;
+import org.mule.transport.tcp.LegacyIoTest;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+@LegacyIoTest
 public class HttpBadEncodingFunctionalTestCase extends HttpEncodingFunctionalTestCase
 {
     public HttpBadEncodingFunctionalTestCase(ConfigVariant variant, String configResources)

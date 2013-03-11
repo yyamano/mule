@@ -19,15 +19,22 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.junit.Rule;
 import org.junit.Test;
 import org.mule.api.transformer.TransformerException;
 import org.mule.tck.junit4.AbstractMuleContextTestCase;
 import org.mule.transformer.types.DataTypeFactory;
 import org.mule.transport.nio.http.HttpConstants;
 import org.mule.transport.nio.http.StreamableHttpResponse;
+import org.mule.transport.nio.tcp.NioProperty;
+import org.mule.transport.nio.tcp.NioTest;
 
+@NioTest
 public class HttpResponseToStringTestCase extends AbstractMuleContextTestCase
 {
+    @Rule
+    public static final NioProperty nioEnabled = new NioProperty(true);
+    
     private final String statusLine = "HTTP/1.1 200 OK";
     private final String headerCT = "Content-Type: text/plain";
     private final String headerTE = "Transfer-Encoding: chunked";

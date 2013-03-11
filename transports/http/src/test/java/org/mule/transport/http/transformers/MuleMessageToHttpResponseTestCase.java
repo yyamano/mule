@@ -18,6 +18,7 @@ import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 import org.mule.transport.http.HttpConstants;
 import org.mule.transport.http.HttpResponse;
+import org.mule.transport.tcp.LegacyIoTest;
 
 import java.text.SimpleDateFormat;
 import java.util.HashSet;
@@ -29,6 +30,7 @@ import org.apache.commons.httpclient.Header;
 import org.junit.Assert;
 import org.junit.Test;
 
+@LegacyIoTest
 @SmallTest
 public class MuleMessageToHttpResponseTestCase extends AbstractMuleTestCase
 {

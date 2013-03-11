@@ -150,7 +150,7 @@ public class CxfErrorBehaviorTestCase extends AbstractServiceAndFlowTestCase
         MuleClient client = new MuleClient(muleContext);
         MuleMessage result = client.send("http://localhost:" + dynamicPort.getNumber() + "/testProxyWithFault", requestFaultPayload, null);
         String resString = result.getPayloadAsString();
-        assertTrue(resString.contains("<faultstring>Cxf Exception Message</faultstring>"));
+        assertTrue("Actual result string was: " + resString, resString.contains("<faultstring>Cxf Exception Message</faultstring>"));
         assertEquals(String.valueOf(HttpConstants.SC_INTERNAL_SERVER_ERROR), result.getInboundProperty(HttpConnector.HTTP_STATUS_PROPERTY));
     }
 

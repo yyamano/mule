@@ -10,7 +10,6 @@
 
 package org.mule.transport.http.functional;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
@@ -29,7 +28,6 @@ import org.mule.transport.http.HttpConstants;
 public class HttpOutboundHeadersPropagationTestCase extends HttpFunctionalTestCase
 {
     protected static String TEST_MESSAGE = "Test Http Request (R�dgr�d), 57 = \u06f7\u06f5 in Arabic";
-    private static String TEST_JAPANESE_MESSAGE = "\u3042";
 
     public HttpOutboundHeadersPropagationTestCase(ConfigVariant variant, String configResources)
     {

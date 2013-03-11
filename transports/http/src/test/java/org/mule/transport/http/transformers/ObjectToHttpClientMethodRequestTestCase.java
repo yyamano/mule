@@ -24,6 +24,7 @@ import org.mule.transport.http.HttpConnector;
 import org.mule.transport.http.HttpConstants;
 import org.mule.transport.http.HttpRequest;
 import org.mule.transport.http.RequestLine;
+import org.mule.transport.tcp.LegacyIoTest;
 
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpVersion;
@@ -32,9 +33,9 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.junit.Test;
 
+@LegacyIoTest
 public class ObjectToHttpClientMethodRequestTestCase extends AbstractMuleContextTestCase
 {
-    
     private InboundEndpoint endpoint;
     
     private MuleMessage setupRequestContext(final String url, final String method) throws Exception

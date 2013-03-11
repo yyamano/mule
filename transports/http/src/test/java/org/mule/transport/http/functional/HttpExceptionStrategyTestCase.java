@@ -13,7 +13,6 @@ import org.hamcrest.core.Is;
 import org.mule.api.ExceptionPayload;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleMessage;
-import org.mule.api.exception.RollbackSourceCallback;
 import org.mule.exception.AbstractMessagingExceptionStrategy;
 import org.mule.tck.junit4.FunctionalTestCase;
 import org.mule.tck.junit4.rule.DynamicPort;

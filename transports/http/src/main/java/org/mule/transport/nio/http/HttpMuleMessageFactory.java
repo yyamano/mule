@@ -10,6 +10,8 @@
 
 package org.mule.transport.nio.http;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.SocketAddress;
 import java.net.URISyntaxException;
@@ -140,7 +142,7 @@ public class HttpMuleMessageFactory extends AbstractMuleMessageFactory
                 }
                 else
                 {
-                    return ChannelBuffers.EMPTY_BUFFER;
+                    return new ByteArrayInputStream(new byte[0]);
                 }
             }
             else
