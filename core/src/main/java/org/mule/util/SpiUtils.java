@@ -38,7 +38,10 @@ public class SpiUtils
     
     public static synchronized void registerTransposer(SpiTransposer transposer)
     {
-        transposers.add(transposer);
+        if (!transposers.contains(transposer))
+        {
+            transposers.add(transposer);
+        }
     }
 
     public static Properties findServiceDescriptor(ServiceType type, String name)
