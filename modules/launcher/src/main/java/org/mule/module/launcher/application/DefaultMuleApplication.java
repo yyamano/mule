@@ -14,7 +14,9 @@ import static org.mule.util.SplashScreen.miniSplash;
 import org.mule.MuleServer;
 import org.mule.api.MuleContext;
 import org.mule.api.MuleException;
+import org.mule.api.MuleRuntimeException;
 import org.mule.api.config.ConfigurationBuilder;
+import org.mule.api.config.DomainAwareConfigurationBuilder;
 import org.mule.api.config.MuleProperties;
 import org.mule.api.context.notification.MuleContextNotificationListener;
 import org.mule.api.lifecycle.Stoppable;
@@ -23,6 +25,7 @@ import org.mule.config.builders.SimpleConfigurationBuilder;
 import org.mule.config.i18n.CoreMessages;
 import org.mule.config.i18n.MessageFactory;
 import org.mule.context.DefaultMuleContextFactory;
+import org.mule.context.MuleApplicationDomain;
 import org.mule.context.notification.MuleContextNotification;
 import org.mule.context.notification.NotificationException;
 import org.mule.module.launcher.AbstractFileWatcher;
@@ -61,13 +64,14 @@ public class DefaultMuleApplication implements Application
 
     protected transient final Log logger = LogFactory.getLog(getClass());
     protected transient final Log deployLogger = LogFactory.getLog(MuleDeploymentService.class);
+    private MuleApplicationDomain applicationDomain;
 
     protected ScheduledExecutorService watchTimer;
 
     protected MuleContext muleContext;
     protected ClassLoader deploymentClassLoader;
     protected ApplicationDescriptor descriptor;
-    protected final ApplicationClassLoaderFactory applicationClassLoaderFactory;
+    protected ApplicationClassLoaderFactory applicationClassLoaderFactory;
 
     protected String[] absoluteResourcePaths;
 
@@ -78,6 +82,12 @@ public class DefaultMuleApplication implements Application
         this.descriptor = appDesc;
         this.applicationClassLoaderFactory = applicationClassLoaderFactory;
         this.deploymentListener = new NullDeploymentListener();
+    }
+
+    public DefaultMuleApplication(ApplicationDescriptor descriptor, ApplicationClassLoaderFactory applicationClassLoaderFactory, MuleApplicationDomain applicationDomain)
+    {
+        this(descriptor,applicationClassLoaderFactory);
+        this.applicationDomain = applicationDomain;
     }
 
     public void setDeploymentListener(DeploymentListener deploymentListener)
@@ -223,8 +233,26 @@ public class DefaultMuleApplication implements Application
     protected ConfigurationBuilder createConfigurationBuilder() throws Exception
     {
         String configBuilderClassName = determineConfigBuilderClassName();
-        return (ConfigurationBuilder) ClassUtils.instanciateClass(configBuilderClassName,
-            new Object[] { absoluteResourcePaths }, getDeploymentClassLoader());
+        if (applicationDomain != null && applicationDomain.getContext() == null)
+        {
+            return (ConfigurationBuilder) ClassUtils.instanciateClass(configBuilderClassName,
+              new Object[] { absoluteResourcePaths }, getDeploymentClassLoader());
+        }
+        else
+        {
+            ConfigurationBuilder configurationBuilder = (ConfigurationBuilder) ClassUtils.instanciateClass(configBuilderClassName,
+                                                                                                           new Object[] {absoluteResourcePaths}, getDeploymentClassLoader());
+            if (configurationBuilder instanceof DomainAwareConfigurationBuilder)
+            {
+                ((DomainAwareConfigurationBuilder)configurationBuilder).setDomainContext(applicationDomain.getContext());
+            }
+            else
+            {
+                //TODO verify if fail or throw exception
+                throw new MuleRuntimeException(CoreMessages.createStaticMessage(String.format("ConfigurationBuilder %s does not support domain context",configurationBuilder.getClass().getCanonicalName())));
+            }
+            return configurationBuilder;
+        }
     }
 
     protected String determineConfigBuilderClassName()

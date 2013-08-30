@@ -29,7 +29,7 @@ public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader
 
     protected transient Log logger = LogFactory.getLog(getClass());
 
-    private final String domain = "undefined";
+    private String domain = "undefined";
 
     @SuppressWarnings("unchecked")
     public MuleSharedDomainClassLoader(String domain, ClassLoader parent)
@@ -37,6 +37,7 @@ public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader
         super(new URL[0], parent);
         try
         {
+            this.domain = domain;
             File domainDir = new File(MuleContainerBootstrapUtils.getMuleHome(), "lib/shared/" + domain);
             if (!domainDir.exists())
             {

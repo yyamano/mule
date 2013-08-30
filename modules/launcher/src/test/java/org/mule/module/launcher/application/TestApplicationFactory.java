@@ -10,6 +10,8 @@
 
 package org.mule.module.launcher.application;
 
+import org.mule.module.launcher.domain.MuleApplicationDomainFactory;
+
 import java.io.IOException;
 
 /**
@@ -24,7 +26,8 @@ public class TestApplicationFactory extends DefaultApplicationFactory
 
     public TestApplicationFactory(ApplicationClassLoaderFactory applicationClassLoaderFactory)
     {
-        super(applicationClassLoaderFactory);
+        //TODO fix test
+        super(applicationClassLoaderFactory, new MuleApplicationDomainFactory());
     }
 
     @Override

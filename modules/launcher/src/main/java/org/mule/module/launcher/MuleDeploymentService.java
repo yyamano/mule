@@ -13,12 +13,18 @@ package org.mule.module.launcher;
 import static org.mule.util.SplashScreen.miniSplash;
 import org.mule.config.StartupContext;
 import org.mule.config.i18n.MessageFactory;
+import org.mule.context.DefaultMuleDomainFactory;
+import org.mule.context.MuleApplicationDomain;
 import org.mule.module.launcher.application.Application;
 import org.mule.module.launcher.application.ApplicationClassLoaderFactory;
 import org.mule.module.launcher.application.ApplicationFactory;
 import org.mule.module.launcher.application.CompositeApplicationClassLoaderFactory;
 import org.mule.module.launcher.application.DefaultApplicationFactory;
 import org.mule.module.launcher.application.MuleApplicationClassLoaderFactory;
+import org.mule.module.launcher.domain.ApplicationDomainClassLoaderFactory;
+import org.mule.module.launcher.domain.ApplicationDomainFactory;
+import org.mule.module.launcher.domain.MuleApplicationDomainClassLoaderFactory;
+import org.mule.module.launcher.domain.MuleApplicationDomainFactory;
 import org.mule.module.launcher.util.DebuggableReentrantLock;
 import org.mule.module.launcher.util.ElementAddedEvent;
 import org.mule.module.launcher.util.ElementRemovedEvent;
@@ -68,6 +74,7 @@ public class MuleDeploymentService implements DeploymentService
     public static final String INSTALL_OPERATION_HAS_BEEN_INTERRUPTED = "Install operation has been interrupted";
 
     protected static final int DEFAULT_CHANGES_CHECK_INTERVAL_MS = 5000;
+    private final ApplicationDomainFactory applicationDomainFactory;
 
     protected ScheduledExecutorService appDirMonitorTimer;
 
@@ -86,9 +93,14 @@ public class MuleDeploymentService implements DeploymentService
 
     public MuleDeploymentService(PluginClassLoaderManager pluginClassLoaderManager)
     {
-        ApplicationClassLoaderFactory applicationClassLoaderFactory = new MuleApplicationClassLoaderFactory();
+        ApplicationDomainClassLoaderFactory applicationDomainClassLoaderFactory = new MuleApplicationDomainClassLoaderFactory();
+
+        ApplicationClassLoaderFactory applicationClassLoaderFactory = new MuleApplicationClassLoaderFactory(applicationDomainClassLoaderFactory);
         applicationClassLoaderFactory = new CompositeApplicationClassLoaderFactory(applicationClassLoaderFactory, pluginClassLoaderManager);
-        DefaultApplicationFactory appFactory = new DefaultApplicationFactory(applicationClassLoaderFactory);
+
+        applicationDomainFactory = new MuleApplicationDomainFactory();
+
+        DefaultApplicationFactory appFactory = new DefaultApplicationFactory(applicationClassLoaderFactory, applicationDomainFactory);
         appFactory.setDeploymentListener(deploymentListener);
         this.appFactory = appFactory;
 
@@ -147,6 +159,8 @@ public class MuleDeploymentService implements DeploymentService
         }
 
         apps = removeDuplicateAppNames(apps);
+
+        applicationDomainFactory.createAllDomains();
 
         for (String app : apps)
         {

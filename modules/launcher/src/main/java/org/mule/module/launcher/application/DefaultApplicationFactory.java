@@ -14,6 +14,7 @@ import org.mule.module.launcher.AppBloodhound;
 import org.mule.module.launcher.DefaultAppBloodhound;
 import org.mule.module.launcher.DeploymentListener;
 import org.mule.module.launcher.descriptor.ApplicationDescriptor;
+import org.mule.module.launcher.domain.ApplicationDomainFactory;
 
 import java.io.IOException;
 
@@ -24,11 +25,13 @@ public class DefaultApplicationFactory implements ApplicationFactory
 {
 
     private final ApplicationClassLoaderFactory applicationClassLoaderFactory;
+    private final ApplicationDomainFactory applicationDomainFactory;
     protected DeploymentListener deploymentListener;
 
-    public DefaultApplicationFactory(ApplicationClassLoaderFactory applicationClassLoaderFactory)
+    public DefaultApplicationFactory(ApplicationClassLoaderFactory applicationClassLoaderFactory, ApplicationDomainFactory applicationDomainFactory)
     {
         this.applicationClassLoaderFactory = applicationClassLoaderFactory;
+        this.applicationDomainFactory = applicationDomainFactory;
     }
 
     public void setDeploymentListener(DeploymentListener deploymentListener)
@@ -46,13 +49,20 @@ public class DefaultApplicationFactory implements ApplicationFactory
 
     protected Application createAppFrom(ApplicationDescriptor descriptor) throws IOException
     {
-        final DefaultMuleApplication delegate = new DefaultMuleApplication(descriptor, applicationClassLoaderFactory);
+        DefaultMuleApplication delegate;
+        if (descriptor.getDomain() == null || "".equals(descriptor.getDomain().trim()))
+        {
+            delegate = new DefaultMuleApplication(descriptor, applicationClassLoaderFactory);
+        }
+        else
+        {
+            delegate = new DefaultMuleApplication(descriptor, applicationClassLoaderFactory, applicationDomainFactory.createAppDomain(descriptor.getDomain()));
+        }
 
         if (deploymentListener != null)
         {
             delegate.setDeploymentListener(deploymentListener);
         }
-
         return new ApplicationWrapper(delegate);
     }
 

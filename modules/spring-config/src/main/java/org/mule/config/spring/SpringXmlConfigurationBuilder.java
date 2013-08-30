@@ -12,6 +12,7 @@ package org.mule.config.spring;
 
 import org.mule.api.MuleContext;
 import org.mule.api.config.ConfigurationException;
+import org.mule.api.config.DomainAwareConfigurationBuilder;
 import org.mule.api.lifecycle.LifecycleManager;
 import org.mule.api.lifecycle.Startable;
 import org.mule.api.registry.Registry;
@@ -26,17 +27,20 @@ import org.springframework.context.ConfigurableApplicationContext;
  * Spring XML Configuration file used with Mule name-spaces. Multiple configuration
  * files can be loaded from this builder (specified as a comma-separated list).
  */
-public class SpringXmlConfigurationBuilder extends AbstractResourceConfigurationBuilder
+public class SpringXmlConfigurationBuilder extends AbstractResourceConfigurationBuilder implements DomainAwareConfigurationBuilder
 {
     public static final String MULE_DEFAULTS_CONFIG = "default-mule-config.xml";
     public static final String MULE_SPRING_CONFIG = "mule-spring-config.xml";
+    public static final String MULE_MINIMAL_SPRING_CONFIG = "minimal-mule-config.xml";
 
     /** Prepend "default-mule-config.xml" to the list of config resources. */
     protected boolean useDefaultConfigResource = true;
+    protected boolean useMinimalConfigResource = false;
 
     protected Registry registry;
 
     protected ApplicationContext parentContext;
+    protected ApplicationContext applicationContext;
 
     public SpringXmlConfigurationBuilder(String[] configResources) throws ConfigurationException
     {
@@ -57,12 +61,20 @@ public class SpringXmlConfigurationBuilder extends AbstractResourceConfiguration
     protected void doConfigure(MuleContext muleContext) throws Exception
     {
         ConfigResource[] allResources;
-        if (useDefaultConfigResource)
+        if (useMinimalConfigResource)
         {
             allResources = new ConfigResource[configResources.length + 2];
-            allResources[0] = new ConfigResource(MULE_SPRING_CONFIG);
-            allResources[1] = new ConfigResource(MULE_DEFAULTS_CONFIG);
+            allResources[0] = new ConfigResource(MULE_MINIMAL_SPRING_CONFIG);
+            allResources[1] = new ConfigResource(MULE_SPRING_CONFIG);
             System.arraycopy(configResources, 0, allResources, 2, configResources.length);
+        }
+        else if (useDefaultConfigResource)
+        {
+            allResources = new ConfigResource[configResources.length + 3];
+            allResources[0] = new ConfigResource(MULE_MINIMAL_SPRING_CONFIG);
+            allResources[1] = new ConfigResource(MULE_SPRING_CONFIG);
+            allResources[2] = new ConfigResource(MULE_DEFAULTS_CONFIG);
+            System.arraycopy(configResources, 0, allResources, 3, configResources.length);
         }
         else
         {
@@ -70,29 +82,8 @@ public class SpringXmlConfigurationBuilder extends AbstractResourceConfiguration
             allResources[0] = new ConfigResource(MULE_SPRING_CONFIG);
             System.arraycopy(configResources, 0, allResources, 1, configResources.length);
         }
-        setParentContext(ContainerResources.getServerResourcesContext());
-        createSpringRegistry(muleContext, createApplicationContext(muleContext, allResources));
-    }
-
-    protected ApplicationContext doConfigure2(MuleContext muleContext) throws Exception
-    {
-        ConfigResource[] allResources;
-        if (useDefaultConfigResource)
-        {
-            allResources = new ConfigResource[configResources.length + 2];
-            allResources[0] = new ConfigResource(MULE_SPRING_CONFIG);
-            allResources[1] = new ConfigResource(MULE_DEFAULTS_CONFIG);
-            System.arraycopy(configResources, 0, allResources, 2, configResources.length);
-        }
-        else
-        {
-            allResources = new ConfigResource[configResources.length + 1];
-            allResources[0] = new ConfigResource(MULE_SPRING_CONFIG);
-            System.arraycopy(configResources, 0, allResources, 1, configResources.length);
-        }
-        ApplicationContext applicationContext = createApplicationContext(muleContext, allResources);
+        applicationContext = createApplicationContext(muleContext, allResources);
         createSpringRegistry(muleContext, applicationContext);
-        return applicationContext;
     }
 
     public void unconfigure(MuleContext muleContext)
@@ -151,24 +142,24 @@ public class SpringXmlConfigurationBuilder extends AbstractResourceConfiguration
         }
     }
 
-    public boolean isUseDefaultConfigResource()
-    {
-        return useDefaultConfigResource;
-    }
-
     public void setUseDefaultConfigResource(boolean useDefaultConfigResource)
     {
         this.useDefaultConfigResource = useDefaultConfigResource;
     }
 
-    protected ApplicationContext getParentContext()
+    public ApplicationContext getApplicationContext()
     {
-        return parentContext;
+        return applicationContext;
     }
 
-    public void setParentContext(ApplicationContext parentContext)
+    public void setUseMinimalConfigResource(boolean useMinimalConfigResource)
     {
-        this.parentContext = parentContext;
+        this.useMinimalConfigResource = useMinimalConfigResource;
     }
 
+    @Override
+    public void setDomainContext(Object domainContext)
+    {
+        this.parentContext = (ApplicationContext) domainContext;
+    }
 }

@@ -29,6 +29,7 @@ import org.mule.config.StartupContext;
 import org.mule.module.launcher.application.Application;
 import org.mule.module.launcher.application.MuleApplicationClassLoaderFactory;
 import org.mule.module.launcher.application.TestApplicationFactory;
+import org.mule.module.launcher.domain.MuleApplicationDomainClassLoaderFactory;
 import org.mule.tck.junit4.AbstractMuleContextTestCase;
 import org.mule.tck.probe.PollingProber;
 import org.mule.tck.probe.Probe;
@@ -380,7 +381,7 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         assertNotNull("Test app file not found " + url, url);
         addAppArchive(url);
 
-        TestApplicationFactory appFactory = new TestApplicationFactory(new MuleApplicationClassLoaderFactory());
+        TestApplicationFactory appFactory = new TestApplicationFactory(new MuleApplicationClassLoaderFactory(new MuleApplicationDomainClassLoaderFactory()));
         appFactory.setFailOnStopApplication(true);
 
         deploymentService.setAppFactory(appFactory);
@@ -402,7 +403,7 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         assertNotNull("Test app file not found " + url, url);
         addAppArchive(url);
 
-        TestApplicationFactory appFactory = new TestApplicationFactory(new MuleApplicationClassLoaderFactory());
+        TestApplicationFactory appFactory = new TestApplicationFactory(new MuleApplicationClassLoaderFactory(new MuleApplicationDomainClassLoaderFactory()));
         appFactory.setFailOnDisposeApplication(true);
         deploymentService.setAppFactory(appFactory);
         deploymentService.start();

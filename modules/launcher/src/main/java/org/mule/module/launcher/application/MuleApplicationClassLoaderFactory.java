@@ -14,6 +14,8 @@ import org.mule.module.launcher.DefaultMuleSharedDomainClassLoader;
 import org.mule.module.launcher.MuleApplicationClassLoader;
 import org.mule.module.launcher.MuleSharedDomainClassLoader;
 import org.mule.module.launcher.descriptor.ApplicationDescriptor;
+import org.mule.module.launcher.domain.ApplicationDomainClassLoaderFactory;
+import org.mule.module.launcher.domain.ApplicationDomainFactory;
 import org.mule.module.launcher.plugin.MulePluginsClassLoader;
 import org.mule.module.launcher.plugin.PluginDescriptor;
 import org.mule.util.StringUtils;
@@ -27,21 +29,18 @@ import java.util.Set;
 public class MuleApplicationClassLoaderFactory implements ApplicationClassLoaderFactory
 {
 
+    private final ApplicationDomainClassLoaderFactory applicationDomainClassLoaderFactory;
+
+    public MuleApplicationClassLoaderFactory(ApplicationDomainClassLoaderFactory applicationDomainClassLoaderFactory)
+    {
+        this.applicationDomainClassLoaderFactory = applicationDomainClassLoaderFactory;
+    }
+
     @Override
     public ClassLoader create(ApplicationDescriptor descriptor)
     {
         final String domain = descriptor.getDomain();
-        ClassLoader parent;
-
-        if (StringUtils.isBlank(domain) || DefaultMuleSharedDomainClassLoader.DEFAULT_DOMAIN_NAME.equals(domain))
-        {
-            parent = new DefaultMuleSharedDomainClassLoader(getClass().getClassLoader());
-        }
-        else
-        {
-            // TODO handle non-existing domains with an exception
-            parent = new MuleSharedDomainClassLoader(domain, getClass().getClassLoader());
-        }
+        ClassLoader parent = applicationDomainClassLoaderFactory.create(domain);;
 
         final Set<PluginDescriptor> plugins = descriptor.getPlugins();
         if (!plugins.isEmpty())

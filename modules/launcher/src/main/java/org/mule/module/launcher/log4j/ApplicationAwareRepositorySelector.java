@@ -11,6 +11,7 @@
 package org.mule.module.launcher.log4j;
 
 import org.mule.module.launcher.MuleApplicationClassLoader;
+import org.mule.module.launcher.MuleSharedDomainClassLoader;
 import org.mule.module.launcher.application.ApplicationClassLoader;
 import org.mule.module.reboot.MuleContainerBootstrapUtils;
 import org.mule.module.reboot.MuleContainerSystemClassLoader;
@@ -101,6 +102,40 @@ public class ApplicationAwareRepositorySelector implements RepositorySelector
                             }
                         }
                     }
+                }
+                else if (ccl instanceof MuleSharedDomainClassLoader)
+                {
+                    //TODO add an interface for every domain class loader that can return the domain name or unify it with getName for app name in appCl and domain name for domainCl
+                    MuleSharedDomainClassLoader domainClassLoader = (MuleSharedDomainClassLoader) ccl;
+                    //TODO add support for log4j.xml in domain folder
+                    //URL appLogConfig = getAppLoggingConfig(muleCL);
+                    //final String appName = muleCL.getAppName();
+                    //if (appLogConfig == null)
+                    //{
+                    //    // fallback to defaults
+                    //    String logName = String.format("mule-app-%s.log", appName);
+                    //    File logDir = new File(MuleContainerBootstrapUtils.getMuleHome(), "logs");
+                    //    File logFile = new File(logDir, logName);
+                    //    DailyRollingFileAppender fileAppender = new DailyRollingFileAppender(new PatternLayout(PATTERN_LAYOUT), logFile.getAbsolutePath(), "'.'yyyy-MM-dd");
+                    //    fileAppender.setAppend(true);
+                    //    fileAppender.activateOptions();
+                    //    root.addAppender(fileAppender);
+                    //}
+                    //else
+                    //{
+                    File defaultSystemLog = new File(MuleContainerBootstrapUtils.getMuleHome(), "conf/log4j.xml");
+                    if (!defaultSystemLog.exists() && !defaultSystemLog.canRead())
+                    {
+                        defaultSystemLog = new File(MuleContainerBootstrapUtils.getMuleHome(), "conf/log4j.properties");
+                    }
+                    configureFrom(defaultSystemLog.toURL(), repository);
+                    String logName = String.format("mule-domain-%s.log", domainClassLoader.getDomain());
+                    File logDir = new File(MuleContainerBootstrapUtils.getMuleHome(), "logs");
+                    File logFile = new File(logDir, logName);
+                    DailyRollingFileAppender fileAppender = new DailyRollingFileAppender(new PatternLayout(PATTERN_LAYOUT), logFile.getAbsolutePath(), "'.'yyyy-MM-dd");
+                    fileAppender.setAppend(true);
+                    fileAppender.activateOptions();
+                    root.addAppender(fileAppender);
                 }
                 else
                 {
