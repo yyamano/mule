@@ -14,7 +14,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
 import org.mule.api.MuleMessage;
-import org.mule.module.client.MuleClient;
+import org.mule.api.client.MuleClient;
 import org.mule.tck.junit4.FunctionalTestCase;
 import org.mule.transport.NullPayload;
 
@@ -23,13 +23,8 @@ import java.util.Map;
 
 import org.junit.Test;
 
-/**
- * @author alejandrosequeira
- *
- */
 public class EchoTestCase extends FunctionalTestCase
 {
-
     private static String MESSAGE = "message";
 
     @Override
@@ -41,13 +36,14 @@ public class EchoTestCase extends FunctionalTestCase
     @Test
     public void httpGetToFlowUrlEchoesSentMessage() throws Exception
     {
-        MuleClient client = new MuleClient(muleContext);
-        Map<String, String> props = new HashMap<String, String>();
+        MuleClient client = muleContext.getClient();
+
+        Map<String, Object> props = new HashMap<String, Object>();
         props.put("http.method", "GET");
+
         MuleMessage result = client.send("http://localhost:8084/" + MESSAGE, "", props);
         assertNotNull(result);
         assertFalse(result.getPayload() instanceof NullPayload);
         assertEquals("/" + MESSAGE, result.getPayloadAsString());
     }
-
 }

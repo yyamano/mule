@@ -14,7 +14,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import org.mule.api.MuleMessage;
-import org.mule.module.client.MuleClient;
+import org.mule.api.client.MuleClient;
 import org.mule.tck.AbstractServiceAndFlowTestCase;
 import org.mule.transport.http.HttpConnector;
 import org.mule.transport.http.HttpConstants;
@@ -38,14 +38,14 @@ public class BasicJerseyTestCase extends AbstractServiceAndFlowTestCase
     public static Collection<Object[]> parameters()
     {
         return Arrays.asList(new Object[][]{
-            {ConfigVariant.SERVICE, "basic-conf.xml"},            
+            {ConfigVariant.SERVICE, "basic-conf.xml"},
         });
-    }      
-    
+    }
+
     @Test
     public void testBasic() throws Exception
     {
-        MuleClient client = new MuleClient(muleContext);
+        MuleClient client = muleContext.getClient();
 
         MuleMessage result = client.send("http://localhost:63081/helloworld", "", null);
         assertEquals((Integer)200, result.getInboundProperty(HttpConnector.HTTP_STATUS_PROPERTY, 0));
@@ -55,7 +55,7 @@ public class BasicJerseyTestCase extends AbstractServiceAndFlowTestCase
         result = client.send("http://localhost:63081/hello", "", null);
         assertEquals((Integer)404, result.getInboundProperty(HttpConnector.HTTP_STATUS_PROPERTY, 0));
 
-        Map<String, String> props = new HashMap<String, String>();
+        Map<String, Object> props = new HashMap<String, Object>();
         props.put(HttpConnector.HTTP_METHOD_PROPERTY, HttpConstants.METHOD_GET);
         result = client.send("http://localhost:63081/helloworld", "", props);
         assertEquals((Integer)405, result.getInboundProperty(HttpConnector.HTTP_STATUS_PROPERTY, 0));
@@ -69,9 +69,9 @@ public class BasicJerseyTestCase extends AbstractServiceAndFlowTestCase
     @Test
     public void testParams() throws Exception
     {
-        MuleClient client = new MuleClient(muleContext);
+        MuleClient client = muleContext.getClient();
 
-        Map<String, String> props = new HashMap<String, String>();
+        Map<String, Object> props = new HashMap<String, Object>();
         props.put(HttpConnector.HTTP_METHOD_PROPERTY, HttpConstants.METHOD_GET);
         MuleMessage result = client.send("http://localhost:63081/helloworld/sayHelloWithUri/Dan", "", props);
         assertEquals((Integer)200, result.getInboundProperty(HttpConnector.HTTP_STATUS_PROPERTY, 0));
@@ -101,18 +101,17 @@ public class BasicJerseyTestCase extends AbstractServiceAndFlowTestCase
 
     protected void callThrowException(Integer expectedErrorCode, String expectedData) throws Exception
     {
-        MuleClient client = new MuleClient(muleContext);
+        MuleClient client = muleContext.getClient();
 
-        Map<String, String> props = new HashMap<String, String>();
+        Map<String, Object> props = new HashMap<String, Object>();
         props.put(HttpConnector.HTTP_METHOD_PROPERTY, HttpConstants.METHOD_GET);
         MuleMessage result = client.send("http://localhost:63081/helloworld/throwException", "", props);
         assertEquals(expectedErrorCode, result.getInboundProperty(HttpConnector.HTTP_STATUS_PROPERTY, 0));
         assertTrue(result.getPayloadAsString().contains(expectedData));
     }
-    
+
     protected String getJsonHelloBean()
     {
         return "{\"message\":\"Hello Dan\",\"number\":\"0\"}";
     }
-
 }

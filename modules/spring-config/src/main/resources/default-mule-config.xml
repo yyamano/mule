@@ -16,15 +16,15 @@
 
     </mule:mule>
 
-     <bean name="_muleSecurityManager" class="org.mule.security.MuleSecurityManager"/>
+    <bean name="_muleSecurityManager" class="org.mule.security.MuleSecurityManager"/>
 
     <bean name="_muleMessageProcessingManager" class="org.mule.execution.MuleMessageProcessingManager"/>
 
     <bean name="_muleStreamCloserService" class="org.mule.util.DefaultStreamCloserService"/>
 
     <bean name="_muleProcessingTimeWatcher" class="org.mule.management.stats.DefaultProcessingTimeWatcher"/>
-
-
+    
+    <bean name="_muleVersionChecker" class="org.mule.config.DefaultMuleVersionChecker" />
 
 
 </beans>

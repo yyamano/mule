@@ -12,25 +12,27 @@ package org.mule.module.pgp;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import org.mule.DefaultMuleMessage;
+import org.mule.api.ExceptionPayload;
+import org.mule.api.MuleEvent;
+import org.mule.api.MuleException;
+import org.mule.api.MuleMessage;
+import org.mule.api.client.MuleClient;
+import org.mule.api.processor.MessageProcessor;
+import org.mule.tck.AbstractServiceAndFlowTestCase;
+import org.mule.util.ExceptionUtils;
 
 import java.util.Arrays;
 import java.util.Collection;
 
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
-import org.mule.DefaultMuleMessage;
-import org.mule.api.MuleMessage;
-import org.mule.module.client.MuleClient;
-import org.mule.tck.AbstractServiceAndFlowTestCase;
 
 public class PGPExpiredIntegrationTestCase extends AbstractServiceAndFlowTestCase
 {
-
-    public PGPExpiredIntegrationTestCase(ConfigVariant variant, String configResources)
-    {
-        super(variant, configResources);
-        
-    }
+    private static Throwable exceptionFromFlow = null;
 
     @Parameters
     public static Collection<Object[]> parameters()
@@ -41,18 +43,38 @@ public class PGPExpiredIntegrationTestCase extends AbstractServiceAndFlowTestCas
         });
     }
 
+    public PGPExpiredIntegrationTestCase(ConfigVariant variant, String configResources)
+    {
+        super(variant, configResources);
+    }
+
     @Test
     public void testEncryptDecrypt() throws Exception
     {
         String payload = "this is a super simple test. Hope it works!!!";
-        MuleClient client = new MuleClient(muleContext);
-        
-        MuleMessage exceptionMessage = client.send("vm://in", new DefaultMuleMessage(payload, muleContext));
-        
-        assertNotNull(exceptionMessage);
-        
-        MuleMessage message = client.request("vm://out", 1000);
+        MuleClient client = muleContext.getClient();
+
+        client.dispatch("vm://in", new DefaultMuleMessage(payload, muleContext));
+
+        MuleMessage message = client.request("vm://out", 5000);
         assertNull(message);
+
+        assertNotNull("flow's exception strategy should have caught an exception", exceptionFromFlow);
+        InvalidPublicKeyException ipke =
+            ExceptionUtils.getDeepestOccurenceOfType(exceptionFromFlow, InvalidPublicKeyException.class);
+        assertNotNull("root cause must be a InvalidPublicKeyException", ipke);
+        assertTrue(ipke.getMessage().contains("has expired"));
     }
 
+    public static class ExceptionSaver implements MessageProcessor
+    {
+        @Override
+        public MuleEvent process(MuleEvent event) throws MuleException
+        {
+            ExceptionPayload exceptionPayload = event.getMessage().getExceptionPayload();
+            exceptionFromFlow = exceptionPayload.getException();
+
+            return null;
+        }
+    }
 }

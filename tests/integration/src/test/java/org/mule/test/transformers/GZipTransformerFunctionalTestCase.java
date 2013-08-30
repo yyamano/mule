@@ -15,10 +15,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import org.mule.api.MuleMessage;
-import org.mule.module.client.MuleClient;
+import org.mule.api.client.MuleClient;
 import org.mule.tck.junit4.FunctionalTestCase;
 import org.mule.util.IOUtils;
-import org.mule.util.SerializationUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -41,8 +40,8 @@ public class GZipTransformerFunctionalTestCase extends FunctionalTestCase
     @Test
     public void testCompressDecompressByteArray() throws Exception
     {
-        byte[] testDataByteArray = SerializationUtils.serialize(TEST_DATA);
-        MuleClient client = new MuleClient(muleContext);
+        byte[] testDataByteArray = TEST_DATA.getBytes();
+        MuleClient client = muleContext.getClient();
 
         // Compress input.
         MuleMessage compressedResponse = client.send("vm://compressInput", testDataByteArray, null);
@@ -54,15 +53,15 @@ public class GZipTransformerFunctionalTestCase extends FunctionalTestCase
         assertNotNull(uncompressedResponse);
         assertTrue(uncompressedResponse.getPayload() instanceof byte[]);
 
-        String uncompressedStr = (String) SerializationUtils.deserialize((byte[]) uncompressedResponse.getPayload());
+        String uncompressedStr = new String((byte[]) uncompressedResponse.getPayload());
         assertEquals(TEST_DATA, uncompressedStr);
     }
 
     @Test
     public void testCompressDecompressInputStream() throws Exception
     {
-        ByteArrayInputStream bis = new ByteArrayInputStream(SerializationUtils.serialize(TEST_DATA));
-        MuleClient client = new MuleClient(muleContext);
+        ByteArrayInputStream bis = new ByteArrayInputStream(TEST_DATA.getBytes());
+        MuleClient client = muleContext.getClient();
 
         // Compress input.
         MuleMessage compressedResponse = client.send("vm://compressInput", bis, null);
@@ -75,7 +74,7 @@ public class GZipTransformerFunctionalTestCase extends FunctionalTestCase
         assertTrue(uncompressedResponse.getPayload() instanceof InputStream);
 
         byte[] uncompressedByteArray = IOUtils.toByteArray((InputStream) uncompressedResponse.getPayload());
-        String uncompressedStr = (String) SerializationUtils.deserialize(uncompressedByteArray);
+        String uncompressedStr = new String(uncompressedByteArray);
         assertEquals(TEST_DATA, uncompressedStr);
     }
 }

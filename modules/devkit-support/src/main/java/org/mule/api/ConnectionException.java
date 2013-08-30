@@ -10,11 +10,14 @@
 
 package org.mule.api;
 
+
 /**
  * Exception thrown when connect method in cloud connectors fails to connect properly.
  */
 public class ConnectionException extends Exception
 {
+
+    private static final long serialVersionUID = 1131270076379901356L;
 
     /**
      * Exception code

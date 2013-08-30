@@ -13,6 +13,7 @@ package org.mule.module.launcher.application;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Arrays;
@@ -50,16 +51,16 @@ public class CompositeApplicationClassLoader extends ClassLoader implements Appl
     }
 
     @Override
-    public Class<?> loadClass(String s) throws ClassNotFoundException
+    public Class<?> loadClass(String name) throws ClassNotFoundException
     {
         for (ClassLoader classLoader : classLoaders)
         {
             try
             {
-                Class<?> aClass = classLoader.loadClass(s);
+                Class<?> aClass = classLoader.loadClass(name);
                 if (logger.isDebugEnabled())
                 {
-                    logger.debug(String.format("Class '%s' loaded from classLoader '%s", s, classLoader));
+                    logger.debug(String.format("Class '%s' loaded from classLoader '%s", name, classLoader));
                 }
 
                 return aClass;
@@ -70,20 +71,20 @@ public class CompositeApplicationClassLoader extends ClassLoader implements Appl
             }
         }
 
-        throw new ClassNotFoundException(String.format("Cannot load class '%s'", s));
+        throw new ClassNotFoundException(String.format("Cannot load class '%s'", name));
     }
 
     @Override
-    protected synchronized Class<?> loadClass(String s, boolean b) throws ClassNotFoundException
+    protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException
     {
         for (ClassLoader classLoader : classLoaders)
         {
             try
             {
-                Class<?> aClass = loadClass(classLoader, s, b);
+                Class<?> aClass = loadClass(classLoader, name, resolve);
                 if (logger.isDebugEnabled())
                 {
-                    logger.debug(String.format("Class '%s' loaded from classLoader '%s", s, classLoader));
+                    logger.debug(String.format("Class '%s' loaded from classLoader '%s", name, classLoader));
                 }
 
                 return aClass;
@@ -94,40 +95,40 @@ public class CompositeApplicationClassLoader extends ClassLoader implements Appl
             }
         }
 
-        throw new ClassNotFoundException(String.format("Cannot load class '%s'", s));
+        throw new ClassNotFoundException(String.format("Cannot load class '%s'", name));
     }
 
-    protected Class<?> loadClass(ClassLoader classLoader, String s, boolean b) throws ClassNotFoundException
+    protected Class<?> loadClass(ClassLoader classLoader, String name, boolean resolve) throws ClassNotFoundException
     {
         try
         {
             Method loadClassMethod = findDeclaredMethod(classLoader, "loadClass", String.class, boolean.class);
 
-            return (Class<?>) loadClassMethod.invoke(classLoader, s, b);
+            return (Class<?>) loadClassMethod.invoke(classLoader, name, resolve);
         }
         catch (Exception e)
         {
             if (logger.isDebugEnabled())
             {
-                logger.debug(String.format("Error loading class '%s' from classloader '%s'", s, classLoader), e);
+                logReflectionLoadingError(name, classLoader, e, "Class");
             }
         }
 
-        throw new ClassNotFoundException(String.format("Cannot load class '%s'", s));
+        throw new ClassNotFoundException(String.format("Cannot load class '%s'", name));
     }
 
     @Override
-    public URL getResource(String s)
+    public URL getResource(String name)
     {
         for (ClassLoader classLoader : classLoaders)
         {
-            URL resource = classLoader.getResource(s);
+            URL resource = classLoader.getResource(name);
 
             if (resource != null)
             {
                 if (logger.isDebugEnabled())
                 {
-                    logger.debug(String.format("Resource '%s' loaded from classLoader '%s", s, classLoader));
+                    logger.debug(String.format("Resource '%s' loaded from classLoader '%s", name, classLoader));
                 }
 
                 return resource;
@@ -138,17 +139,17 @@ public class CompositeApplicationClassLoader extends ClassLoader implements Appl
     }
 
     @Override
-    public InputStream getResourceAsStream(String s)
+    public InputStream getResourceAsStream(String name)
     {
         for (ClassLoader classLoader : classLoaders)
         {
-            InputStream resourceAsStream = classLoader.getResourceAsStream(s);
+            InputStream resourceAsStream = classLoader.getResourceAsStream(name);
 
             if (resourceAsStream != null)
             {
                 if (logger.isDebugEnabled())
                 {
-                    logger.debug(String.format("Stream resource '%s' loaded from classLoader '%s", s, classLoader));
+                    logger.debug(String.format("Stream resource '%s' loaded from classLoader '%s", name, classLoader));
                 }
 
                 return resourceAsStream;
@@ -159,17 +160,17 @@ public class CompositeApplicationClassLoader extends ClassLoader implements Appl
     }
 
     @Override
-    protected String findLibrary(String s)
+    protected String findLibrary(String libname)
     {
         for (ClassLoader classLoader : classLoaders)
         {
-            String library = findLibrary(s, classLoader);
+            String library = findLibrary(libname, classLoader);
             if (library != null)
             {
 
                 if (logger.isDebugEnabled())
                 {
-                    logger.debug(String.format("Library '%s' found in classLoader '%s", s, classLoader));
+                    logger.debug(String.format("Library '%s' found in classLoader '%s", libname, classLoader));
                 }
 
                 return library;
@@ -179,19 +180,19 @@ public class CompositeApplicationClassLoader extends ClassLoader implements Appl
         return null;
     }
 
-    protected String findLibrary(String s, ClassLoader classLoader)
+    protected String findLibrary(String libname, ClassLoader classLoader)
     {
         try
         {
             Method findLibraryMethod = findDeclaredMethod(classLoader, "findLibrary", String.class);
 
-            return (String) findLibraryMethod.invoke(classLoader, s);
+            return (String) findLibraryMethod.invoke(classLoader, libname);
         }
         catch (Exception e)
         {
             if (logger.isDebugEnabled())
             {
-                logger.debug(String.format("Error finding library '%s' in classloader '%s'", s, classLoader), e);
+                logReflectionLoadingError(libname, classLoader, e, "Library");
             }
         }
 
@@ -199,13 +200,13 @@ public class CompositeApplicationClassLoader extends ClassLoader implements Appl
     }
 
     @Override
-    public Enumeration<URL> getResources(String s) throws IOException
+    public Enumeration<URL> getResources(String name) throws IOException
     {
         final Map<String, URL> resources = new HashMap<String, URL>();
 
         for (ClassLoader classLoader : classLoaders)
         {
-            Enumeration<URL> partialResources = classLoader.getResources(s);
+            Enumeration<URL> partialResources = classLoader.getResources(name);
 
             while (partialResources.hasMoreElements())
             {
@@ -221,17 +222,17 @@ public class CompositeApplicationClassLoader extends ClassLoader implements Appl
     }
 
     @Override
-    public URL findResource(String s)
+    public URL findResource(String name)
     {
         for (ClassLoader classLoader : classLoaders)
         {
-            URL resource = findResource(classLoader, s);
+            URL resource = findResource(classLoader, name);
 
             if (resource != null)
             {
                 if (logger.isDebugEnabled())
                 {
-                    logger.debug(String.format("Resource '%s' loaded from classLoader '%s", s, classLoader));
+                    logger.debug(String.format("Resource '%s' loaded from classLoader '%s", name, classLoader));
                 }
 
                 return resource;
@@ -260,19 +261,19 @@ public class CompositeApplicationClassLoader extends ClassLoader implements Appl
         }
     }
 
-    private URL findResource(ClassLoader classLoader, String s)
+    private URL findResource(ClassLoader classLoader, String name)
     {
         try
         {
             Method findResourceMethod = findDeclaredMethod(classLoader, "findResource", String.class);
 
-            return (URL) findResourceMethod.invoke(classLoader, s);
+            return (URL) findResourceMethod.invoke(classLoader, name);
         }
         catch (Exception e)
         {
             if (logger.isDebugEnabled())
             {
-                logger.debug(String.format("Error finding resource '%s' in classloader '%s'", s, classLoader), e);
+                logReflectionLoadingError(name, classLoader, e, "Resource");
             }
         }
 
@@ -299,5 +300,27 @@ public class CompositeApplicationClassLoader extends ClassLoader implements Appl
         }
 
         throw new NoSuchMethodException(String.format("Cannot find a method '%s' with the given parameter types '%s'", methodName, Arrays.toString(params)));
+    }
+
+    private void logReflectionLoadingError(String name, ClassLoader classLoader, Exception e, String type)
+    {
+        if (e instanceof InvocationTargetException && ((InvocationTargetException) e).getTargetException() instanceof ClassNotFoundException)
+        {
+            logger.debug(String.format("'%s' '%s' not found in class loader '%s'", type, name, classLoader));
+        }
+        else
+        {
+            final String errorMessage;
+            if (e instanceof InvocationTargetException)
+            {
+                errorMessage = ((InvocationTargetException) e).getTargetException().getMessage();
+            }
+            else
+            {
+                errorMessage = e.getMessage();
+            }
+
+            logger.debug(String.format("Error loading '%s' '%s' from class loader '%s': '%s'", type.toLowerCase(), name, classLoader, errorMessage));
+        }
     }
 }

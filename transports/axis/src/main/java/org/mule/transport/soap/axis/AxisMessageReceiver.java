@@ -173,7 +173,7 @@ public class AxisMessageReceiver extends AbstractMessageReceiver
                 SoapMethod method;
                 if (m instanceof List)
                 {
-                    method = new SoapMethod(name, (List<?>) m);
+                    method = new SoapMethod(name, (List<String>) m);
                 }
                 else
                 {
@@ -379,6 +379,8 @@ public class AxisMessageReceiver extends AbstractMessageReceiver
     @Override
     protected void doStop() throws MuleException
     {
+        super.doStop();
+
         if (soapService != null)
         {
             soapService.stop();

@@ -13,6 +13,11 @@ package org.mule.transport.quartz;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import org.mule.api.client.MuleClient;
+import org.mule.tck.AbstractServiceAndFlowTestCase;
+import org.mule.tck.functional.CountdownCallback;
+import org.mule.tck.functional.FunctionalTestComponent;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -20,14 +25,9 @@ import java.util.Map;
 
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
-import org.mule.module.client.MuleClient;
-import org.mule.tck.AbstractServiceAndFlowTestCase;
-import org.mule.tck.functional.CountdownCallback;
-import org.mule.tck.functional.FunctionalTestComponent;
 
 public class QuartzDispatchJobTestCase extends AbstractServiceAndFlowTestCase
 {
-
     public QuartzDispatchJobTestCase(ConfigVariant variant, String configResources)
     {
         super(variant, configResources);
@@ -50,7 +50,8 @@ public class QuartzDispatchJobTestCase extends AbstractServiceAndFlowTestCase
         CountdownCallback count = new CountdownCallback(3);
         component.setEventCallback(count);
 
-        new MuleClient(muleContext).dispatch("vm://quartz.scheduler", "quartz test", null);
+        MuleClient client = muleContext.getClient();
+        client.dispatch("vm://quartz.scheduler", "quartz test", null);
         assertTrue(count.await(5000));
     }
 
@@ -62,10 +63,11 @@ public class QuartzDispatchJobTestCase extends AbstractServiceAndFlowTestCase
         CountdownCallback count = new CountdownCallback(3);
         component.setEventCallback(count);
 
-        Map<String,String> props = new HashMap<String,String>();
+        Map<String, Object> props = new HashMap<String, Object>();
         props.put("ENDPOINT_NAME", "quartz.expression.in");
 
-        new MuleClient(muleContext).dispatch("vm://quartz.expression.scheduler", "quartz test", props);
+        org.mule.api.client.MuleClient client = muleContext.getClient();
+        client.dispatch("vm://quartz.expression.scheduler", "quartz test", props);
         assertTrue(count.await(5000));
     }
 }

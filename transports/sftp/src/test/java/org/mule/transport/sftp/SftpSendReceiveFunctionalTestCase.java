@@ -14,9 +14,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.mule.api.MuleEventContext;
-import org.mule.module.client.MuleClient;
+import org.mule.api.client.MuleClient;
 import org.mule.tck.functional.EventCallback;
-
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +36,6 @@ import org.junit.runners.Parameterized.Parameters;
  */
 public class SftpSendReceiveFunctionalTestCase extends AbstractSftpTestCase
 {
-
     private static final long TIMEOUT = 30000;
 
     private ArrayList<String> sendFiles;
@@ -96,7 +94,6 @@ public class SftpSendReceiveFunctionalTestCase extends AbstractSftpTestCase
         final CountDownLatch latch = new CountDownLatch(sendFiles.size());
         final AtomicInteger loopCount = new AtomicInteger(0);
 
-        MuleClient client = new MuleClient(muleContext);
         assertTrue("muleContext is not started", muleContext.isStarted());
         receiveFiles = new ArrayList<String>();
 
@@ -125,9 +122,10 @@ public class SftpSendReceiveFunctionalTestCase extends AbstractSftpTestCase
 
         getFunctionalTestComponent("receiving").setEventCallback(callback);
 
+        MuleClient client = muleContext.getClient();
         for (String sendFile : sendFiles)
         {
-            HashMap<String, String> props = new HashMap<String, String>(1);
+            HashMap<String, Object> props = new HashMap<String, Object>();
             props.put(SftpConnector.PROPERTY_FILENAME, sendFile + ".txt");
             client.dispatch("vm://test.upload", sendFile, props);
         }

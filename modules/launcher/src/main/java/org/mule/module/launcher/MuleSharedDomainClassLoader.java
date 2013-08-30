@@ -15,6 +15,7 @@ import org.mule.util.FileUtils;
 import org.mule.util.SystemUtils;
 
 import java.io.File;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
 
@@ -95,4 +96,25 @@ public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader
                              Integer.toHexString(System.identityHashCode(this)));
     }
 
+    @Override
+    public URL findResource(String name)
+    {
+        URL resource = super.findResource(name);
+        if (resource == null)
+        {
+            File file = new File(MuleContainerBootstrapUtils.getMuleHome(), "lib/shared/" + domain + File.separator + name);
+            if (file.exists())
+            {
+                try
+                {
+                    resource = file.toURI().toURL();
+                }
+                catch (MalformedURLException e)
+                {
+                    logger.debug("Failure looking for resource", e);
+                }
+            }
+        }
+        return resource;
+    }
 }

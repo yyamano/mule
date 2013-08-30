@@ -74,6 +74,11 @@ public class CoreMessages extends MessageFactory
         return factory.createMessage(BUNDLE_PATH, 6, version);
     }
 
+    public static Message minMuleVersionNotMet(String minVersion)
+    {
+        return factory.createMessage(BUNDLE_PATH, 344, minVersion);
+    }
+
     public static Message shutdownNormally(Date date)
     {
         return factory.createMessage(BUNDLE_PATH, 7, date);
@@ -1384,9 +1389,9 @@ public class CoreMessages extends MessageFactory
         return factory.createMessage(BUNDLE_PATH, 340);
     }
 
-    public static Message invalidJdk(String jdkVersion, String jdkVendor, String validJdks)
+    public static Message invalidJdk(String jdkVersion, String validJdks)
     {
-        return factory.createMessage(BUNDLE_PATH, 341, jdkVersion, jdkVendor, validJdks);
+        return factory.createMessage(BUNDLE_PATH, 341, jdkVersion, validJdks);
     }
 
     public static Message servicesDeprecated()

@@ -16,8 +16,8 @@ import static org.junit.Assert.assertTrue;
 
 import org.mule.api.MuleEventContext;
 import org.mule.api.MuleMessage;
+import org.mule.api.client.MuleClient;
 import org.mule.api.construct.FlowConstruct;
-import org.mule.module.client.MuleClient;
 import org.mule.tck.functional.EventCallback;
 import org.mule.tck.functional.FunctionalTestComponent;
 import org.mule.transport.http.HttpConstants;
@@ -33,7 +33,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 public class JettyHttpsFunctionalTestCase extends HttpFunctionalTestCase
 {
-
     public JettyHttpsFunctionalTestCase(ConfigVariant variant, String configResources)
     {
         super(variant, configResources);
@@ -46,8 +45,8 @@ public class JettyHttpsFunctionalTestCase extends HttpFunctionalTestCase
             {ConfigVariant.SERVICE, "jetty-https-functional-test-service.xml"},
             {ConfigVariant.FLOW, "jetty-https-functional-test-flow.xml"}
         });
-    }      
-    
+    }
+
     @Override
     public void testSend() throws Exception
     {
@@ -58,6 +57,7 @@ public class JettyHttpsFunctionalTestCase extends HttpFunctionalTestCase
         final AtomicBoolean callbackMade = new AtomicBoolean(false);
         EventCallback callback = new EventCallback()
         {
+            @Override
             public void eventReceived(MuleEventContext context, Object component) throws Exception
             {
                 assertTrue(callbackMade.compareAndSet(false, true));
@@ -68,8 +68,8 @@ public class JettyHttpsFunctionalTestCase extends HttpFunctionalTestCase
 
         testComponent.setEventCallback(callback);
 
-        MuleClient client = new MuleClient(muleContext);
-        Map<String, String> props = new HashMap<String, String>();
+        MuleClient client = muleContext.getClient();
+        Map<String, Object> props = new HashMap<String, Object>();
         props.put(HttpConstants.HEADER_CONTENT_TYPE, "text/plain;charset=UTF-8");
         MuleMessage result = client.send("clientEndpoint", TEST_MESSAGE, props);
         assertNotNull(result);
