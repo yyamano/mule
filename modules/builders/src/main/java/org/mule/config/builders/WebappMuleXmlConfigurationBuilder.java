@@ -140,6 +140,16 @@ public class WebappMuleXmlConfigurationBuilder extends SpringXmlConfigurationBui
         return parentContext;
     }
 
+    public void setParentContext(ApplicationContext parentContext)
+    {
+        this.parentContext = parentContext;
+    }
+
+    public ApplicationContext getParentContext()
+    {
+        return parentContext;
+    }
+
     class ServletContextOrClassPathConfigResource extends ConfigResource
     {
         public ServletContextOrClassPathConfigResource(String resourceName) throws IOException

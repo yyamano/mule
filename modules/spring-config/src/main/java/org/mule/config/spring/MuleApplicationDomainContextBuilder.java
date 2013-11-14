@@ -16,6 +16,7 @@ public class MuleApplicationDomainContextBuilder implements ApplicationDomainCon
 
     private String domain;
     private ClassLoader classLoader;
+    private String domainConfigFileLocation = "mule-domain-config.xml";
 
     @Override
     public void setDomain(String domain)
@@ -35,12 +36,12 @@ public class MuleApplicationDomainContextBuilder implements ApplicationDomainCon
         try
         {
             //TODO add logging
-            URL resource = classLoader.getResource("mule-domain-config.xml");
+            URL resource = classLoader.getResource(this.domainConfigFileLocation);
             ApplicationContext domainApplicationContext = null;
             if (resource != null)
             {
                 MuleContext muleContext = new DefaultMuleContextFactory().createMuleContext();
-                SpringXmlConfigurationBuilder springXmlConfigurationBuilder = new SpringXmlConfigurationBuilder(new String[] {"mule-domain-config.xml"});
+                SpringXmlConfigurationBuilder springXmlConfigurationBuilder = new SpringXmlConfigurationBuilder(new String[] {domainConfigFileLocation});
                 springXmlConfigurationBuilder.setUseMinimalConfigResource(true);
                 springXmlConfigurationBuilder.doConfigure(muleContext);
                 domainApplicationContext = springXmlConfigurationBuilder.getApplicationContext();
@@ -52,5 +53,10 @@ public class MuleApplicationDomainContextBuilder implements ApplicationDomainCon
         {
             throw new MuleRuntimeException(e);
         }
+    }
+
+    public void setDomainConfigFileLocation(String domainConfigFileLocation)
+    {
+        this.domainConfigFileLocation = domainConfigFileLocation;
     }
 }
