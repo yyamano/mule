@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.transport.http.functional;
 
 import static org.junit.Assert.assertEquals;
@@ -35,13 +31,14 @@ import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.bio.SocketConnector;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
-import org.mortbay.jetty.Connector;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.bio.SocketConnector;
-import org.mortbay.jetty.servlet.ServletHandler;
 
 public class HttpMultipleCookiesTestCase extends AbstractServiceAndFlowTestCase
 {
@@ -141,10 +138,11 @@ public class HttpMultipleCookiesTestCase extends AbstractServiceAndFlowTestCase
         connector.setPort(dynamicPort2.getNumber());
         server.setConnectors(new Connector[]{connector});
 
-        ServletHandler handler = new ServletHandler();
+        ServletContextHandler handler = new ServletContextHandler();
         server.setHandler(handler);
 
-        handler.addServletWithMapping(HelloServlet.class.getName(), "/");
+        handler.setContextPath("/");
+        handler.addServlet(new ServletHolder(HelloServlet.class), "/");
 
         server.start();
         // server.join();

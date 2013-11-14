@@ -1,8 +1,5 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
@@ -20,6 +17,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
@@ -294,4 +292,27 @@ public class MuleHttpServletResponse implements HttpServletResponse
         message.setOutboundProperty(HttpConnector.HTTP_STATUS_PROPERTY, sc);
     }
 
+    @Override
+    public Collection<String> getHeaderNames()
+    {
+        return null;
+    }
+
+    @Override
+    public int getStatus()
+    {
+        return 0;
+    }
+
+    @Override
+    public Collection<String> getHeaders(String s)
+    {
+        return null;
+    }
+
+    @Override
+    public String getHeader(String s)
+    {
+        return null;
+    }
 }

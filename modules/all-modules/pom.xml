@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.mule.modules</groupId>
         <artifactId>mule-modules</artifactId>
-        <version>3.5.0-M1-SNAPSHOT</version>
+        <version>3.5.0-M3-SNAPSHOT</version>
     </parent>
     <artifactId>mule-modules-all</artifactId>
     <packaging>pom</packaging>
@@ -13,6 +13,10 @@
         This is a meta module that allows easy referencing of all modules.
         This is needed in our various distributions we publish.
     </description>
+
+    <properties>
+        <licensePath>../../LICENSE_HEADER.txt</licensePath>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -33,6 +37,11 @@
         <dependency>
             <groupId>org.mule.modules</groupId>
             <artifactId>mule-module-bpm</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mule.modules</groupId>
+            <artifactId>mule-module-bti</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -108,6 +117,11 @@
         <dependency>
             <groupId>org.mule.modules</groupId>
             <artifactId>mule-module-scripting</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mule.modules</groupId>
+            <artifactId>mule-module-schedulers</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

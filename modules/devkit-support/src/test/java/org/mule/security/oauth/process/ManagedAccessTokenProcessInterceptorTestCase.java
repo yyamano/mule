@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.security.oauth.process;
 
 import org.mule.api.MuleEvent;
@@ -15,10 +11,10 @@ import org.mule.api.MuleMessage;
 import org.mule.api.devkit.ProcessInterceptor;
 import org.mule.api.processor.MessageProcessor;
 import org.mule.common.connection.exception.UnableToAcquireConnectionException;
+import org.mule.devkit.processor.DevkitBasedMessageProcessor;
 import org.mule.security.oauth.OAuth2Adapter;
 import org.mule.security.oauth.OAuth2Manager;
 import org.mule.security.oauth.callback.ProcessCallback;
-import org.mule.security.oauth.processor.AbstractConnectedProcessor;
 import org.mule.tck.size.SmallTest;
 
 import java.util.ArrayList;
@@ -49,7 +45,7 @@ public class ManagedAccessTokenProcessInterceptorTestCase
     private ProcessCallback<Object, OAuth2Adapter> callback;
 
     @Mock(extraInterfaces = MessageProcessor.class)
-    private AbstractConnectedProcessor processor;
+    private DevkitBasedMessageProcessor processor;
 
     @Mock
     private OAuth2Adapter adapter;
@@ -100,6 +96,19 @@ public class ManagedAccessTokenProcessInterceptorTestCase
     {
         Mockito.when(this.callback.isProtected()).thenReturn(true);
         Mockito.when(this.manager.getDefaultUnauthorizedConnector().getName()).thenReturn(ACCESS_TOKEN_ID);
+        Mockito.when(this.manager.acquireAccessToken(ACCESS_TOKEN_ID)).thenReturn(this.adapter);
+
+        this.interceptor.execute(callback, this.adapter, (MessageProcessor) this.processor, this.event);
+        Mockito.verify(this.manager).acquireAccessToken(ACCESS_TOKEN_ID);
+        Mockito.verify(this.next).execute(this.callback, this.adapter, (MessageProcessor) this.processor,
+            this.event);
+    }
+
+    @Test
+    public void withDefaultAccessTokenId() throws Exception
+    {
+        Mockito.when(this.callback.isProtected()).thenReturn(true);
+        Mockito.when(this.manager.getDefaultAccessTokenId()).thenReturn(ACCESS_TOKEN_ID);
         Mockito.when(this.manager.acquireAccessToken(ACCESS_TOKEN_ID)).thenReturn(this.adapter);
 
         this.interceptor.execute(callback, this.adapter, (MessageProcessor) this.processor, this.event);

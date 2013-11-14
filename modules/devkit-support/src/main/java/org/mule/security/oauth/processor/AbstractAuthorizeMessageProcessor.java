@@ -1,18 +1,15 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.security.oauth.processor;
 
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
 import org.mule.api.callback.HttpCallback;
+import org.mule.api.callback.HttpCallbackFactory;
 import org.mule.api.construct.FlowConstructAware;
 import org.mule.api.context.MuleContextAware;
 import org.mule.api.lifecycle.Initialisable;
@@ -22,15 +19,12 @@ import org.mule.api.processor.InterceptingMessageProcessor;
 import org.mule.api.processor.MessageProcessor;
 import org.mule.api.transformer.TransformerException;
 import org.mule.api.transformer.TransformerMessagingException;
-import org.mule.security.oauth.DefaultHttpCallback;
+import org.mule.devkit.processor.DevkitBasedMessageProcessor;
+import org.mule.security.oauth.callback.DefaultHttpCallbackFactory;
 import org.mule.security.oauth.callback.HttpCallbackAdapter;
 import org.mule.security.oauth.notification.OAuthAuthorizeNotification;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.regex.Pattern;
-
-public abstract class AbstractAuthorizeMessageProcessor extends AbstractDevkitBasedMessageProcessor
+public abstract class AbstractAuthorizeMessageProcessor extends DevkitBasedMessageProcessor
     implements FlowConstructAware, MuleContextAware, Initialisable, Startable, Stoppable,
     InterceptingMessageProcessor
 {
@@ -40,6 +34,7 @@ public abstract class AbstractAuthorizeMessageProcessor extends AbstractDevkitBa
     private String accessTokenUrl = null;
     private HttpCallback oauthCallback;
     private String state;
+    private HttpCallbackFactory callbackFactory;
 
     public AbstractAuthorizeMessageProcessor()
     {
@@ -48,26 +43,26 @@ public abstract class AbstractAuthorizeMessageProcessor extends AbstractDevkitBa
 
     protected abstract String getAuthCodeRegex();
 
+    @Override
+    public void start() throws MuleException
+    {
+        if (this.callbackFactory == null) {
+            this.callbackFactory = new DefaultHttpCallbackFactory();
+        }
+    }
+    
     protected void startCallback(HttpCallbackAdapter adapter,
                                  FetchAccessTokenMessageProcessor fetchAccessTokenMessageProcessor)
         throws MuleException
     {
-        if (oauthCallback == null)
+        if (this.oauthCallback == null)
         {
-            oauthCallback = new DefaultHttpCallback(this.buildCallbackProcessorList(
-                new ExtractAuthorizationCodeMessageProcessor(Pattern.compile(this.getAuthCodeRegex())),
-                fetchAccessTokenMessageProcessor, this.listener), getMuleContext(), adapter.getDomain(),
-                adapter.getLocalPort(), adapter.getRemotePort(), adapter.getPath(), adapter.getAsync(),
-                getFlowConstruct().getExceptionListener(), adapter.getConnector());
-
-            fetchAccessTokenMessageProcessor.setRedirectUri(oauthCallback.getUrl());
-            oauthCallback.start();
+            this.oauthCallback = this.callbackFactory.createCallback(adapter, this.getAuthCodeRegex(),
+                fetchAccessTokenMessageProcessor, this.listener, muleContext, flowConstruct);
+            this.oauthCallback.start();
         }
-    }
-
-    protected List<MessageProcessor> buildCallbackProcessorList(MessageProcessor... processors)
-    {
-        return Arrays.asList(processors);
+        
+        fetchAccessTokenMessageProcessor.setRedirectUri(this.oauthCallback.getUrl());
     }
 
     protected void notifyAuthorizeStart(MuleEvent event)
@@ -176,6 +171,11 @@ public abstract class AbstractAuthorizeMessageProcessor extends AbstractDevkitBa
     public String getState()
     {
         return state;
+    }
+    
+    public void setCallbackFactory(HttpCallbackFactory callbackFactory)
+    {
+        this.callbackFactory = callbackFactory;
     }
 
 }

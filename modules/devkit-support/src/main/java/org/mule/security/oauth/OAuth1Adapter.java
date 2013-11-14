@@ -1,19 +1,17 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.security.oauth;
 
 import oauth.signpost.OAuthConsumer;
 
 import org.mule.common.security.oauth.exception.UnableToAcquireAccessTokenException;
 import org.mule.common.security.oauth.exception.UnableToAcquireRequestTokenException;
+import org.mule.security.oauth.callback.RestoreAccessTokenCallback;
+import org.mule.security.oauth.callback.SaveAccessTokenCallback;
 
 import java.util.Map;
 
@@ -62,6 +60,34 @@ public interface OAuth1Adapter extends OAuthAdapter, OAuth1Connector
                                  String accessTokenUrl,
                                  String authorizationUrl,
                                  String redirectUri) throws UnableToAcquireAccessTokenException;
+    
+    /**
+     * Set the callback to be called when the access token and secret need to be
+     * saved for later restoration
+     * 
+     * @param saveCallback Callback to be called
+     */
+    public void setOauthSaveAccessToken(SaveAccessTokenCallback saveCallback);
+
+    /**
+     * Set the callback to be called when the access token and secret need to be
+     * restored
+     * 
+     * @param restoreCallback Callback to be called
+     */
+    public void setOauthRestoreAccessToken(RestoreAccessTokenCallback restoreCallback);
+
+    /**
+     * Get the callback to be called when the access token and secret need to be
+     * saved for later restoration
+     */
+    public SaveAccessTokenCallback getOauthSaveAccessToken();
+
+    /**
+     * Get the callback to be called when the access token and secret need to be
+     * restored
+     */
+    public RestoreAccessTokenCallback getOauthRestoreAccessToken();
 
     /**
      * Retrieves the accessTokenSecret

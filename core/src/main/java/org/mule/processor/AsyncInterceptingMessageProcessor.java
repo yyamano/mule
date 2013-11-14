@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.processor;
 
 import org.mule.VoidMuleEvent;
@@ -15,6 +11,7 @@ import org.mule.api.MessagingException;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
 import org.mule.api.config.ThreadingProfile;
+import org.mule.api.construct.MessageProcessorPathResolver;
 import org.mule.api.construct.Pipeline;
 import org.mule.api.context.WorkManager;
 import org.mule.api.context.WorkManagerSource;
@@ -160,9 +157,10 @@ public class AsyncInterceptingMessageProcessor extends AbstractInterceptingMessa
         if (event.getFlowConstruct() instanceof Pipeline)
         {
             muleContext.getNotificationManager().fireNotification(
-                new AsyncMessageNotification((Pipeline) event.getFlowConstruct(), event, next,
-                    AsyncMessageNotification.PROCESS_ASYNC_SCHEDULED));
+                    new AsyncMessageNotification(event.getFlowConstruct(), event, next,
+                                                 AsyncMessageNotification.PROCESS_ASYNC_SCHEDULED));
         }
+
     }
 
     class AsyncMessageProcessorWorker extends AbstractMuleEventWork
@@ -222,10 +220,10 @@ public class AsyncInterceptingMessageProcessor extends AbstractInterceptingMessa
 
     protected void firePipelineNotification(MuleEvent event, MessagingException exception)
     {
-        if (event.getFlowConstruct() instanceof Pipeline)
+        if (event.getFlowConstruct() instanceof MessageProcessorPathResolver)
         {
             muleContext.getNotificationManager().fireNotification(
-                new AsyncMessageNotification((Pipeline) event.getFlowConstruct(), event,
+                new AsyncMessageNotification(event.getFlowConstruct(), event,
                     next, AsyncMessageNotification.PROCESS_ASYNC_COMPLETE, exception));
         }
     }

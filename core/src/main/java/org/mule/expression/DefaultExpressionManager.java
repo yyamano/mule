@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.expression;
 
 import org.mule.api.MuleContext;
@@ -35,7 +31,6 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -673,5 +668,10 @@ public class DefaultExpressionManager implements ExpressionManager, MuleContextA
     public void setExpressionLanguage(ExpressionLanguage expressionLanguage)
     {
         this.expressionLanguage = expressionLanguage;
+    }
+
+    public ExpressionLanguage getExpressionLanguage()
+    {
+        return expressionLanguage;
     }
 }

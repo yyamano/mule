@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.mule.transports</groupId>
         <artifactId>mule-transports</artifactId>
-        <version>3.5.0-M1-SNAPSHOT</version>
+        <version>3.5.0-M3-SNAPSHOT</version>
     </parent>
     <artifactId>mule-transport-email</artifactId>
     <packaging>jar</packaging>
@@ -12,6 +12,10 @@
     <description>A Mule transport for Email Connectivity. This transport supplies a Pop3 connector, Smtp connector and a
         Mail connector which is an aggregation of the two.
     </description>
+
+    <properties>
+        <licensePath>../../LICENSE_HEADER.txt</licensePath>
+    </properties>
 
     <build>
         <plugins>

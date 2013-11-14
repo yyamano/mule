@@ -1,19 +1,17 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.transport.http.transformers;
 
 import org.mule.RequestContext;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleMessage;
+import org.mule.api.MuleMessageCollection;
 import org.mule.api.config.MuleProperties;
+import org.mule.api.transformer.DataType;
 import org.mule.api.transformer.TransformerException;
 import org.mule.api.transport.OutputHandler;
 import org.mule.api.transport.PropertyScope;
@@ -44,7 +42,6 @@ import javax.activation.DataHandler;
 import javax.activation.FileDataSource;
 import javax.activation.URLDataSource;
 
-import org.apache.commons.httpclient.ContentLengthInputStream;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpVersion;
 import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
@@ -121,7 +118,7 @@ public class ObjectToHttpClientMethodRequest extends AbstractMessageTransformer
             }
             else if (HttpConstants.METHOD_PATCH.equalsIgnoreCase(method))
             {
-                httpMethod = createPatchMethod(msg);
+                httpMethod = createPatchMethod(msg, outputEncoding);
             }
             else
             {
@@ -302,10 +299,15 @@ public class ObjectToHttpClientMethodRequest extends AbstractMessageTransformer
         return new TraceMethod(uri.toString());
     }
 
-    protected HttpMethod createPatchMethod(MuleMessage message) throws Exception
+    protected HttpMethod createPatchMethod(MuleMessage message, String outputEncoding) throws Exception
     {
         URI uri = getURI(message);
-        return new PatchMethod(uri.toString());
+        PatchMethod patchMethod = new PatchMethod(uri.toString());
+
+        Object payload = message.getPayload();
+        setupEntityMethod(payload, outputEncoding, message, patchMethod);
+        checkForContentType(message, patchMethod);
+        return patchMethod;
     }
 
     protected URI getURI(MuleMessage message) throws URISyntaxException, TransformerException
@@ -356,7 +358,14 @@ public class ObjectToHttpClientMethodRequest extends AbstractMessageTransformer
             {
                 try
                 {
-                    src = msg.getPayloadAsBytes();
+                    if (msg instanceof MuleMessageCollection)
+                    {
+                        src = msg.getPayload(DataType.BYTE_ARRAY_DATA_TYPE);
+                    }
+                    else
+                    {
+                        src = msg.getPayloadAsBytes();
+                    }
                 }
                 catch (final Exception e)
                 {
@@ -386,11 +395,6 @@ public class ObjectToHttpClientMethodRequest extends AbstractMessageTransformer
             if (src instanceof InputStream)
             {
                 postMethod.setRequestEntity(new InputStreamRequestEntity((InputStream) src, outboundMimeType));
-                // chunking a ContentLenghtInputStream results on content being corrupted
-                if (!(src instanceof ContentLengthInputStream))
-                {
-                    postMethod.setContentChunked(true);
-                }
             }
             else if (src instanceof byte[])
             {
@@ -485,7 +489,7 @@ public class ObjectToHttpClientMethodRequest extends AbstractMessageTransformer
                         fileName = fileName.substring(x + 1);
                     }
                 }
-                parts[i] = new FilePart(dh.getName(), new ByteArrayPartSource(fileName,
+                parts[i] = new FilePart(fileName, new ByteArrayPartSource(fileName,
                     IOUtils.toByteArray(dh.getInputStream())), dh.getContentType(), null);
             }
         }

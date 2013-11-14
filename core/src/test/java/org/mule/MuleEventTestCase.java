@@ -1,15 +1,12 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -32,7 +29,9 @@ import org.mule.tck.junit4.AbstractMuleContextTestCase;
 import org.mule.transformer.AbstractTransformer;
 import org.mule.transformer.simple.ByteArrayToObject;
 import org.mule.transformer.simple.SerializableToByteArray;
+import org.mule.util.SerializationUtils;
 
+import java.io.ByteArrayInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -291,6 +290,22 @@ public class MuleEventTestCase extends AbstractMuleContextTestCase
             muleContext.getRegistry().lookupEndpointBuilder("epBuilderTest"));
         Service service = muleContext.getRegistry().lookupService("appleService");
         return RequestContext.setEvent(getTestEvent("payload", service, endpoint));
+    }
+
+
+    @Test
+    public void testMuleEventSerializationWithRawPayload() throws Exception
+    {
+        StringBuilder payload = new StringBuilder();
+        //to reproduce issue we must try to serialize something with a payload bigger than 1020 bytes
+        for (int i = 0; i < 108; i++)
+        {
+            payload.append("1234567890");
+        }
+        MuleEvent testEvent = getTestEvent(new ByteArrayInputStream(payload.toString().getBytes()));
+        byte[] serializedEvent = SerializationUtils.serialize(testEvent);
+        testEvent  = (MuleEvent)SerializationUtils.deserialize(serializedEvent);
+        assertArrayEquals((byte[])testEvent.getMessage().getPayload(), payload.toString().getBytes());
     }
 
     private void createAndRegisterTransformersEndpointBuilderService() throws Exception

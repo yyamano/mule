@@ -1,18 +1,15 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.el.mvel;
 
 import org.mule.api.MuleContext;
 import org.mule.api.el.ExpressionLanguageExtension;
 
+import java.util.Collection;
 import java.util.Map.Entry;
 
 import org.mvel2.ParserContext;
@@ -27,12 +24,12 @@ public class GlobalVariableResolverFactory extends MVELExpressionLanguageContext
     public GlobalVariableResolverFactory(MVELExpressionLanguage el,
                                          MVELExpressionLanguageContext parent,
                                          ParserContext parserContext,
-                                         MuleContext muleContext)
+                                         MuleContext muleContext,
+                                         Collection<ExpressionLanguageExtension> expressionLanguageExtensions)
     {
         super(parserContext, muleContext);
         this.parent = parent;
-        for (ExpressionLanguageExtension extension : muleContext.getRegistry().lookupObjectsForLifecycle(
-            ExpressionLanguageExtension.class))
+        for (ExpressionLanguageExtension extension : expressionLanguageExtensions)
         {
             extension.configureContext(parent);
         }

@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.security.oauth.processor;
 
 import org.mule.api.MessagingException;
@@ -26,6 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.util.StringUtils;
+
 public abstract class BaseOAuth2AuthorizeMessageProcessor<T extends OAuth2Manager<OAuth2Adapter>> extends
     AbstractAuthorizeMessageProcessor
 {
@@ -35,9 +33,22 @@ public abstract class BaseOAuth2AuthorizeMessageProcessor<T extends OAuth2Manage
     @Override
     public final void start() throws MuleException
     {
+        super.start();
+
         OAuth2Manager<OAuth2Adapter> module = this.getOAuthManager();
+
+        String accessTokenId = this.getAccessTokenId();
+        if (StringUtils.isEmpty(accessTokenId))
+        {
+            accessTokenId = module.getDefaultAccessTokenId();
+            if (StringUtils.isEmpty(accessTokenId))
+            {
+                accessTokenId = module.getDefaultUnauthorizedConnector().getName();
+            }
+        }
+
         FetchAccessTokenMessageProcessor fetchAccessTokenMessageProcessor = new OAuth2FetchAccessTokenMessageProcessor(
-            (OAuth2Manager<OAuth2Adapter>) module, this.getAccessTokenId());
+            (OAuth2Manager<OAuth2Adapter>) module, accessTokenId);
 
         this.startCallback(module, fetchAccessTokenMessageProcessor);
 
@@ -83,14 +94,14 @@ public abstract class BaseOAuth2AuthorizeMessageProcessor<T extends OAuth2Manage
 
     private void setState(Map<String, String> extraParameters, MuleEvent event)
     {
-        String state = this.getState();
+        String state = String.format(OAuthProperties.EVENT_STATE_TEMPLATE, event.getId());
 
-        if (state != null)
+        if (this.getState() != null)
         {
-            state = String.format(OAuthProperties.EVENT_STATE_TEMPLATE, event.getId())
-                    + this.toString(event, state);
-            extraParameters.put("state", state);
+            state += this.toString(event, this.getState());
         }
+
+        extraParameters.put("state", state);
     }
 
     private Map<String, String> getExtraParameters(MuleEvent event, OAuth2Manager<OAuth2Adapter> moduleObject)
@@ -123,9 +134,13 @@ public abstract class BaseOAuth2AuthorizeMessageProcessor<T extends OAuth2Manage
                 try
                 {
                     Object value = field.get(this);
-                    Object transformed = this.evaluateAndTransform(getMuleContext(), event,
-                        parameter.getType(), null, value);
-                    extraParameters.put(parameter.getName(), this.toString(event, transformed).toLowerCase());
+                    if (value != null)
+                    {
+                        Object transformed = this.evaluateAndTransform(getMuleContext(), event,
+                            parameter.getType(), null, value);
+                        extraParameters.put(parameter.getName(), this.toString(event, transformed)
+                            .toLowerCase());
+                    }
                 }
                 catch (IllegalAccessException e)
                 {
@@ -136,7 +151,6 @@ public abstract class BaseOAuth2AuthorizeMessageProcessor<T extends OAuth2Manage
         }
 
         return extraParameters;
-
     }
 
     @SuppressWarnings("unchecked")

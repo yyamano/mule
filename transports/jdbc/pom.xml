@@ -4,12 +4,16 @@
     <parent>
         <groupId>org.mule.transports</groupId>
         <artifactId>mule-transports</artifactId>
-        <version>3.5.0-M1-SNAPSHOT</version>
+        <version>3.5.0-M3-SNAPSHOT</version>
     </parent>
     <artifactId>mule-transport-jdbc</artifactId>
     <packaging>jar</packaging>
     <name>JDBC Transport</name>
     <description>A Mule transport for JDBC connectivity.</description>
+
+    <properties>
+        <licensePath>../../LICENSE_HEADER.txt</licensePath>
+    </properties>
 
     <build>
          <plugins>
@@ -41,7 +45,12 @@
         <dependency>
             <groupId>com.experlog</groupId>
             <artifactId>xapool</artifactId>
-            <version>${xaPoolVersion}-osgi</version>
+            <version>${xaPoolVersion}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mule.modules</groupId>
+            <artifactId>mule-module-bti</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- Unit tests -->

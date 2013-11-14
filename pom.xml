@@ -5,7 +5,7 @@
     <groupId>org.mule</groupId>
     <artifactId>mule</artifactId>
     <packaging>pom</packaging>
-    <version>3.5.0-M1-SNAPSHOT</version>
+    <version>3.5.0-M3-SNAPSHOT</version>
 
     <!-- Organization -->
     <organization>
@@ -61,7 +61,9 @@
     </modules>
 
     <properties>
+        
         <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
+        <licensePath>LICENSE_HEADER.txt</licensePath>
         <coberturaVersion>2.5</coberturaVersion>
         <eclipsePluginVersion>2.5.1</eclipsePluginVersion>
         <gmavenPluginVersion>1.4</gmavenPluginVersion>
@@ -86,9 +88,11 @@
         <antlrVersion>3.1.1</antlrVersion>
         <asmVersion>3.3.1</asmVersion>
         <aspectjVersion>1.6.11</aspectjVersion>
+        <bitronixTMVersion>2.1.4</bitronixTMVersion>
         <bshVersion>2.0b4</bshVersion>
         <bouncycastleVersion>1.46</bouncycastleVersion>
         <cglibVersion>2.2</cglibVersion>
+        <cometdVersion>6.1.26</cometdVersion>
         <commonsBeanUtilsVersion>1.8.0</commonsBeanUtilsVersion>
         <commonsCliVersion>1.2</commonsCliVersion>
         <commonsCodecVersion>1.3</commonsCodecVersion>
@@ -105,13 +109,14 @@
         <cryptixJceVersion>20050328</cryptixJceVersion>
         <cryptixVersion>20050405</cryptixVersion>
         <cxfVersion>2.5.9</cxfVersion>
-        <derbyVersion>10.6.1.0</derbyVersion>
+        <derbyVersion>10.9.1.0</derbyVersion>
         <dom4jVersion>1.6.1</dom4jVersion>
         <flatpackVersion>3.1.1</flatpackVersion>
         <geronimoSpecsVersion>1.1</geronimoSpecsVersion>
         <geronimoSpecsJtaVersion>1.1.1</geronimoSpecsJtaVersion>
-        <geronimoSpecsAnnotationVersion>1.1.1</geronimoSpecsAnnotationVersion>
+        <geronimoSpecsAnnotationVersion>1.0.1</geronimoSpecsAnnotationVersion>
         <geronimoSpecsStaxVersion>1.0.1</geronimoSpecsStaxVersion>
+        <geronimoSpecsServletApiVersion>1.0</geronimoSpecsServletApiVersion>
         <geronimoSpecsWsMetadataVersion>1.1.2</geronimoSpecsWsMetadataVersion>
         <hibernateVersion>3.6.0.Final</hibernateVersion>
         <jacksonVersion>1.9.11</jacksonVersion>
@@ -127,10 +132,9 @@
         <jbpmVersion>4.4</jbpmVersion>
         <jcrVersion>1.0</jcrVersion>
         <jdomVersion>1.1.3</jdomVersion>
-        <jettyVersion>6.1.26</jettyVersion>
-        <jettyServletApiVersion>2.5-20081211</jettyServletApiVersion>
+        <jettyVersion>8.1.13.v20130916</jettyVersion>
         <jodaTimeVersion>1.6</jodaTimeVersion>
-        <jschVersion>0.1.44-1</jschVersion>
+        <jschVersion>0.1.50</jschVersion>
         <jsr181Version>1.0-MR1</jsr181Version>
         <jsr250AnnotationVerson>1.0</jsr250AnnotationVerson>
         <log4jVersion>1.2.16</log4jVersion>
@@ -143,7 +147,7 @@
         <oroVersion>2.0.8</oroVersion>
         <quartzVersion>1.8.5</quartzVersion>
         <saajVersion>1.3</saajVersion>
-        <saxonVersion>8.9.0.4</saxonVersion>
+        <saxonVersion>9.1.0.8</saxonVersion>
         <slf4jVersion>1.6.1</slf4jVersion>
         <smackVersion>3.1.0</smackVersion>
         <springOsgiVersion>1.0.2</springOsgiVersion>
@@ -160,7 +164,6 @@
         <wrapperVersion>3.2.3</wrapperVersion>
         <xalanVersion>2.7.1</xalanVersion>
         <xmlPullVersion>1.1.3.4.O</xmlPullVersion>
-        <xmlResolverVersion>1.2</xmlResolverVersion>
         <xmlSecurityVersion>1.5.3</xmlSecurityVersion>
         <xstreamVersion>1.4.2</xstreamVersion>
         <xaPoolVersion>1.5.0</xaPoolVersion>
@@ -170,13 +173,11 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <!-- OSGi-ready -->
                 <groupId>org.apache.geronimo.specs</groupId>
-                <artifactId>geronimo-annotation_1.0_spec</artifactId>
+                <artifactId>geronimo-annotation_1.1_spec</artifactId>
                 <version>${geronimoSpecsAnnotationVersion}</version>
             </dependency>
             <dependency>
-                <!-- OSGi-ready -->
                 <groupId>org.apache.geronimo.specs</groupId>
                 <artifactId>geronimo-stax-api_1.0_spec</artifactId>
                 <version>${geronimoSpecsStaxVersion}</version>
@@ -322,60 +323,109 @@
                 </exclusions>
             </dependency>
             <dependency>
-                <!-- OSGi-ready -->
-                <groupId>org.mortbay.jetty</groupId>
-                <artifactId>jetty</artifactId>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-server</artifactId>
                 <version>${jettyVersion}</version>
                 <exclusions>
                     <exclusion>
-                        <groupId>org.mortbay.jetty</groupId>
-                        <artifactId>servlet-api</artifactId>
+                        <groupId>org.eclipse.jetty.orbit</groupId>
+                        <artifactId>javax.servlet</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
             <dependency>
-                <!-- OSGi-ready -->
-                <groupId>org.mortbay.jetty</groupId>
+                <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-util</artifactId>
                 <version>${jettyVersion}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.mortbay.jetty</groupId>
-                        <artifactId>servlet-api</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
-                <groupId>org.mortbay.jetty</groupId>
-                <artifactId>servlet-api</artifactId>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-continuation</artifactId>
+                <version>${jettyVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-deploy</artifactId>
+                <version>${jettyVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-servlet</artifactId>
+                <version>${jettyVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-webapp</artifactId>
+                <version>${jettyVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-client</artifactId>
+                <version>${jettyVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-security</artifactId>
+                <version>${jettyVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.geronimo.specs</groupId>
+                <artifactId>geronimo-servlet_3.0_spec</artifactId>
                 <!-- servlet api jar is versioned differently -->
-                <version>${jettyServletApiVersion}</version>
+                <version>${geronimoSpecsServletApiVersion}</version>
             </dependency>
             <dependency>
-                <groupId>org.mortbay.jetty</groupId>
+                <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-annotations</artifactId>
                 <version>${jettyVersion}</version>
                 <exclusions>
                     <exclusion>
-                        <groupId>geronimo-spec</groupId>
-                        <artifactId>geronimo-spec-jta</artifactId>
+                        <groupId>org.eclipse.jetty.orbit</groupId>
+                        <artifactId>javax.activation</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.eclipse.jetty.orbit</groupId>
+                        <artifactId>javax.annotation</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.eclipse.jetty.orbit</groupId>
+                        <artifactId>javax.mail.glassfish</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.eclipse.jetty.orbit</groupId>
+                        <artifactId>javax.transaction</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.eclipse.jetty.orbit</groupId>
+                        <artifactId>org.objectweb.asm</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.mortbay.jetty</groupId>
                 <artifactId>cometd-server</artifactId>
-                <version>${jettyVersion}</version>
+                <version>${cometdVersion}</version>
             </dependency>
             <dependency>
                 <groupId>org.mortbay.jetty</groupId>
                 <artifactId>cometd-client</artifactId>
-                <version>${jettyVersion}</version>
+                <version>${cometdVersion}</version>
+                <exclusions>
+                   <exclusion>
+                       <groupId>org.mortbay.jetty</groupId>
+                       <artifactId>servlet-api</artifactId>
+                   </exclusion>
+               </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.yourkit</groupId>
                 <artifactId>yjp-controller-api-redist</artifactId>
                 <version>9.0.8</version>
+            </dependency>
+            <dependency>
+                <groupId>org.codehaus.btm</groupId>
+                <artifactId>btm</artifactId>
+                <version>${bitronixTMVersion}</version>
             </dependency>
             <!-- For unit tests only -->
             <dependency>
@@ -539,22 +589,22 @@
             <dependency>
                 <groupId>org.apache.geronimo.specs</groupId>
                 <artifactId>geronimo-ejb_2.1_spec</artifactId>
-                <version>${geronimoSpecsVersion}-osgi</version>
+                <version>${geronimoSpecsVersion}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.geronimo.specs</groupId>
                 <artifactId>geronimo-j2ee-connector_1.5_spec</artifactId>
-                <version>${geronimoSpecsVersion}-osgi</version>
+                <version>${geronimoSpecsVersion}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.geronimo.specs</groupId>
                 <artifactId>geronimo-j2ee-management_1.0_spec</artifactId>
-                <version>${geronimoSpecsVersion}-osgi</version>
+                <version>${geronimoSpecsVersion}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.geronimo.specs</groupId>
                 <artifactId>geronimo-jms_1.1_spec</artifactId>
-                <version>${geronimoSpecsVersion}-osgi</version>
+                <version>${geronimoSpecsVersion}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.geronimo.specs</groupId>
@@ -579,7 +629,7 @@
             <dependency>
                 <groupId>javax.xml.bind</groupId>
                 <artifactId>jaxb-api</artifactId>
-                <version>${jaxbApiVersion}-osgi</version>
+                <version>${jaxbApiVersion}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>javax.xml.stream</groupId>
@@ -595,27 +645,27 @@
             <dependency>
                 <groupId>com.sun.xml.bind</groupId>
                 <artifactId>jaxb-xjc</artifactId>
-                <version>${javaXmlBindVersion}-osgi</version>
+                <version>${javaXmlBindVersion}</version>
             </dependency>
             <dependency>
                 <groupId>com.sun.xml.bind</groupId>
                 <artifactId>jaxb-impl</artifactId>
-                <version>${javaXmlBindVersion}-osgi</version>
+                <version>${javaXmlBindVersion}</version>
             </dependency>
             <dependency>
                 <groupId>javax.xml.soap</groupId>
                 <artifactId>saaj-api</artifactId>
-                <version>${saajVersion}-osgi</version>
+                <version>${saajVersion}</version>
             </dependency>
             <dependency>
                 <groupId>com.sun.xml.messaging.saaj</groupId>
                 <artifactId>saaj-impl</artifactId>
-                <version>${saajVersion}-osgi</version>
+                <version>${saajVersion}</version>
             </dependency>
             <dependency>
                 <groupId>net.java.dev.stax-utils</groupId>
                 <artifactId>stax-utils</artifactId>
-                <version>${staxUtilsVersion}-osgi</version>
+                <version>${staxUtilsVersion}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>com.bea.xml</groupId>
@@ -642,7 +692,7 @@
             <dependency>
                 <groupId>commons-codec</groupId>
                 <artifactId>commons-codec</artifactId>
-                <version>${commonsCodecVersion}-osgi</version>
+                <version>${commonsCodecVersion}</version>
                 <exclusions>
                     <exclusion>
                         <artifactId>commons-logging</artifactId>
@@ -658,7 +708,7 @@
             <dependency>
                 <groupId>commons-httpclient</groupId>
                 <artifactId>commons-httpclient</artifactId>
-                <version>${commonsHttpClientVersion}-osgi</version>
+                <version>${commonsHttpClientVersion}</version>
                 <exclusions>
                     <exclusion>
                         <artifactId>commons-logging</artifactId>
@@ -690,7 +740,7 @@
             <dependency>
                 <groupId>commons-jxpath</groupId>
                 <artifactId>commons-jxpath</artifactId>
-                <version>${commonsJxpathVersion}-osgi</version>
+                <version>${commonsJxpathVersion}</version>
                 <exclusions>
                     <!-- we want newer beanutils via core -->
                     <exclusion>
@@ -712,23 +762,23 @@
                         <groupId>xerces</groupId>
                         <artifactId>xerces</artifactId>
                     </exclusion>
+                    <!-- not required; likely a m1 POM conversion bug -->
                     <exclusion>
-                        <!-- not required; likely a m1 POM conversion bug -->
                         <groupId>ant</groupId>
                         <artifactId>ant-optional</artifactId>
                     </exclusion>
+                    <!-- exclude older jdom-b9 -->
                     <exclusion>
-                        <!-- exclude older jdom-b9 -->
                         <groupId>jdom</groupId>
                         <artifactId>jdom</artifactId>
                     </exclusion>
+                    <!-- exclude older Servlet 2.2 spec jar -->
                     <exclusion>
-                        <!-- exclude older Servlet 2.2 spec jar -->
                         <groupId>javax.servlet</groupId>
                         <artifactId>servlet-api</artifactId>
                     </exclusion>
+                    <!-- exclude older Servlet 2.2 spec jar -->
                     <exclusion>
-                        <!-- exclude older Servlet 2.2 spec jar -->
                         <groupId>servlet</groupId>
                         <artifactId>servlet-api</artifactId>
                     </exclusion>
@@ -859,13 +909,6 @@
                 <version>1.2.1</version>
             </dependency>
             <dependency>
-                <groupId>javax.script</groupId>
-                <artifactId>script-api</artifactId>
-                <version>1.0-osgi</version>
-                <!-- we use our own retrotranslated version -->
-                <classifier>jdk14</classifier>
-            </dependency>
-            <dependency>
                 <groupId>tanukisoft</groupId>
                 <artifactId>wrapper</artifactId>
                 <version>${wrapperVersion}</version>
@@ -895,7 +938,7 @@
             <dependency>
                 <groupId>dom4j</groupId>
                 <artifactId>dom4j</artifactId>
-                <version>${dom4jVersion}-osgi</version>
+                <version>${dom4jVersion}</version>
                 <exclusions>
                     <exclusion>
                         <groupId>xml-apis</groupId>
@@ -926,7 +969,7 @@
             <dependency>
                 <groupId>jaxen</groupId>
                 <artifactId>jaxen</artifactId>
-                <version>${jaxenVersion}-osgi</version>
+                <version>${jaxenVersion}</version>
             </dependency>
             <!--
                 override the wss4j version that's used in the cxf module and
@@ -977,39 +1020,29 @@
                 <version>${xmlSecurityVersion}</version>
             </dependency>
             <dependency>
-                <groupId>xml-resolver</groupId>
-                <artifactId>xml-resolver</artifactId>
-                <version>${xmlResolverVersion}-osgi</version>
-            </dependency>
-            <dependency>
                 <groupId>mx4j</groupId>
                 <artifactId>mx4j-jmx</artifactId>
-                <version>${mx4jVersion}-osgi</version>
+                <version>${mx4jVersion}</version>
             </dependency>
             <dependency>
                 <groupId>mx4j</groupId>
                 <artifactId>mx4j-impl</artifactId>
-                <version>${mx4jVersion}-osgi</version>
+                <version>${mx4jVersion}</version>
             </dependency>
             <dependency>
                 <groupId>mx4j</groupId>
                 <artifactId>mx4j-tools</artifactId>
-                <version>${mx4jVersion}-osgi</version>
+                <version>${mx4jVersion}</version>
             </dependency>
             <dependency>
                 <groupId>mx4j</groupId>
                 <artifactId>mx4j-remote</artifactId>
-                <version>${mx4jVersion}-osgi</version>
+                <version>${mx4jVersion}</version>
             </dependency>
             <dependency>
                 <groupId>asm</groupId>
                 <artifactId>asm</artifactId>
                 <version>${asmVersion}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.beanshell</groupId>
-                <artifactId>bsh</artifactId>
-                <version>${bshVersion}-osgi</version>
             </dependency>
             <!-- BouncyCastle deps -->
             <dependency>
@@ -1794,6 +1827,60 @@
                     </reportPlugins>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>com.mycila.maven-license-plugin</groupId>
+                <artifactId>maven-license-plugin</artifactId>
+                <version>1.9.0</version>
+                <configuration>
+                    <header>${licensePath}</header>
+                    <excludes>
+                        <exclude>target/**</exclude>
+                        <exclude>**/.gitignore</exclude>
+                        <exclude>**/*.txt</exclude>
+                        <exclude>**/*.groovy</exclude>
+                        <exclude>**/*.sh</exclude>
+                        <exclude>**/*.bat</exclude>
+                        <exclude>**/*.ftl</exclude>
+                        <exclude>**/*.xml</exclude>
+                        <exclude>**/*.properties</exclude>
+                        <exclude>**/*.sample</exclude>
+                        <exclude>**/*.md</exclude>
+                        <exclude>**/*.xsl</exclude>
+                        <exclude>**/*.html</exclude>
+                        <exclude>**/*.css</exclude>
+                        <exclude>**/build-number.txt</exclude>
+
+                        <exclude>**/BndMojo.java</exclude>
+                        <exclude>**/BobberArchetype.java</exclude>
+                        <exclude>**/BobberArchetypeMojo.java</exclude>
+                        <exclude>**/DummySSLServerSocketFactory.java</exclude>
+                        <exclude>**/ConfigurationPatternArchetypeMojo.java</exclude>
+                        <exclude>**/ModuleArchetypeMojo.java</exclude>
+                        <exclude>**/MultipartConfiguration.java</exclude>
+
+                        <exclude>**/ParamReader.java</exclude>
+                        <exclude>**/Part.java</exclude>
+                        <exclude>**/ProjectArchetypeMojo.java</exclude>
+                        <exclude>**/TransportArchetypeMojo.java</exclude>
+                        <exclude>**/XMLStreamReaderToContentHandler.java</exclude>
+                        <exclude>**/__artifactId__IBean.java</exclude>
+                        <exclude>**/__artifactId__IBeanTestCase.java</exclude>
+                    </excludes>
+                    <includes>
+                        <include>**/*.java</include>
+                    </includes>
+                    <mapping>
+                        <java>SLASHSTAR_STYLE</java>
+                    </mapping>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -2005,12 +2092,12 @@
                 <repository>
                     <id>mule-ee-releases</id>
                     <name>Mule Release Repository</name>
-                    <url>http://dev.ee.mulesource.com/repository/content/repositories/releases/</url>
+                    <url>https://repository-master.mulesoft.org/nexus/content/repositories/ci-releases</url>
                 </repository>
                 <snapshotRepository>
                     <id>mule-ee-snapshots</id>
                     <name>Mule Snapshot Repository</name>
-                    <url>http://dev.ee.mulesource.com/repository/content/repositories/snapshots/</url>
+                    <url>https://repository-master.mulesoft.org/nexus/content/repositories/ci-snapshots</url>
                     <uniqueVersion>false</uniqueVersion>
                 </snapshotRepository>
             </distributionManagement>
@@ -2024,7 +2111,7 @@
                 <repository>
                     <id>mule-ee-customer-releases</id>
                     <name>Mule Release Repository</name>
-                    <url>https://repository.mulesoft.org/nexus-ee/content/repositories/releases-ee/</url>
+                    <url>https://repository-master.mulesoft.org/nexus/content/repositories/releases-ee</url>
                 </repository>
             </distributionManagement>
         </profile>

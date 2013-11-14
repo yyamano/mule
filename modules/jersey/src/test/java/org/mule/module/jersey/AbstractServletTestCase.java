@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.module.jersey;
 
 import static org.junit.Assert.assertEquals;
@@ -26,10 +22,10 @@ import java.util.Map;
 
 import javax.servlet.ServletContext;
 
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.junit.Rule;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.servlet.Context;
-import org.mortbay.jetty.servlet.ServletHolder;
 
 public abstract class AbstractServletTestCase extends AbstractServiceAndFlowTestCase
 {
@@ -52,7 +48,7 @@ public abstract class AbstractServletTestCase extends AbstractServiceAndFlowTest
 
         httpServer = new Server(httpPort.getNumber());
 
-        Context root = new Context(httpServer,"/",Context.SESSIONS);
+        ServletContextHandler root = new ServletContextHandler(httpServer, "/", ServletContextHandler.SESSIONS);
         ServletHolder holder = new ServletHolder(MuleReceiverServlet.class);
         root.addServlet(holder, context);
 

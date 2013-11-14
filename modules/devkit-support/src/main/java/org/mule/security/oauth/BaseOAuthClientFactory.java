@@ -1,8 +1,5 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
@@ -18,6 +15,7 @@ import org.mule.api.lifecycle.Stoppable;
 import org.mule.api.store.ObjectStore;
 import org.mule.api.store.ObjectStoreException;
 import org.mule.common.security.oauth.OAuthState;
+import org.mule.common.security.oauth.exception.NotAuthorizedException;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -26,12 +24,13 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
 
 import org.apache.commons.pool.KeyedPoolableObjectFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class BaseOAuthClientFactory implements KeyedPoolableObjectFactory
+public abstract class BaseOAuthClientFactory implements KeyedPoolableObjectFactory<String, OAuth2Adapter>
 {
 
     private static transient Logger logger = LoggerFactory.getLogger(BaseOAuthClientFactory.class);
@@ -107,23 +106,30 @@ public abstract class BaseOAuthClientFactory implements KeyedPoolableObjectFacto
      * {@link org.mule.security.oauth.OAuth2Connector.postAuth()} method is invoked.
      * 
      * @param the key of the object at the object store
-     * @throws IllegalArgumentException if key is not a String
      */
     @Override
-    public final Object makeObject(Object key) throws Exception
+    public final OAuth2Adapter makeObject(String key) throws Exception
     {
-        if (!(key instanceof String))
-        {
-            throw new IllegalArgumentException("Invalid key type");
-        }
+        OAuthState state = null;
+        Lock lock = this.getLock(key);
+        lock.lock();
 
-        if (!this.objectStore.contains(((String) key)))
+        try
         {
-            throw new RuntimeException(
-                (("There is no access token stored under the key " + ((String) key)) + ". You need to call the <authorize> message processor. The key will be given to you via a flow variable after the OAuth dance is completed. You can extract it using flowVars['tokenId']."));
-        }
+            if (!this.objectStore.contains(key))
+            {
+                throw new NotAuthorizedException(
+                    String.format(
+                        "There is no access token stored under the key %s . You need to call the <authorize> message processor. The key will be given to you via a flow variable after the OAuth dance is completed. You can extract it using flowVars['tokenId'].",
+                        key));
+            }
 
-        OAuthState state = this.retrieveOAuthState((String) key, true);
+            state = this.retrieveOAuthState(key, true);
+        }
+        finally
+        {
+            lock.unlock();
+        }
 
         OAuth2Adapter connector = this.getAdapterClass()
             .getConstructor(OAuth2Manager.class)
@@ -151,7 +157,7 @@ public abstract class BaseOAuthClientFactory implements KeyedPoolableObjectFacto
             ((Startable) connector).start();
         }
 
-        connector.postAuth();
+        this.oauthManager.postAuth(connector, key);
         return connector;
     }
 
@@ -182,7 +188,7 @@ public abstract class BaseOAuthClientFactory implements KeyedPoolableObjectFacto
         }
         catch (ObjectStoreException e)
         {
-            throw new RuntimeException("Error retrievin value from object store with key " + key, e);
+            throw new RuntimeException("Error retrieving value from object store with key " + key, e);
         }
 
         if (state != null && !(state instanceof OAuthState))
@@ -255,18 +261,13 @@ public abstract class BaseOAuthClientFactory implements KeyedPoolableObjectFacto
      * 
      * @param key the key of the object at the object store
      * @param obj an instance of {@link org.mule.security.oauth.OAuth2Adapter}
-     * @throws IllegalArgumetException if key is not a string or if obj is not an
-     *             instance of the type returned by {@link
+     * @throws IllegalArgumetException if obj is not an instance of the type returned
+     *             by {@link
      *             org.mule.security.oauth.BaseOAuthClientFactory.getAdapterClass()}
      */
     @Override
-    public final void destroyObject(Object key, Object obj) throws Exception
+    public final void destroyObject(String key, OAuth2Adapter obj) throws Exception
     {
-        if (!(key instanceof String))
-        {
-            throw new IllegalArgumentException("Invalid key type");
-        }
-
         if (!this.getAdapterClass().isInstance(obj))
         {
             throw new IllegalArgumentException("Invalid connector type");
@@ -289,20 +290,13 @@ public abstract class BaseOAuthClientFactory implements KeyedPoolableObjectFacto
      * 
      * @param key the key of the object at the object store
      * @param obj an instance of {@link org.mule.security.oauth.OAuth2Adapter}
-     * @throws IllegalArgumetException if key is not a string or if obj is not an
-     *             instance of the type returned by {@link
+     * @throws IllegalArgumetException if obj is not an instance of the type returned
+     *             by {@link
      *             org.mule.security.oauth.BaseOAuthClientFactory.getAdapterClass()}
      */
     @Override
-    public final boolean validateObject(Object key, Object obj)
+    public final boolean validateObject(String key, OAuth2Adapter obj)
     {
-        if (!(key instanceof String))
-        {
-            throw new IllegalArgumentException("Invalid key type");
-        }
-
-        String k = (String) key;
-
         if (!this.getAdapterClass().isInstance(obj))
         {
             throw new IllegalArgumentException("Invalid connector type");
@@ -310,14 +304,16 @@ public abstract class BaseOAuthClientFactory implements KeyedPoolableObjectFacto
 
         OAuth2Adapter connector = (OAuth2Adapter) obj;
 
+        Lock lock = this.getLock(key);
+        lock.lock();
         try
         {
-            if (!this.objectStore.contains(k))
+            if (!this.objectStore.contains(key))
             {
                 return false;
             }
 
-            OAuthState state = this.retrieveOAuthState(k, true);
+            OAuthState state = this.retrieveOAuthState(key, true);
 
             if (connector.getAccessToken() == null)
             {
@@ -344,6 +340,10 @@ public abstract class BaseOAuthClientFactory implements KeyedPoolableObjectFacto
             logger.warn("Could not validate object due to object store exception", e);
             return false;
         }
+        finally
+        {
+            lock.unlock();
+        }
         return true;
     }
 
@@ -351,7 +351,7 @@ public abstract class BaseOAuthClientFactory implements KeyedPoolableObjectFacto
      * This default implementation does nothing
      */
     @Override
-    public void activateObject(Object key, Object obj) throws Exception
+    public void activateObject(String key, OAuth2Adapter obj) throws Exception
     {
     }
 
@@ -362,20 +362,13 @@ public abstract class BaseOAuthClientFactory implements KeyedPoolableObjectFacto
      * 
      * @param key the key of the object at the object store
      * @param obj an instance of {@link org.mule.security.oauth.OAuth2Adapter}
-     * @throws IllegalArgumetException if key is not a string or if obj is not an
-     *             instance of the type returned by {@link
+     * @throws IllegalArgumetException if obj is not an instance of the type returned
+     *             by {@link
      *             org.mule.security.oauth.BaseOAuthClientFactory.getAdapterClass()}
      */
     @Override
-    public final void passivateObject(Object key, Object obj) throws Exception
+    public final void passivateObject(String key, OAuth2Adapter obj) throws Exception
     {
-        if (!(key instanceof String))
-        {
-            throw new IllegalArgumentException("Invalid key type");
-        }
-
-        String k = (String) key;
-
         if (!this.getAdapterClass().isInstance(obj))
         {
             throw new IllegalArgumentException("Invalid connector type");
@@ -385,25 +378,41 @@ public abstract class BaseOAuthClientFactory implements KeyedPoolableObjectFacto
 
         OAuthState state = null;
 
-        if (this.objectStore.contains(k))
+        Lock lock = this.getLock(key);
+        lock.lock();
+
+        try
         {
-            state = this.retrieveOAuthState(k, false);
-            this.objectStore.remove(k);
-        }
+            if (this.objectStore.contains(key))
+            {
+                state = this.retrieveOAuthState(key, false);
+                this.objectStore.remove(key);
+            }
+            else
+            {
+                state = new OAuthState();
+            }
 
-        if (state == null)
+            state.setAccessToken(connector.getAccessToken());
+            state.setAccessTokenUrl(connector.getAccessTokenUrl());
+            state.setAuthorizationUrl(connector.getAuthorizationUrl());
+            state.setRefreshToken(connector.getRefreshToken());
+
+            this.setCustomStateProperties(connector, state);
+
+            this.objectStore.store(key, state);
+        }
+        finally
         {
-            state = new OAuthState();
+            lock.unlock();
         }
+    }
 
-        state.setAccessToken(connector.getAccessToken());
-        state.setAccessTokenUrl(connector.getAccessTokenUrl());
-        state.setAuthorizationUrl(connector.getAuthorizationUrl());
-        state.setRefreshToken(connector.getRefreshToken());
-
-        this.setCustomStateProperties(connector, state);
-
-        this.objectStore.store(k, state);
+    private Lock getLock(String key)
+    {
+        return this.oauthManager.getMuleContext()
+            .getLockFactory()
+            .createLock(String.format("OAuthTokenKeyLock-%s", key));
     }
 
 }

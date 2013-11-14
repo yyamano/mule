@@ -1,8 +1,5 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
@@ -16,11 +13,12 @@ import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
 import org.mule.api.MuleMessage;
+import org.mule.api.NameableObject;
+import org.mule.api.ThreadSafeAccess;
 import org.mule.api.config.MuleProperties;
 import org.mule.api.construct.FlowConstruct;
 import org.mule.api.construct.FlowConstructAware;
 import org.mule.api.context.MuleContextAware;
-import org.mule.api.devkit.ProcessAdapter;
 import org.mule.api.devkit.ProcessTemplate;
 import org.mule.api.devkit.capability.Capabilities;
 import org.mule.api.devkit.capability.ModuleCapability;
@@ -29,6 +27,7 @@ import org.mule.api.lifecycle.Initialisable;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.lifecycle.Startable;
 import org.mule.api.lifecycle.Stoppable;
+import org.mule.api.registry.RegistrationException;
 import org.mule.api.store.ObjectDoesNotExistException;
 import org.mule.api.store.ObjectStore;
 import org.mule.api.store.ObjectStoreException;
@@ -37,9 +36,7 @@ import org.mule.common.security.oauth.exception.UnableToAcquireAccessTokenExcept
 import org.mule.config.i18n.CoreMessages;
 import org.mule.config.i18n.MessageFactory;
 import org.mule.security.oauth.callback.DefaultHttpCallbackAdapter;
-import org.mule.security.oauth.callback.RestoreAccessTokenCallback;
-import org.mule.security.oauth.callback.SaveAccessTokenCallback;
-import org.mule.security.oauth.process.OAuthProcessTemplate;
+import org.mule.security.oauth.process.ManagedAccessTokenProcessTemplate;
 import org.mule.security.oauth.util.DefaultOAuthResponseParser;
 import org.mule.security.oauth.util.HttpUtil;
 import org.mule.security.oauth.util.HttpUtilImpl;
@@ -48,21 +45,25 @@ import org.mule.security.oauth.util.OAuthResponseParser;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
+import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.pool.KeyedPoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.slf4j.Logger;
 
 public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends DefaultHttpCallbackAdapter
     implements MuleContextAware, Initialisable, Capabilities, Startable, Stoppable, Disposable,
-    OAuth2Manager<OAuth2Adapter>, ProcessAdapter<OAuth2Adapter>
+    OAuth2Manager<OAuth2Adapter>, NameableObject
 {
 
     private OAuth2Adapter defaultUnauthorizedConnector;
     private String applicationName;
     private String scope;
+    private RefreshTokenManager refreshTokenManager;
 
     /**
      * muleContext
@@ -78,15 +79,17 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
     /**
      * Access Token Pool Factory
      */
-    private KeyedPoolableObjectFactory accessTokenPoolFactory;
+    private KeyedPoolableObjectFactory<String, OAuth2Adapter> accessTokenPoolFactory;
 
     /**
      * Access Token Pool
      */
-    private GenericKeyedObjectPool accessTokenPool;
+    private GenericKeyedObjectPool<String, OAuth2Adapter> accessTokenPool;
 
     private HttpUtil httpUtil;
     private OAuthResponseParser oauthResponseParser;
+
+    private String defaultAccessTokenId;
 
     /**
      * @return the logger to be used when logging messages.
@@ -113,8 +116,8 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
      * @return an instance of
      *         {@link org.apache.commons.pool.KeyedPoolableObjectFactory}
      */
-    protected abstract KeyedPoolableObjectFactory createPoolFactory(OAuth2Manager<OAuth2Adapter> oauthManager,
-                                                                    ObjectStore<Serializable> objectStore);
+    protected abstract KeyedPoolableObjectFactory<String, OAuth2Adapter> createPoolFactory(OAuth2Manager<OAuth2Adapter> oauthManager,
+                                                                                           ObjectStore<Serializable> objectStore);
 
     /**
      * Populates the adapter with custom properties not accessible from the base
@@ -157,7 +160,8 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
         }
 
         this.accessTokenPoolFactory = this.createPoolFactory(this, this.accessTokenObjectStore);
-        this.accessTokenPool = new GenericKeyedObjectPool(accessTokenPoolFactory, config);
+        this.accessTokenPool = new GenericKeyedObjectPool<String, OAuth2Adapter>(accessTokenPoolFactory,
+            config);
 
         if (defaultUnauthorizedConnector instanceof Initialisable)
         {
@@ -173,6 +177,20 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
         {
             this.oauthResponseParser = new DefaultOAuthResponseParser();
         }
+
+        if (this.refreshTokenManager == null)
+        {
+            try
+            {
+                this.refreshTokenManager = this.muleContext.getRegistry().lookupObject(
+                    RefreshTokenManager.class);
+            }
+            catch (RegistrationException e)
+            {
+                throw new InitialisationException(e, this);
+            }
+        }
+
     }
 
     /**
@@ -214,6 +232,15 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
         if (defaultUnauthorizedConnector instanceof Disposable)
         {
             ((Disposable) defaultUnauthorizedConnector).dispose();
+        }
+
+        try
+        {
+            this.accessTokenPool.close();
+        }
+        catch (Exception e)
+        {
+            this.getLogger().warn("Exception found while trying to close access token pool", e);
         }
     }
 
@@ -261,7 +288,7 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
                     accessTokenPool.getNumIdle(accessTokenId)));
         }
 
-        OAuth2Adapter object = ((OAuth2Adapter) accessTokenPool.borrowObject(accessTokenId));
+        OAuth2Adapter object = accessTokenPool.borrowObject(accessTokenId);
 
         if (getLogger().isDebugEnabled())
         {
@@ -336,18 +363,32 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
         {
             urlBuilder.append(this.getDefaultUnauthorizedConnector().getAuthorizationUrl());
         }
-        urlBuilder.append("?");
-        urlBuilder.append("response_type=code&");
-        urlBuilder.append("client_id=");
-        urlBuilder.append(this.getDefaultUnauthorizedConnector().getConsumerKey());
-        urlBuilder.append("&redirect_uri=");
-        urlBuilder.append(redirectUri);
-        for (String parameter : extraParameters.keySet())
+
+        urlBuilder.append("?")
+            .append("response_type=code&")
+            .append("client_id=")
+            .append(this.getDefaultUnauthorizedConnector().getConsumerKey());
+
+        try
         {
-            urlBuilder.append("&");
-            urlBuilder.append(parameter);
-            urlBuilder.append("=");
-            urlBuilder.append(extraParameters.get(parameter));
+            if (!StringUtils.isBlank(this.getScope()))
+            {
+                urlBuilder.append("&scope=").append(URLEncoder.encode(this.getScope(), "UTF-8"));
+            }
+
+            for (Map.Entry<String, String> entry : extraParameters.entrySet())
+            {
+                urlBuilder.append("&")
+                    .append(entry.getKey())
+                    .append("=")
+                    .append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+            }
+
+            urlBuilder.append("&redirect_uri=").append(URLEncoder.encode(redirectUri, "UTF-8"));
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            throw new RuntimeException(e);
         }
 
         if (getLogger().isDebugEnabled())
@@ -356,43 +397,6 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
         }
 
         return urlBuilder.toString();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean restoreAccessToken(OAuth2Adapter adapter)
-    {
-        RestoreAccessTokenCallback callback = adapter.getOauthRestoreAccessToken();
-        if (callback != null)
-        {
-            if (getLogger().isDebugEnabled())
-            {
-                getLogger().debug("Attempting to restore access token...");
-            }
-
-            try
-            {
-                callback.restoreAccessToken();
-                String accessToken = callback.getAccessToken();
-                adapter.setAccessToken(accessToken);
-
-                if (getLogger().isDebugEnabled())
-                {
-                    getLogger().debug(
-                        String.format(
-                            "Access token and secret has been restored successfully [accessToken = %s]",
-                            accessToken));
-                }
-                return true;
-            }
-            catch (Exception e)
-            {
-                getLogger().error("Cannot restore access token, an unexpected error occurred", e);
-            }
-        }
-        return false;
     }
 
     /**
@@ -420,7 +424,7 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
         {
             throw new RuntimeException(e);
         }
-        this.fetchAndExtract(adapter, builder.toString());
+        this.fetchAndExtract(adapter, builder.toString(), null);
     }
 
     /**
@@ -431,12 +435,8 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
     {
         if (adapter.getAccessToken() == null)
         {
-            this.restoreAccessToken(adapter);
-            if (adapter.getAccessToken() == null)
-            {
-                throw new NotAuthorizedException(
-                    "This connector has not yet been authorized, please authorize by calling \"authorize\".");
-            }
+            throw new NotAuthorizedException(
+                "This connector has not yet been authorized, please authorize by calling \"authorize\".");
         }
     }
 
@@ -444,15 +444,17 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
      * {@inheritDoc}
      */
     @Override
-    public final void refreshAccessToken(OAuth2Adapter adapter) throws UnableToAcquireAccessTokenException
+    public final void refreshAccessToken(OAuth2Adapter adapter, String accessTokenId)
+        throws UnableToAcquireAccessTokenException
     {
-        if (getLogger().isDebugEnabled())
-        {
-            getLogger().debug("Trying to refresh access token...");
-        }
         if (adapter.getRefreshToken() == null)
         {
             throw new IllegalStateException("Cannot refresh access token since refresh token is null");
+        }
+
+        if (getLogger().isDebugEnabled())
+        {
+            getLogger().debug("Trying to refresh access token...");
         }
 
         StringBuilder builder = new StringBuilder();
@@ -465,7 +467,7 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
         builder.append(adapter.getRefreshToken());
 
         adapter.setAccessToken(null);
-        this.fetchAndExtract(adapter, builder.toString());
+        this.fetchAndExtract(adapter, builder.toString(), accessTokenId);
     }
 
     /**
@@ -503,15 +505,23 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
                     message.getPayload().getClass().getCanonicalName())), event);
         }
 
-        try
+        String key = this.buildAuthorizationEventKey(event.getId());
+        synchronized (event)
         {
-            this.accessTokenObjectStore.store(this.buildAuthorizationEventKey(event.getId()), event);
-        }
-        catch (ObjectStoreException e)
-        {
-            throw new MessagingException(
-                MessageFactory.createStaticMessage("Exception was thrown when trying to store the message into object store. Please check that all message properties are serializable"),
-                event, e);
+            try
+            {
+                if (this.accessTokenObjectStore.contains(key))
+                {
+                    this.accessTokenObjectStore.remove(key);
+                }
+                this.accessTokenObjectStore.store(key, event);
+            }
+            catch (ObjectStoreException e)
+            {
+                throw new MessagingException(
+                    MessageFactory.createStaticMessage("Exception was thrown when trying to store the message into object store. Please check that all message properties are serializable"),
+                    event, e);
+            }
         }
     }
 
@@ -522,7 +532,24 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
     public MuleEvent restoreAuthorizationEvent(String eventId)
         throws ObjectStoreException, ObjectDoesNotExistException
     {
-        return (MuleEvent) this.accessTokenObjectStore.retrieve(this.buildAuthorizationEventKey(eventId));
+        Serializable maybeEvent = this.accessTokenObjectStore.retrieve(this.buildAuthorizationEventKey(eventId));
+        if (maybeEvent instanceof MuleEvent)
+        {
+            MuleEvent event = (MuleEvent) maybeEvent;
+
+            if (event instanceof ThreadSafeAccess)
+            {
+                ((ThreadSafeAccess) event).resetAccessControl();
+            }
+
+            return event;
+        }
+        else
+        {
+            throw new IllegalArgumentException(String.format(
+                "Tried to retrieve authorization event of id %s but instead found object of class %s",
+                eventId, maybeEvent.getClass().getCanonicalName()));
+        }
     }
 
     private String buildAuthorizationEventKey(String eventId)
@@ -530,11 +557,9 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
         return String.format(OAuthProperties.AUTHORIZATION_EVENT_KEY_TEMPLATE, eventId);
     }
 
-    private void fetchAndExtract(OAuth2Adapter adapter, String requestBody)
+    private void fetchAndExtract(OAuth2Adapter adapter, String requestBody, String accessTokenId)
         throws UnableToAcquireAccessTokenException
     {
-        this.restoreAccessToken(adapter);
-
         if (adapter.getAccessToken() != null)
         {
             return;
@@ -565,8 +590,6 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
                 String.format("Access token retrieved successfully [accessToken = %s]",
                     adapter.getAccessToken()));
         }
-
-        this.saveAccessToken(adapter);
 
         if (getLogger().isDebugEnabled())
         {
@@ -629,7 +652,7 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
         this.fetchCallbackParameters(adapter, response);
         try
         {
-            adapter.postAuth();
+            this.postAuth(adapter, accessTokenId);
         }
         catch (Exception e)
         {
@@ -639,27 +662,54 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
         }
     }
 
-    private void saveAccessToken(OAuth2Adapter adapter)
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void postAuth(OAuth2Adapter adapter, String accessTokenId) throws Exception
     {
-        SaveAccessTokenCallback saveCallback = adapter.getOauthSaveAccessToken();
-
-        if (saveCallback != null)
+        try
         {
-            try
-            {
-                if (getLogger().isDebugEnabled())
-                {
-                    getLogger().debug(
-                        String.format("Attempting to save access token...[accessToken = %s]",
-                            adapter.getAccessToken()));
-                }
-                saveCallback.saveAccessToken(adapter.getAccessToken(), null);
-            }
-            catch (Exception e)
-            {
-                getLogger().error("Cannot save access token, an unexpected error occurred", e);
-            }
+            adapter.postAuth();
         }
+        catch (Exception e)
+        {
+            if (accessTokenId != null)
+            {
+                for (Class<? extends Exception> clazz : this.refreshAccessTokenOn())
+                {
+                    if (clazz.isAssignableFrom(e.getClass()))
+                    {
+                        Logger logger = this.getLogger();
+                        if (logger.isDebugEnabled())
+                        {
+                            logger.debug(String.format(
+                                "Tried to execute postAuth() postAuth in adapter of class %s with accessTokenId %s but token was expired. Attempting refresh",
+                                adapter.getClass().getCanonicalName(), accessTokenId));
+                        }
+                        try
+                        {
+                            this.refreshTokenManager.refreshToken(adapter, accessTokenId);
+                            adapter.postAuth();
+                        }
+                        catch (Exception re)
+                        {
+                            logger.error(String.format(
+                                "Could not refresh access token %s on adapter of class %s while attempting postAuth(). Will throw the original exception",
+                                accessTokenId, adapter.getClass().getCanonicalName()));
+                            throw e;
+                        }
+                    }
+                }
+            }
+
+            throw e;
+        }
+    }
+
+    protected Set<Class<? extends Exception>> refreshAccessTokenOn()
+    {
+        return Collections.emptySet();
     }
 
     /**
@@ -684,10 +734,10 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
     }
 
     @Override
-    @SuppressWarnings({"unchecked", "rawtypes"})
     public <T> ProcessTemplate<T, OAuth2Adapter> getProcessTemplate()
     {
-        return (ProcessTemplate<T, OAuth2Adapter>) new OAuthProcessTemplate(this);
+        return (ProcessTemplate<T, OAuth2Adapter>) new ManagedAccessTokenProcessTemplate<T>(this,
+            this.muleContext);
     }
 
     /**
@@ -792,7 +842,8 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
     /**
      * {@inheritDoc}
      */
-    public KeyedPoolableObjectFactory getAccessTokenPoolFactory()
+    @Override
+    public KeyedPoolableObjectFactory<String, OAuth2Adapter> getAccessTokenPoolFactory()
     {
         return this.accessTokenPoolFactory;
     }
@@ -850,5 +901,60 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
     protected void setDefaultUnauthorizedConnector(OAuth2Adapter defaultUnauthorizedConnector)
     {
         this.defaultUnauthorizedConnector = defaultUnauthorizedConnector;
+    }
+
+    public String getConsumerKey()
+    {
+        return this.defaultUnauthorizedConnector.getConsumerKey();
+    }
+
+    public String getConsumerSecret()
+    {
+        return this.defaultUnauthorizedConnector.getConsumerSecret();
+    }
+
+    @Override
+    public String getName()
+    {
+        return this.defaultUnauthorizedConnector.getName();
+    }
+
+    @Override
+    public void setName(String name)
+    {
+        this.defaultUnauthorizedConnector.setName(name);
+    }
+
+    @Override
+    public OnNoTokenPolicy getOnNoTokenPolicy()
+    {
+        return this.defaultUnauthorizedConnector.getOnNoTokenPolicy();
+    }
+
+    @Override
+    public void setOnNoTokenPolicy(OnNoTokenPolicy policy)
+    {
+        this.defaultUnauthorizedConnector.setOnNoTokenPolicy(policy);
+    }
+
+    @Override
+    public String getDefaultAccessTokenId()
+    {
+        return this.defaultAccessTokenId;
+    }
+
+    public void setDefaultAccessTokenId(String defaultAccessTokenId)
+    {
+        this.defaultAccessTokenId = defaultAccessTokenId;
+    }
+
+    public void setRefreshTokenManager(RefreshTokenManager refreshTokenManager)
+    {
+        this.refreshTokenManager = refreshTokenManager;
+    }
+
+    protected void setAccessTokenPool(GenericKeyedObjectPool<String, OAuth2Adapter> accessTokenPool)
+    {
+        this.accessTokenPool = accessTokenPool;
     }
 }

@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.transport.soap.axis;
 
 import static org.junit.Assert.assertEquals;
@@ -32,9 +28,9 @@ import javax.servlet.ServletContextListener;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.servlet.Context;
-import org.mortbay.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 
 public class AxisServletWithSecurityTestCase extends FunctionalTestCase
 {
@@ -57,7 +53,7 @@ public class AxisServletWithSecurityTestCase extends FunctionalTestCase
         HTTP_PORT = dynamicPort.getNumber();
         httpServer = new Server(HTTP_PORT);
 
-        Context c = new Context(httpServer, "/", Context.SESSIONS);
+        ServletContextHandler c = new ServletContextHandler(httpServer, "/", ServletContextHandler.SESSIONS);
         c.addServlet(new ServletHolder(new MuleReceiverServlet()), "/services/*");
         c.addEventListener(new ServletContextListener()
         {

@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.mule.tests.archetypes</groupId>
         <artifactId>mule-tests-archetypes</artifactId>
-        <version>3.5.0-M1-SNAPSHOT</version>
+        <version>3.5.0-M3-SNAPSHOT</version>
     </parent>
     <groupId>org.mule.tests.archetypes</groupId>
     <artifactId>example-archetype</artifactId>
@@ -19,6 +19,7 @@
         <archetype>org.mule.tools:mule-example-archetype</archetype>
         <!-- this string will be appended to the archetype's commandline -->
         <archetypeParams>-DartifactId=foo -DhasCustomSchema=y</archetypeParams>
+        <licensePath>../../../LICENSE_HEADER.txt</licensePath>
     </properties>
 
     <dependencies>

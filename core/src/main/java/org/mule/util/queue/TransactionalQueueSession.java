@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.util.queue;
 
 import org.mule.api.store.ObjectStoreException;
@@ -59,9 +55,30 @@ class TransactionalQueueSession extends DefaultXASession implements QueueSession
         }
 
         @Override
-        public boolean offer(Serializable item, long timeout) throws InterruptedException, ObjectStoreException
+        public void clear() throws InterruptedException
         {
-            if (localContext != null  && !queue.isQueueTransactional())
+            if (localContext != null && !queue.isQueueTransactional())
+            {
+                ((QueueTransactionContext) localContext).clear(queue);
+            }
+            else
+            {
+                try
+                {
+                    queueManager.doClear(queue);
+                }
+                catch (ObjectStoreException e)
+                {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        @Override
+        public boolean offer(Serializable item, long timeout)
+            throws InterruptedException, ObjectStoreException
+        {
+            if (localContext != null && !queue.isQueueTransactional())
             {
                 return ((QueueTransactionContext) localContext).offer(queue, item, timeout);
             }
@@ -147,7 +164,7 @@ class TransactionalQueueSession extends DefaultXASession implements QueueSession
             }
             catch (InterruptedException iex)
             {
-                if (queueManager.getMuleContext().isStopping())
+                if (!queueManager.getMuleContext().isStopping())
                 {
                     throw iex;
                 }
@@ -207,7 +224,7 @@ class TransactionalQueueSession extends DefaultXASession implements QueueSession
         }
 
         /**
-         *  Note -- this must handle null items
+         * Note -- this must handle null items
          */
         private Serializable postProcessIfNeeded(Serializable item)
         {

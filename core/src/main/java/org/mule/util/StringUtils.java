@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.util;
 
 import java.util.ArrayList;
@@ -139,9 +135,9 @@ public class StringUtils extends org.apache.commons.lang.StringUtils
      * @param pattern the pattern to use as regexp
      * @param value the value to evaluate
      * @param matchIndex the group index to be returned
-     * @return the value of the group at the given index
-     * @throws IllegalArgumentException if no match found at the given index. Also if
-     *             value or pattern are null
+     * @return the value of the group at the given index. <code>null</code> if no
+     *         match found
+     * @throws IllegalArgumentException if pattern or value are null.
      */
     public static String match(Pattern pattern, String value, int matchIndex) throws IllegalArgumentException
     {
@@ -155,9 +151,7 @@ public class StringUtils extends org.apache.commons.lang.StringUtils
             return matcher.group(matchIndex);
         }
 
-        throw new IllegalArgumentException(String.format(
-            "String %s did not produced any match for pattern %s at index %d", value, pattern.pattern(),
-            matchIndex));
+        return null;
     }
 
     // lookup tables needed for toHexString(byte[], boolean)

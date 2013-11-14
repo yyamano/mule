@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.endpoint;
 
 import org.mule.api.AnnotatedObject;
@@ -52,6 +48,7 @@ public class URIBuilder implements AnnotatedObject
 {
     private static final String DOTS = ":";
     private static final String DOTS_SLASHES = DOTS + "//";
+    private static final String SLASH = "/";
     private static final String QUERY = "?";
     private static final String AND = "&";
     private static final String EQUALS = "=";
@@ -250,6 +247,7 @@ public class URIBuilder implements AnnotatedObject
         OrderedQueryParameters uriQueries = appendAddress(buffer);
         uriQueries.override(queryMap);
         buffer.append(uriQueries.toString());
+        removeRootTrailingSlash(buffer);
         return buffer.toString();
     }
 
@@ -336,6 +334,27 @@ public class URIBuilder implements AnnotatedObject
                 buffer.append("/");
             }
             buffer.append(path);
+        }
+    }
+
+    private void removeRootTrailingSlash(StringBuffer buffer)
+    {
+        int lastIndex = buffer.length() - 1;
+
+        if (lastIndex >= 0 && buffer.charAt(lastIndex) == SLASH.charAt(0))
+        {
+            int start = 0;
+            int index = buffer.indexOf(DOTS_SLASHES);
+
+            if (index != -1)
+            {
+                start = index + DOTS_SLASHES.length();
+            }
+
+            if (buffer.indexOf(SLASH, start) == lastIndex)
+            {
+                buffer.deleteCharAt(lastIndex);
+            }
         }
     }
 

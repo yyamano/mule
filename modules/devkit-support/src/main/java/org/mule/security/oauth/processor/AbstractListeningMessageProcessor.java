@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.security.oauth.processor;
 
 import org.mule.DefaultMuleEvent;
@@ -18,12 +14,19 @@ import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
 import org.mule.api.MuleMessage;
 import org.mule.api.callback.SourceCallback;
+import org.mule.api.processor.InternalMessageProcessor;
 import org.mule.api.processor.MessageProcessor;
+import org.mule.api.processor.MessageProcessorChain;
+import org.mule.api.processor.MessageProcessorContainer;
+import org.mule.api.processor.MessageProcessorPathElement;
+import org.mule.devkit.processor.DevkitBasedMessageProcessor;
+import org.mule.util.NotificationUtils;
 
+import java.util.Arrays;
 import java.util.Map;
 
-public abstract class AbstractListeningMessageProcessor extends AbstractDevkitBasedMessageProcessor
-    implements SourceCallback
+public abstract class AbstractListeningMessageProcessor extends DevkitBasedMessageProcessor
+    implements SourceCallback, MessageProcessorContainer
 {
 
     /**
@@ -149,9 +152,22 @@ public abstract class AbstractListeningMessageProcessor extends AbstractDevkitBa
      * @throws UnsupportedOperationException
      */
     @Override
-    protected final MuleEvent doProcess(MuleEvent event) throws Exception
+    protected MuleEvent doProcess(MuleEvent event) throws Exception
     {
         throw new UnsupportedOperationException("Listening message processors cannot execute this method");
+    }
+
+    @Override
+    public void addMessageProcessorPathElements(MessageProcessorPathElement pathElement)
+    {
+        if (messageProcessor instanceof MessageProcessorChain)
+        {
+            NotificationUtils.addMessageProcessorPathElements(((MessageProcessorChain) messageProcessor).getMessageProcessors(), pathElement.getParent());
+        }
+        else if (messageProcessor != null)
+        {
+            NotificationUtils.addMessageProcessorPathElements(Arrays.asList(messageProcessor), pathElement.getParent());
+        }
     }
 
 }

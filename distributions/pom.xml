@@ -4,12 +4,16 @@
     <parent>
         <groupId>org.mule</groupId>
         <artifactId>mule</artifactId>
-        <version>3.5.0-M1-SNAPSHOT</version>
+        <version>3.5.0-M3-SNAPSHOT</version>
     </parent>
     <groupId>org.mule.distributions</groupId>
     <artifactId>mule-distributions</artifactId>
     <packaging>pom</packaging>
     <name>Mule Distributions</name>
+
+    <properties>
+        <licensePath>../LICENSE_HEADER.txt</licensePath>
+    </properties>
 
     <distributionManagement>
         <snapshotRepository>

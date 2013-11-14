@@ -1,16 +1,14 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.transport.file.reliability;
 
 import static org.junit.Assert.fail;
+import static org.mule.transport.file.FileTestUtils.createDataFile;
+import static org.mule.transport.file.FileTestUtils.createFolder;
 import org.mule.api.context.notification.ExceptionNotificationListener;
 import org.mule.context.notification.ExceptionNotification;
 import org.mule.exception.DefaultSystemExceptionStrategy;
@@ -204,8 +202,6 @@ public class InboundMessageLossTestCase extends AbstractFileMoveDeleteTestCase
     public void testRollbackExceptionStrategyConsumesMessage() throws Exception
     {
         final CountDownLatch exceptionStrategyLatch = new CountDownLatch(4);
-        tmpDir = createFolder(".mule/rollbackOnException");
-        final File file = createDataFile(tmpDir, "test1.txt");
         muleContext.registerListener(new ExceptionNotificationListener<ExceptionNotification>() {
             @Override
             public void onNotification(ExceptionNotification notification)
@@ -213,6 +209,8 @@ public class InboundMessageLossTestCase extends AbstractFileMoveDeleteTestCase
                 exceptionStrategyLatch.countDown();
             }
         });
+        tmpDir = createFolder(".mule/rollbackOnException");
+        final File file = createDataFile(tmpDir, "test1.txt");
         if (!exceptionStrategyLatch.await(RECEIVE_TIMEOUT, TimeUnit.MILLISECONDS))
         {
             fail("message should be redelivered");

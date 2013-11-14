@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.transport.http;
 
 import org.mule.VoidMuleEvent;
@@ -163,7 +159,12 @@ public class HttpClientMessageDispatcher extends AbstractMessageDispatcher
 
     private void processMuleSession(MuleEvent event, HttpMethod httpMethod)
     {
-        httpMethod.setRequestHeader(new Header(HttpConstants.HEADER_MULE_SESSION, event.getMessage().<String>getOutboundProperty(MuleProperties.MULE_SESSION_PROPERTY)));
+        String muleSession = event.getMessage().getOutboundProperty(MuleProperties.MULE_SESSION_PROPERTY);
+
+        if (muleSession != null)
+        {
+            httpMethod.setRequestHeader(new Header(HttpConstants.HEADER_MULE_SESSION, muleSession));
+        }
     }
 
     protected void processCookies(MuleEvent event)
@@ -214,6 +215,13 @@ public class HttpClientMessageDispatcher extends AbstractMessageDispatcher
         }
 
         httpMethod.setFollowRedirects("true".equalsIgnoreCase((String)endpoint.getProperty("followRedirects")));
+
+        // keepAlive=true is the default behavior of HttpClient
+        if ("false".equalsIgnoreCase((String) endpoint.getProperty("keepAlive")))
+        {
+            httpMethod.setRequestHeader("Connection", "close");
+        }
+
         return httpMethod;
     }
 

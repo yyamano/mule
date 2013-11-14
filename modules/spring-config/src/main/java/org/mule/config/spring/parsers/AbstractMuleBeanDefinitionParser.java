@@ -1,8 +1,5 @@
 /*
- * $Id:AbstractMuleBeanDefinitionParser.java 5187 2007-02-16 18:00:42Z rossmason $
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
@@ -27,6 +24,7 @@ import org.mule.config.spring.parsers.assembly.configuration.ReusablePropertyCon
 import org.mule.config.spring.parsers.assembly.configuration.ValueMap;
 import org.mule.config.spring.parsers.generic.AutoIdUtils;
 import org.mule.processor.AbstractMessageProcessorOwner;
+import org.mule.routing.requestreply.AbstractAsyncRequestReplyRequester;
 import org.mule.util.ClassUtils;
 import org.mule.util.StringUtils;
 import org.mule.util.XMLUtils;
@@ -274,7 +272,8 @@ public abstract class AbstractMuleBeanDefinitionParser extends AbstractBeanDefin
             && !OutboundRouter.class.isAssignableFrom(beanClass)
             && !AbstractMessageProcessorOwner.class.isAssignableFrom(beanClass)
             && !MessagingExceptionHandler.class.isAssignableFrom(beanClass)
-            && !Transformer.class.isAssignableFrom(beanClass))
+            && !Transformer.class.isAssignableFrom(beanClass)
+            && !AbstractAsyncRequestReplyRequester.class.isAssignableFrom(beanClass))
         {
             if (Initialisable.class.isAssignableFrom(beanClass))
             {

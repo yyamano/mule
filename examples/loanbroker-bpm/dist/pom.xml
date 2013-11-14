@@ -8,7 +8,7 @@
     <name>Loanbroker BPM Example</name>
 
     <properties>
-        <muleVersion>3.5.0-M1-SNAPSHOT</muleVersion>
+        <muleVersion>3.5.0-M3-SNAPSHOT</muleVersion>
     </properties>
 
     <build>
@@ -72,7 +72,6 @@
         <dependency>
             <groupId>org.apache.derby</groupId>
             <artifactId>derby</artifactId>
-            <version>10.6.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.activemq</groupId>

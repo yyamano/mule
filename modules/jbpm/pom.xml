@@ -5,12 +5,16 @@
     <parent>
         <groupId>org.mule.modules</groupId>
         <artifactId>mule-modules</artifactId>
-        <version>3.5.0-M1-SNAPSHOT</version>
+        <version>3.5.0-M3-SNAPSHOT</version>
     </parent>
     <artifactId>mule-module-jbpm</artifactId>
     <packaging>jar</packaging>
     <name>BPM Support: JBoss jBPM</name>
     <description>Classes which allow Mule to integrate with JBoss jBPM via the BPM Module.</description>
+
+    <properties>
+        <licensePath>../../LICENSE_HEADER.txt</licensePath>
+    </properties>
 
     <dependencies>
         <!-- Generic BPM Support -->

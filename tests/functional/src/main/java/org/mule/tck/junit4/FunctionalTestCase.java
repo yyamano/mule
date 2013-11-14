@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.tck.junit4;
 
 import static org.junit.Assert.fail;
@@ -53,13 +49,53 @@ public abstract class FunctionalTestCase extends AbstractMuleContextTestCase
         setStartContext(true);
     }
 
+    /**
+     * @return
+     * @deprecated use getConfigFile instead.
+     */
+    @Deprecated
+    protected String getConfigResources()
+    {
+        return null;
+    }
+
+
     @Override
     protected ConfigurationBuilder getBuilder() throws Exception
     {
-        return new SpringXmlConfigurationBuilder(getConfigResources());
+        String configResources = getConfigResources();
+        if (configResources != null)
+        {
+            return new SpringXmlConfigurationBuilder(configResources);
+        }
+        configResources = getConfigFile();
+        if (configResources != null)
+        {
+            if (configResources.contains(","))
+            {
+                throw new RuntimeException("Do not use this method when the config is composed of several files. Use getConfigFiles method instead.");
+            }
+            return new SpringXmlConfigurationBuilder(configResources);
+        }
+        String[] multipleConfigResources = getConfigFiles();
+        return new SpringXmlConfigurationBuilder(multipleConfigResources);
     }
 
-    protected abstract String getConfigResources();
+    /**
+     * @return a single file that defines a mule application configuration
+     */
+    protected String getConfigFile()
+    {
+        return null;
+    }
+
+    /**
+     * @return a several files that define a mule application configuration
+     */
+    protected String[] getConfigFiles()
+    {
+        return null;
+    }
 
     /**
      * Returns an instance of the service's component object. Note that depending on

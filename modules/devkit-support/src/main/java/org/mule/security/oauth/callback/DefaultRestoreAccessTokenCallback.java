@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.security.oauth.callback;
 
 import org.mule.RequestContext;
@@ -21,7 +17,7 @@ import org.mule.api.processor.MessageProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DefaultRestoreAccessTokenCallback
+public class DefaultRestoreAccessTokenCallback implements RestoreAccessTokenCallback
 {
 
     /**
@@ -58,6 +54,7 @@ public class DefaultRestoreAccessTokenCallback
         this.messageProcessor = value;
     }
 
+    @Override
     public void restoreAccessToken()
     {
         MuleEvent event = RequestContext.getEvent();
@@ -113,11 +110,13 @@ public class DefaultRestoreAccessTokenCallback
         }
     }
 
+    @Override
     public String getAccessToken()
     {
         return restoredAccessToken;
     }
 
+    @Override
     public String getAccessTokenSecret()
     {
         return restoredAccessTokenSecret;

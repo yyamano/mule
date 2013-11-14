@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.transport.ajax;
 
 import static org.junit.Assert.assertEquals;
@@ -31,6 +27,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.cometd.Client;
 import org.cometd.Message;
 import org.cometd.MessageListener;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
@@ -95,6 +92,7 @@ public class AjaxFunctionalJsonBindingsTestCase extends AbstractServiceAndFlowTe
     }
 
     @Test
+    @Ignore("MULE-6926: flaky test")
     public void testClientSubscribeWithJsonObjectResponse() throws Exception
     {
         final Latch latch = new Latch();

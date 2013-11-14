@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.transport.http;
 
 import org.mule.api.MuleContext;
@@ -647,4 +643,24 @@ public class HttpConnector extends TcpConnector
         return super.getServerSocket(uri);
     }
 
+    /**
+     * @deprecated Use keepAlive property in the outbound endpoint.
+     */
+    @Override
+    @Deprecated
+    public boolean isKeepSendSocketOpen()
+    {
+        return super.isKeepSendSocketOpen();
+    }
+
+    /**
+     * @deprecated Use keepAlive property in the outbound endpoint.
+     */
+    @Override
+    @Deprecated
+    public void setKeepSendSocketOpen(boolean keepSendSocketOpen)
+    {
+        logger.warn("keepSendSocketOpen attribute is deprecated, use keepAlive in the outbound endpoint instead");
+        super.setKeepSendSocketOpen(keepSendSocketOpen);
+    }
 }

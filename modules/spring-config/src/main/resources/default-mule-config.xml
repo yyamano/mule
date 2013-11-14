@@ -24,7 +24,39 @@
 
     <bean name="_muleProcessingTimeWatcher" class="org.mule.management.stats.DefaultProcessingTimeWatcher"/>
     
-    <bean name="_muleVersionChecker" class="org.mule.config.DefaultMuleVersionChecker" />
+    <bean name="_defaultThreadingProfile" class="org.mule.config.ChainedThreadingProfile"/>
 
+    <bean name="_converterResolver" class="org.mule.DynamicDataTypeConversionResolver">
+        <constructor-arg ref="_muleContext"/>
+    </bean>
+
+    <bean name="_defaultMessageDispatcherThreadingProfile" class="org.mule.config.ChainedThreadingProfile">
+        <constructor-arg ref="_defaultThreadingProfile"/>
+    </bean>
+
+    <bean name="_defaultMessageRequesterThreadingProfile" class="org.mule.config.ChainedThreadingProfile">
+        <constructor-arg ref="_defaultThreadingProfile"/>
+    </bean>
+
+    <bean name="_defaultMessageReceiverThreadingProfile" class="org.mule.config.ChainedThreadingProfile">
+        <constructor-arg ref="_defaultThreadingProfile"/>
+    </bean>
+
+    <bean name="_defaultServiceThreadingProfile" class="org.mule.config.ChainedThreadingProfile">
+        <constructor-arg ref="_defaultThreadingProfile"/>
+    </bean>
+
+    <bean name="_defaultRetryPolicyTemplate" class="org.mule.retry.policies.NoRetryPolicyTemplate"/>
+
+    <bean name="_muleExpressionLanguage" class="org.mule.el.mvel.MVELExpressionLanguageWrapper">
+        <constructor-arg ref="_muleContext"/>
+    </bean>
+
+    <bean name="_muleLockFactory" class="org.mule.util.lock.MuleLockFactory"/>
+
+    <bean name="_muleLockProvider" class="org.mule.util.lock.SingleServerLockProvider"/>
+
+    <!-- Default Transformers are now loaded from META-INF/services/org/mule/config/registry-bootstrap.properties so that
+    the transformers will be available even when using the TransientRegistry only -->
 
 </beans>

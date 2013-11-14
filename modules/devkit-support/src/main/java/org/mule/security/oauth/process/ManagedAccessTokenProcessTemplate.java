@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.security.oauth.process;
 
 import org.mule.api.MuleContext;
@@ -31,9 +27,8 @@ public class ManagedAccessTokenProcessTemplate<P> implements ProcessTemplate<P, 
     {
         ProcessInterceptor<P, OAuth2Adapter> processCallbackProcessInterceptor = new ProcessCallbackProcessInterceptor<P, OAuth2Adapter>();
 
-        @SuppressWarnings("unchecked")
-        ProcessInterceptor<P, OAuth2Adapter> refreshTokenProcessInterceptor = (ProcessInterceptor<P, OAuth2Adapter>) new RefreshTokenProcessInterceptor(
-            processCallbackProcessInterceptor);
+        ProcessInterceptor<P, OAuth2Adapter> refreshTokenProcessInterceptor = (ProcessInterceptor<P, OAuth2Adapter>) new RefreshTokenProcessInterceptor<P>(
+            processCallbackProcessInterceptor, muleContext);
 
         ProcessInterceptor<P, OAuth2Adapter> managedAccessTokenProcessInterceptor = new ManagedAccessTokenProcessInterceptor<P>(
             refreshTokenProcessInterceptor, oauthManager);

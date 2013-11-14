@@ -6,13 +6,17 @@
     <parent>
         <groupId>org.mule.tests</groupId>
         <artifactId>mule-tests</artifactId>
-        <version>3.5.0-M1-SNAPSHOT</version>
+        <version>3.5.0-M3-SNAPSHOT</version>
     </parent>
     <groupId>com.mulesoft.muleesb.tests</groupId>
     <artifactId>mule-tests-integration-axis</artifactId>
     <packaging>jar</packaging>
     <name>Integration Tests for the Axis transport</name>
     <description>Integration Tests for the Axis transport</description>
+
+    <properties>
+        <licensePath>../../LICENSE_HEADER.txt</licensePath>
+    </properties>
 
     <dependencies>
         <dependency>

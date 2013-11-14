@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.routing.correlation;
 
 import org.mule.api.MessagingException;
@@ -62,8 +58,6 @@ public class EventCorrelator implements Startable, Stoppable, Disposable
     public static final String NO_CORRELATION_ID = "no-id";
 
     public static final int MAX_PROCESSED_GROUPS = 50000;
-
-    protected static final long MILLI_TO_NANO_MULTIPLIER = 1000000L;
 
     private static final long ONE_DAY_IN_MILLI = 1000 * 60 * 60 * 24;
 
@@ -189,25 +183,9 @@ public class EventCorrelator implements Startable, Stoppable, Disposable
             throw new RoutingException(CoreMessages.noCorrelationId(), event, timeoutMessageProcessor);
         }
 
-        // indicates interleaved EventGroup removal (very rare)
-        boolean lookupMiss = false;
-
         // spinloop for the EventGroup lookup
         while (true)
         {
-            if (lookupMiss)
-            {
-                try
-                {
-                    // recommended over Thread.yield()
-                    Thread.sleep(1);
-                }
-                catch (InterruptedException interrupted)
-                {
-                    Thread.currentThread().interrupt();
-                }
-            }
-
             try
             {
                 if (isGroupAlreadyProcessed(groupId))
@@ -355,7 +333,7 @@ public class EventCorrelator implements Startable, Stoppable, Disposable
     {
         synchronized (groupsLock)
         {
-            processedGroups.store((Serializable) id, System.nanoTime());
+            processedGroups.store((Serializable) id, System.currentTimeMillis());
         }
     }
 
@@ -545,13 +523,22 @@ public class EventCorrelator implements Startable, Stoppable, Disposable
         @Override
         public void doRun()
         {
+
+            ////TODO(pablo.kraan): is not good to have threads doing nothing in all the nodes but the primary. Need to
+            ////start the thread on the primary node only, and then use a notification schema to start a new thread
+            ////in a different node when the primary goes down.
+            if (!muleContext.isPrimaryPollingInstance())
+            {
+                return;
+            }
+
             List<EventGroup> expired = new ArrayList<EventGroup>(1);
             try
             {
                 for (Serializable o : eventGroups.allKeys())
                 {
                     EventGroup group = getEventGroup(o) ;
-                    if ((group.getCreated() + getTimeout() * MILLI_TO_NANO_MULTIPLIER) < System.nanoTime())
+                    if (group.getCreated() + getTimeout() < System.currentTimeMillis())
                     {
                         expired.add(group);
                     }

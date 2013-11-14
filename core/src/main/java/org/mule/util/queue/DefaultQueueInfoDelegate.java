@@ -1,8 +1,5 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
@@ -40,10 +37,7 @@ public class DefaultQueueInfoDelegate implements TransientQueueInfoDelegate
     @Override
     public boolean offer(Serializable o, int room, long timeout) throws InterruptedException
     {
-        if (Thread.interrupted())
-        {
-            throw new InterruptedException();
-        }
+        checkInterrupted();
         synchronized (list)
         {
             if (capacity > 0)
@@ -76,10 +70,7 @@ public class DefaultQueueInfoDelegate implements TransientQueueInfoDelegate
     @Override
     public Serializable poll(long timeout) throws InterruptedException
     {
-        if (Thread.interrupted())
-        {
-            throw new InterruptedException();
-        }
+        checkInterrupted();
         synchronized (list)
         {
             long l1 = timeout > 0L ? System.currentTimeMillis() : 0L;
@@ -103,10 +94,7 @@ public class DefaultQueueInfoDelegate implements TransientQueueInfoDelegate
     @Override
     public Serializable peek() throws InterruptedException
     {
-        if (Thread.interrupted())
-        {
-            throw new InterruptedException();
-        }
+        checkInterrupted();
         synchronized (list)
         {
             if (list.isEmpty())
@@ -123,13 +111,20 @@ public class DefaultQueueInfoDelegate implements TransientQueueInfoDelegate
     @Override
     public void untake(Serializable item) throws InterruptedException
     {
-        if (Thread.interrupted())
-        {
-            throw new InterruptedException();
-        }
+        checkInterrupted();
         synchronized (list)
         {
             list.addFirst(item);
+        }
+    }
+    
+    @Override
+    public void clear() throws InterruptedException
+    {
+        this.checkInterrupted();
+        synchronized (list)
+        {
+            list.clear();
         }
     }
 
@@ -147,6 +142,14 @@ public class DefaultQueueInfoDelegate implements TransientQueueInfoDelegate
             boolean result = list.addAll(items);
             list.notifyAll();
             return result;
+        }
+    }
+    
+    private void checkInterrupted() throws InterruptedException
+    {
+        if (Thread.interrupted())
+        {
+            throw new InterruptedException();
         }
     }
 }

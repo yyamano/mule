@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.mule.modules</groupId>
         <artifactId>mule-modules</artifactId>
-        <version>3.5.0-M1-SNAPSHOT</version>
+        <version>3.5.0-M3-SNAPSHOT</version>
     </parent>
     <artifactId>mule-module-spring-extras</artifactId>
     <packaging>jar</packaging>
@@ -12,6 +12,10 @@
     <description>
         Non-core functionality provided by Spring such as transactions, remoting, data sources, etc.
     </description>
+
+    <properties>
+        <licensePath>../../LICENSE_HEADER.txt</licensePath>
+    </properties>
 
     <dependencies>
         <dependency>

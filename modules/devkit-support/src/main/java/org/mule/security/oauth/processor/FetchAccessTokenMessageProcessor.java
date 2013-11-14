@@ -1,20 +1,17 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.security.oauth.processor;
 
 import org.mule.api.MuleEvent;
 import org.mule.api.processor.MessageProcessor;
+import org.mule.devkit.processor.DevkitBasedMessageProcessor;
 import org.mule.security.oauth.notification.OAuthAuthorizeNotification;
 
-public abstract class FetchAccessTokenMessageProcessor extends AbstractDevkitBasedMessageProcessor
+public abstract class FetchAccessTokenMessageProcessor extends DevkitBasedMessageProcessor
     implements MessageProcessor
 {
 

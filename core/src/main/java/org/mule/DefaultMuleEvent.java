@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule;
 
 import org.mule.api.DefaultMuleException;
@@ -21,6 +17,7 @@ import org.mule.api.config.MuleProperties;
 import org.mule.api.construct.FlowConstruct;
 import org.mule.api.construct.Pipeline;
 import org.mule.api.endpoint.InboundEndpoint;
+import org.mule.api.processor.ProcessingDescriptor;
 import org.mule.api.security.Credentials;
 import org.mule.api.transformer.DataType;
 import org.mule.api.transformer.TransformerException;
@@ -276,6 +273,12 @@ public class DefaultMuleEvent implements MuleEvent, ThreadSafeAccess, Deserializ
             rewriteEvent.isSynchronous());
     }
 
+    public DefaultMuleEvent(MuleEvent rewriteEvent, FlowConstruct flowConstruct, ReplyToHandler replyToHandler, Object replyToDestination)
+    {
+        this(rewriteEvent.getMessage(), rewriteEvent, flowConstruct, rewriteEvent.getSession(),
+             rewriteEvent.isSynchronous(), replyToHandler, replyToDestination);
+    }
+
     public DefaultMuleEvent(MuleMessage message, MuleEvent rewriteEvent, boolean synchronus)
     {
         this(message, rewriteEvent, rewriteEvent.getFlowConstruct(), rewriteEvent.getSession(), synchronus);
@@ -298,6 +301,17 @@ public class DefaultMuleEvent implements MuleEvent, ThreadSafeAccess, Deserializ
                                MuleSession session,
                                boolean synchronous)
     {
+        this(message, rewriteEvent, flowConstruct, session, synchronous, rewriteEvent.getReplyToHandler(), rewriteEvent.getReplyToDestination());
+    }
+
+    protected DefaultMuleEvent(MuleMessage message,
+                               MuleEvent rewriteEvent,
+                               FlowConstruct flowConstruct,
+                               MuleSession session,
+                               boolean synchronous,
+                               ReplyToHandler replyToHandler,
+                               Object replyToDestination)
+    {
         this.id = rewriteEvent.getId();
         this.flowConstruct = flowConstruct;
         this.session = session;
@@ -318,8 +332,8 @@ public class DefaultMuleEvent implements MuleEvent, ThreadSafeAccess, Deserializ
             this.processingTime = ProcessingTime.newInstance(this);
         }
         setMessage(message);
-        this.replyToHandler = rewriteEvent.getReplyToHandler();
-        this.replyToDestination = rewriteEvent.getReplyToDestination();
+        this.replyToHandler = replyToHandler;
+        this.replyToDestination = replyToDestination;
         this.timeout = rewriteEvent.getTimeout();
         this.transacted = rewriteEvent.isTransacted();
         this.notificationsEnabled = rewriteEvent.isNotificationsEnabled();
@@ -365,12 +379,11 @@ public class DefaultMuleEvent implements MuleEvent, ThreadSafeAccess, Deserializ
     protected boolean resolveEventSynchronicity()
     {
         boolean syncProcessingStrategy = false;
-        if (flowConstruct != null && flowConstruct instanceof Pipeline)
+        if (flowConstruct != null && flowConstruct instanceof ProcessingDescriptor)
         {
-            syncProcessingStrategy = ((Pipeline) flowConstruct).getProcessingStrategy()
-                .getClass()
-                .equals(SynchronousProcessingStrategy.class);
+            syncProcessingStrategy = ((ProcessingDescriptor) flowConstruct).isSynchronous();
         }
+        
         return transacted
                || exchangePattern.hasResponse()
                || message.getProperty(MuleProperties.MULE_FORCE_SYNC_PROPERTY,

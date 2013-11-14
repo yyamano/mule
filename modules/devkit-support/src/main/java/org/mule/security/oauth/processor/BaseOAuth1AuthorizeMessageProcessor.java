@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.security.oauth.processor;
 
 import org.mule.api.MuleEvent;
@@ -29,6 +25,7 @@ public abstract class BaseOAuth1AuthorizeMessageProcessor extends AbstractAuthor
     @Override
     public void start() throws MuleException
     {
+        super.start();
         OAuth1Adapter moduleObject = this.getAdapter();
         OAuth1Manager manager = moduleObject.getOauth1Manager();
         OAuth1FetchAccessTokenMessageProcessor fetchAccessTokenMessageProcessor = new OAuth1FetchAccessTokenMessageProcessor(

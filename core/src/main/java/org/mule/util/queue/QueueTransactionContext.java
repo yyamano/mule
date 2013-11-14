@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.util.queue;
 
 import org.mule.api.store.ObjectStoreException;
@@ -19,6 +15,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.collections.CollectionUtils;
 
 public class QueueTransactionContext extends AbstractTransactionContext
 {
@@ -32,7 +30,8 @@ public class QueueTransactionContext extends AbstractTransactionContext
         this.transactionalQueueManager = transactionalQueueManager;
     }
 
-    public boolean offer(QueueInfo queue, Serializable item, long offerTimeout) throws InterruptedException, ObjectStoreException
+    public boolean offer(QueueInfo queue, Serializable item, long offerTimeout)
+        throws InterruptedException, ObjectStoreException
     {
         readOnly = false;
         if (queue.canTakeFromStore())
@@ -43,7 +42,7 @@ public class QueueTransactionContext extends AbstractTransactionContext
 
         initializeAdded();
 
-        List<Serializable> queueAdded = lookupQueue(queue);
+        List<Serializable> queueAdded = lookupAddedQueue(queue);
         // wait for enough room
         if (queue.offer(null, queueAdded.size(), offerTimeout))
         {
@@ -66,11 +65,39 @@ public class QueueTransactionContext extends AbstractTransactionContext
 
         initializeAdded();
 
-        List<Serializable> queueAdded = lookupQueue(queue);
+        List<Serializable> queueAdded = lookupAddedQueue(queue);
         queueAdded.add(item);
     }
 
-    public Serializable poll(QueueInfo queue, long pollTimeout) throws InterruptedException, ObjectStoreException
+    public void clear(QueueInfo queue) throws InterruptedException
+    {
+        this.readOnly = false;
+        if (queue.canTakeFromStore())
+        {
+            queue.clear();
+        }
+
+        this.initializeRemoved();
+        List<Serializable> queueRemoved = this.lookupRemovedQueue(queue);
+        for (Serializable discardedItem = queue.poll(timeout); discardedItem != null; discardedItem = queue.poll(timeout))
+        {
+            queueRemoved.add(discardedItem);
+        }
+
+        if (this.added != null)
+        {
+            List<Serializable> queueAdded = this.lookupAddedQueue(queue);
+            if (!CollectionUtils.isEmpty(queueAdded))
+            {
+                queueRemoved.addAll(queueAdded);
+                queueAdded.clear();
+            }
+        }
+
+    }
+
+    public Serializable poll(QueueInfo queue, long pollTimeout)
+        throws InterruptedException, ObjectStoreException
     {
         readOnly = false;
         if (added != null)
@@ -238,7 +265,15 @@ public class QueueTransactionContext extends AbstractTransactionContext
         }
     }
 
-    protected List<Serializable> lookupQueue(QueueInfo queue)
+    protected void initializeRemoved()
+    {
+        if (this.removed == null)
+        {
+            this.removed = new HashMap<QueueInfo, List<Serializable>>();
+        }
+    }
+
+    protected List<Serializable> lookupAddedQueue(QueueInfo queue)
     {
         List<Serializable> queueAdded = added.get(queue);
         if (queueAdded == null)
@@ -247,5 +282,16 @@ public class QueueTransactionContext extends AbstractTransactionContext
             added.put(queue, queueAdded);
         }
         return queueAdded;
+    }
+
+    protected List<Serializable> lookupRemovedQueue(QueueInfo queue)
+    {
+        List<Serializable> queueRemoved = this.removed.get(queue);
+        if (queueRemoved == null)
+        {
+            queueRemoved = new ArrayList<Serializable>();
+            this.removed.put(queue, queueRemoved);
+        }
+        return queueRemoved;
     }
 }

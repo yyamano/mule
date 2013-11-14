@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.tck.junit4;
 
 import org.mule.MessageExchangePattern;
@@ -130,6 +126,8 @@ public abstract class AbstractMuleContextTestCase extends AbstractMuleTestCase
     @Before
     public final void setUpMuleContext() throws Exception
     {
+        doSetUpBeforeMuleContextCreation();
+
         muleContext = createMuleContext();
 
         if (isStartContext() && muleContext != null && !muleContext.isStarted())
@@ -138,6 +136,10 @@ public abstract class AbstractMuleContextTestCase extends AbstractMuleTestCase
         }
 
         doSetUp();
+    }
+
+    protected void doSetUpBeforeMuleContextCreation() throws Exception
+    {
     }
 
     private void startMuleContext() throws MuleException, InterruptedException
@@ -248,7 +250,12 @@ public abstract class AbstractMuleContextTestCase extends AbstractMuleTestCase
         if (!isDisposeContextPerClass())
         {
             disposeContext();
+            doTearDownAfterMuleContextDispose();
         }
+    }
+
+    protected void doTearDownAfterMuleContextDispose() throws Exception
+    {
     }
 
     @AfterClass

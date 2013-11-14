@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.test.integration.security.oauth2;
 
 import org.mule.DefaultMuleMessage;
@@ -47,11 +43,12 @@ public class OAuth2AuthorizationEventTestCase extends FunctionalTestCase
 
     private MuleEvent event;
     private TestOAuth2Manager manager;
-    private KeyedPoolableObjectFactory objectFactory = null;
+    private KeyedPoolableObjectFactory<String, OAuth2Adapter> objectFactory = null;
     private OAuth2Adapter adapter;
     private ObjectStore<Serializable> accessTokenObjectStore;
     private DefaultMuleMessage message;
 
+    @SuppressWarnings("unchecked")
     @Before
     public void setUp()
     {
@@ -151,10 +148,10 @@ public class OAuth2AuthorizationEventTestCase extends FunctionalTestCase
     private class TestOAuth2Manager extends BaseOAuth2Manager<OAuth2Adapter> {
         private final transient Logger logger = LoggerFactory.getLogger(TestOAuth2Manager.class);
 
-        private KeyedPoolableObjectFactory objectFactory;
+        private KeyedPoolableObjectFactory<String, OAuth2Adapter> objectFactory;
         private OAuth2Adapter adapter;
 
-        public TestOAuth2Manager(KeyedPoolableObjectFactory objectFactory, OAuth2Adapter adapter)
+        public TestOAuth2Manager(KeyedPoolableObjectFactory<String, OAuth2Adapter> objectFactory, OAuth2Adapter adapter)
         {
             this.objectFactory = objectFactory;
             this.adapter = adapter;
@@ -168,7 +165,7 @@ public class OAuth2AuthorizationEventTestCase extends FunctionalTestCase
         }
 
         @Override
-        protected KeyedPoolableObjectFactory createPoolFactory(OAuth2Manager<OAuth2Adapter> oauthManager,
+        protected KeyedPoolableObjectFactory<String, OAuth2Adapter> createPoolFactory(OAuth2Manager<OAuth2Adapter> oauthManager,
                                                                ObjectStore<Serializable> objectStore)
         {
             return objectFactory;

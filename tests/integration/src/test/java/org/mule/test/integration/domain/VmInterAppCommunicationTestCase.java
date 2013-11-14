@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
+ * The software in this package is published under the terms of the CPAL v1.0
+ * license, a copy of which has been included with this distribution in the
+ * LICENSE.txt file.
+ */
 package org.mule.test.integration.domain;
 
 import static org.junit.Assert.assertThat;
@@ -8,6 +14,7 @@ import org.mule.MessageExchangePattern;
 import org.mule.api.MuleEvent;
 import org.mule.construct.Flow;
 import org.mule.tck.DomainFunctionalTestCase;
+import org.mule.tck.listener.FlowExecutionListener;
 
 import java.util.Map;
 
@@ -53,9 +60,11 @@ public class VmInterAppCommunicationTestCase extends DomainFunctionalTestCase
     public void oneWay() throws Exception
     {
         //TODO remove reference to AbstractMuleTestCase
-        Flow clientFlow = getMuleContext(0).getRegistry().get("clientFlow");
+        Flow clientFlow = getMuleContext(0).getRegistry().get("clientFlowOneWay");
+        FlowExecutionListener flowExecutionListener = new FlowExecutionListener(getMuleContext(1));
         MuleEvent response = clientFlow.process(new DefaultMuleEvent(new DefaultMuleMessage("test-data", (Map<String, Object>) null, getMuleContext(0)), MessageExchangePattern.REQUEST_RESPONSE, clientFlow));
         assertThat(response.getMessageAsString(), Is.is("test-data"));
+        flowExecutionListener.waitUntilFlowIsComplete();
     }
 
 }

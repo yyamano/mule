@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.util.xa;
 
 import java.util.Map;
@@ -17,6 +13,7 @@ import javax.transaction.xa.Xid;
 
 public abstract class AbstractXAResourceManager extends AbstractResourceManager
 {
+
     protected Map<Xid, AbstractTransactionContext> suspendedContexts = new ConcurrentHashMap<Xid, AbstractTransactionContext>();
     protected Map<Xid, AbstractTransactionContext> activeContexts = new ConcurrentHashMap<Xid, AbstractTransactionContext>();
 
@@ -30,7 +27,7 @@ public abstract class AbstractXAResourceManager extends AbstractResourceManager
         return true;
     }
 
-    AbstractTransactionContext getTransactionalResource(Xid xid)
+    protected AbstractTransactionContext getTransactionalResource(Xid xid)
     {
         AbstractTransactionContext context = getActiveTransactionalResource(xid);
         if (context != null)

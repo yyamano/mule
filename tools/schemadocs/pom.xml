@@ -4,12 +4,16 @@
     <parent>
         <groupId>org.mule.tools</groupId>
         <artifactId>mule-tools</artifactId>
-        <version>3.5.0-M1-SNAPSHOT</version>
+        <version>3.5.0-M3-SNAPSHOT</version>
     </parent>
     <artifactId>mule-tools-schemadocs</artifactId>
     <packaging>jar</packaging>
     <name>Schema Docs</name>
     <description>These are the tools used to generate docs from schema</description>
+
+    <properties>
+        <licensePath>../../LICENSE_HEADER.txt</licensePath>
+    </properties>
 
     <dependencies>
         <dependency>

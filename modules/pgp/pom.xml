@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.mule.modules</groupId>
         <artifactId>mule-modules</artifactId>
-        <version>3.5.0-M1-SNAPSHOT</version>
+        <version>3.5.0-M3-SNAPSHOT</version>
     </parent>
     <artifactId>mule-module-pgp</artifactId>
     <packaging>jar</packaging>
@@ -16,6 +16,7 @@
 
     <properties>
         <bouncycastle.jdk>jdk16</bouncycastle.jdk>
+        <licensePath>../../LICENSE_HEADER.txt</licensePath>
     </properties>
 
     <dependencies>

@@ -1,18 +1,16 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.security.oauth.processor;
 
+import org.mule.RequestContext;
 import org.mule.api.MessagingException;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
+import org.mule.api.MuleMessage;
 import org.mule.api.store.ObjectDoesNotExistException;
 import org.mule.api.store.ObjectStoreException;
 import org.mule.api.transport.PropertyScope;
@@ -22,6 +20,8 @@ import org.mule.security.oauth.OAuth2Manager;
 import org.mule.security.oauth.OAuthProperties;
 import org.mule.util.StringUtils;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
@@ -49,8 +49,8 @@ public class OAuth2FetchAccessTokenMessageProcessor extends FetchAccessTokenMess
     @Override
     protected MuleEvent doProcess(MuleEvent event) throws Exception
     {
-        this.notifyCallbackReception(event);
         MuleEvent restoredEvent = this.restoreOriginalEvent(event);
+        this.notifyCallbackReception(event);
 
         try
         {
@@ -63,22 +63,28 @@ public class OAuth2FetchAccessTokenMessageProcessor extends FetchAccessTokenMess
             }
             oauthAdapter.fetchAccessToken(this.getRedirectUri());
 
-            String transformedAccessTokenId = StringUtils.isBlank(this.getAccessTokenId())
-                                                                                          ? this.oauthManager.getDefaultUnauthorizedConnector()
-                                                                                              .getName()
-                                                                                          : this.getAccessTokenId();
+            String transformedAccessTokenId = this.getAccessTokenId();
 
-            transformedAccessTokenId = (String) this.evaluateAndTransform(event.getMuleContext(), event,
-                String.class, null, transformedAccessTokenId);
+            if (StringUtils.isEmpty(transformedAccessTokenId))
+            {
+                transformedAccessTokenId = this.oauthManager.getDefaultUnauthorizedConnector().getName();
+            }
+
+            transformedAccessTokenId = (String) this.evaluateAndTransform(restoredEvent.getMuleContext(),
+                restoredEvent, String.class, null, transformedAccessTokenId);
 
             this.oauthManager.getAccessTokenPoolFactory().passivateObject(transformedAccessTokenId,
                 oauthAdapter);
 
-            restoredEvent.getMessage().setInvocationProperty(OAuthProperties.VERIFIER,
+            MuleMessage message = restoredEvent.getMessage();
+
+            message.setInvocationProperty(OAuthProperties.VERIFIER,
                 event.getMessage().getInvocationProperty(OAuthProperties.VERIFIER));
 
-            restoredEvent.getMessage().setInvocationProperty(OAuthProperties.ACCESS_TOKEN_ID,
-                transformedAccessTokenId);
+            message.setInvocationProperty(OAuthProperties.ACCESS_TOKEN_ID, transformedAccessTokenId);
+
+            message.removeProperty(OAuthProperties.HTTP_STATUS, PropertyScope.OUTBOUND);
+            message.removeProperty(OAuthProperties.CALLBACK_LOCATION, PropertyScope.OUTBOUND);
         }
         catch (Exception e)
         {
@@ -92,19 +98,32 @@ public class OAuth2FetchAccessTokenMessageProcessor extends FetchAccessTokenMess
     private MuleEvent restoreOriginalEvent(MuleEvent event) throws MuleException
     {
         String state = event.getMessage().getInboundProperty("state");
-
-        String eventId = null;
+        if (StringUtils.isEmpty(state))
+        {
+            return event;
+        }
 
         try
         {
-            eventId = StringUtils.match(EVENT_ID_PATTERN, state, 1);
+            state = URLDecoder.decode(state, "UTF-8");
         }
-        catch (IllegalArgumentException e)
+        catch (UnsupportedEncodingException e)
         {
             throw new MessagingException(
-                MessageFactory.createStaticMessage(String.format(
-                    "Could not fetch original event for callback with state %s. Could not extract original event id",
-                    state)), event);
+                MessageFactory.createStaticMessage("State query param had invalid encoding: " + state), event);
+        }
+
+        String eventId = StringUtils.match(EVENT_ID_PATTERN, state, 1);
+
+        if (StringUtils.isBlank(eventId))
+        {
+            if (logger.isWarnEnabled())
+            {
+                logger.warn(String.format(
+                    "Could not fetch original event id for callback with state %s. Will continue with new event without restoring previous one",
+                    state));
+            }
+            return event;
         }
 
         if (logger.isDebugEnabled())
@@ -128,18 +147,20 @@ public class OAuth2FetchAccessTokenMessageProcessor extends FetchAccessTokenMess
                 "Error retrieving authorization event %s from object store", eventId)), event, e);
         }
 
-        try
+        MuleMessage restoredMessage = restoredEvent.getMessage();
+        String cleanedState = StringUtils.match(ORIGINAL_STATE_PATTERN, state, 1);
+
+        if (cleanedState != null)
         {
-            restoredEvent.getMessage().setProperty("state",
-                StringUtils.match(ORIGINAL_STATE_PATTERN, state, 1), PropertyScope.INBOUND);
+            restoredMessage.setProperty("state", cleanedState, PropertyScope.INBOUND);
         }
-        catch (IllegalArgumentException e)
+        else
         {
             // user did not use the state at all, just blank it
-            restoredEvent.getMessage().setProperty("state", StringUtils.EMPTY, PropertyScope.INBOUND);
+            restoredMessage.setProperty("state", StringUtils.EMPTY, PropertyScope.INBOUND);
         }
 
+        RequestContext.setEvent(restoredEvent);
         return restoredEvent;
     }
-
 }

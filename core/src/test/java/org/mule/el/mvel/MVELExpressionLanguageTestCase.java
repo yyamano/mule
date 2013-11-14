@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.el.mvel;
 
 import static org.junit.Assert.assertEquals;
@@ -59,6 +55,7 @@ import javax.activation.DataHandler;
 import javax.activation.MimeType;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -377,6 +374,7 @@ public class MVELExpressionLanguageTestCase extends AbstractMuleContextTestCase
     }
 
     @Test
+    @Ignore("MULE-6926: flaky test")
     public void testConcurrentEvaluation() throws Exception
     {
         muleContext.getRegistry().registerObject("dummy-el-extension", new DummyExpressionLanguageExtension());

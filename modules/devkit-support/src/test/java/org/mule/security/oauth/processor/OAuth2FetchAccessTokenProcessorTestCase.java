@@ -1,15 +1,12 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.security.oauth.processor;
 
+import org.mule.RequestContext;
 import org.mule.api.MessagingException;
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
@@ -51,7 +48,7 @@ public class OAuth2FetchAccessTokenProcessorTestCase
     private OAuth2FetchAccessTokenMessageProcessor processor;
     private MuleEvent event;
     private MuleEvent restoredEvent;
-    
+
     @Mock
     private MuleContext muleContext;
 
@@ -76,7 +73,7 @@ public class OAuth2FetchAccessTokenProcessorTestCase
         Mockito.when(event.getMessage().getInboundProperty("state")).thenReturn(incomingState);
 
         Mockito.when(
-            event.getMuleContext()
+            this.restoredEvent.getMuleContext()
                 .getExpressionManager()
                 .parse(Mockito.anyString(), Mockito.any(MuleMessage.class))).thenAnswer(new Answer<String>()
         {
@@ -94,11 +91,16 @@ public class OAuth2FetchAccessTokenProcessorTestCase
         if (!exception)
         {
             Mockito.verify(this.manager).restoreAuthorizationEvent(eventId);
+            Assert.assertSame(RequestContext.getEvent(), this.restoredEvent);
+            Mockito.verify(this.muleContext).fireNotification(
+                Mockito.argThat(new OAuthNotificationMatcher(
+                    OAuthAuthorizeNotification.OAUTH_AUTHORIZATION_END, this.event)));
+
+            Mockito.verify(this.restoredEvent.getMessage()).removeProperty(OAuthProperties.HTTP_STATUS,
+                PropertyScope.OUTBOUND);
+            Mockito.verify(this.restoredEvent.getMessage()).removeProperty(OAuthProperties.CALLBACK_LOCATION,
+                PropertyScope.OUTBOUND);
         }
-        
-        Mockito.verify(this.muleContext).fireNotification(
-            Mockito.argThat(new OAuthNotificationMatcher(
-                OAuthAuthorizeNotification.OAUTH_AUTHORIZATION_END, this.event)));
     }
 
     @Test
@@ -108,14 +110,26 @@ public class OAuth2FetchAccessTokenProcessorTestCase
         Mockito.verify(this.restoredEvent.getMessage()).setProperty("state", state, PropertyScope.INBOUND);
     }
 
-    @Test(expected = MessagingException.class)
+    @Test
     public void badState() throws Exception
     {
         this.incomingState = "bad state";
         this.exception = true;
 
         Mockito.when(event.getMessage().getInboundProperty("state")).thenReturn(incomingState);
-        this.adapterWithUrlUsingConfigAsId();
+        final String accessTokenUrl = "accessTokenUrl";
+        final String redirectUri = "redirectUri";
+        final String accessTokenId = "accessTokenId";
+
+        this.processor.setRedirectUri(redirectUri);
+
+        OAuth2Adapter adapter = Mockito.mock(OAuth2Adapter.class);
+
+        Mockito.when(this.manager.createAdapter(verifier)).thenReturn(adapter);
+        Mockito.when(this.manager.getDefaultUnauthorizedConnector().getName()).thenReturn(accessTokenId);
+        Mockito.when(adapter.getAccessTokenUrl()).thenReturn(accessTokenUrl);
+
+        Assert.assertSame(this.event, this.processor.process(this.event));
     }
 
     @Test(expected = MessagingException.class)
@@ -126,13 +140,12 @@ public class OAuth2FetchAccessTokenProcessorTestCase
             new ObjectDoesNotExistException());
         this.adapterWithUrlUsingConfigAsId();
     }
-    
+
     @Test(expected = MessagingException.class)
     public void failToRestoreAuthorizationEvent() throws Exception
     {
         this.exception = true;
-        Mockito.when(this.manager.restoreAuthorizationEvent(eventId)).thenThrow(
-            new ObjectStoreException());
+        Mockito.when(this.manager.restoreAuthorizationEvent(eventId)).thenThrow(new ObjectStoreException());
         this.adapterWithUrlUsingConfigAsId();
     }
 

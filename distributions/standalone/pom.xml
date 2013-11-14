@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.mule.distributions</groupId>
         <artifactId>mule-distributions</artifactId>
-        <version>3.5.0-M1-SNAPSHOT</version>
+        <version>3.5.0-M3-SNAPSHOT</version>
     </parent>
     <artifactId>mule-standalone</artifactId>
     <!-- Packaging 'pom' ensures that maven does not try to bind a plugin to the
@@ -14,6 +14,10 @@
     <packaging>pom</packaging>
     <name>Full Distribution</name>
     <description>Includes the Mule server with all of its modules and transports.</description>
+
+    <properties>
+        <licensePath>../../LICENSE_HEADER.txt</licensePath>
+    </properties>
 
     <build>
         <plugins>
@@ -302,15 +306,6 @@
         <dependency>
             <groupId>org.python</groupId>
             <artifactId>jython</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <!--
-            Exclude the transitive dependencies of the bookstore example
-         -->
-        <dependency>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>jsp-2.1-jetty</artifactId>
-            <version>${jettyVersion}</version>
             <scope>provided</scope>
         </dependency>
         <!--

@@ -1,19 +1,16 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.el.mvel;
 
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleMessage;
 import org.mule.api.el.ExpressionLanguage;
+import org.mule.api.el.ExpressionLanguageExtension;
 import org.mule.api.expression.ExpressionManager;
 import org.mule.api.expression.ExpressionRuntimeException;
 import org.mule.api.expression.InvalidExpressionException;
@@ -21,7 +18,6 @@ import org.mule.api.lifecycle.Initialisable;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.transformer.DataType;
 import org.mule.config.i18n.CoreMessages;
-import org.mule.expression.DefaultExpressionManager;
 import org.mule.transformer.types.DataTypeFactory;
 import org.mule.transport.NullPayload;
 import org.mule.util.IOUtils;
@@ -29,6 +25,7 @@ import org.mule.util.IOUtils;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -56,6 +53,7 @@ public class MVELExpressionLanguage implements ExpressionLanguage, Initialisable
     protected ParserContext parserContext;
     protected MuleContext muleContext;
     protected MVELExpressionExecutor expressionExecutor;
+    protected Collection<ExpressionLanguageExtension> expressionLanguageExtensions;
 
     protected MVELExpressionLanguageContext staticContext;
 
@@ -71,10 +69,6 @@ public class MVELExpressionLanguage implements ExpressionLanguage, Initialisable
     {
         this.muleContext = muleContext;
         System.setProperty("mvel2.compiler.allow_override_all_prophandling", "true");
-        if (muleContext.getExpressionManager() instanceof DefaultExpressionManager)
-        {
-            ((DefaultExpressionManager) muleContext.getExpressionManager()).setExpressionLanguage(this);
-        }
     }
 
     @Override
@@ -82,6 +76,7 @@ public class MVELExpressionLanguage implements ExpressionLanguage, Initialisable
     {
         parserContext = createParserContext();
         expressionExecutor = new MVELExpressionExecutor(parserContext);
+        expressionLanguageExtensions = muleContext.getRegistry().lookupObjectsForLifecycle(ExpressionLanguageExtension.class);
 
         loadGlobalFunctions();
         createStaticContext();
@@ -337,7 +332,7 @@ public class MVELExpressionLanguage implements ExpressionLanguage, Initialisable
 
     protected VariableResolverFactory createGlobalVariableResolverFactory(MVELExpressionLanguageContext context)
     {
-        return new GlobalVariableResolverFactory(this, context, parserContext, muleContext);
+        return new GlobalVariableResolverFactory(this, context, parserContext, muleContext, expressionLanguageExtensions);
     }
 
     protected VariableResolverFactory createEventVariableResolverFactory(MuleEvent event)

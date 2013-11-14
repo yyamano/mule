@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.transport.vm;
 
 import org.mule.api.MuleContext;
@@ -18,19 +14,14 @@ import org.mule.api.endpoint.EndpointURI;
 import org.mule.api.endpoint.ImmutableEndpoint;
 import org.mule.api.endpoint.InboundEndpoint;
 import org.mule.api.lifecycle.InitialisationException;
-import org.mule.api.transaction.Transaction;
-import org.mule.api.transaction.TransactionException;
 import org.mule.api.transport.MessageReceiver;
 import org.mule.config.QueueProfile;
 import org.mule.endpoint.DynamicURIInboundEndpoint;
 import org.mule.endpoint.MuleEndpointURI;
 import org.mule.routing.filters.WildcardFilter;
-import org.mule.transaction.TransactionCoordination;
-import org.mule.transaction.XaTransaction;
 import org.mule.transport.AbstractConnector;
 import org.mule.util.queue.QueueManager;
 import org.mule.util.queue.QueueSession;
-import org.mule.util.xa.XAResourceFactory;
 
 import java.util.Iterator;
 
@@ -47,7 +38,6 @@ public class VMConnector extends AbstractConnector
     private Integer queueTimeout;
     /** The queue manager to use for vm queues only */
     private QueueManager queueManager;
-    private static XAResourceFactory xaResourceFactory;
 
     public VMConnector(MuleContext context)
     {
@@ -131,16 +121,6 @@ public class VMConnector extends AbstractConnector
         this.queueProfile = queueProfile;
     }
 
-    /**
-     * @deprecated For customizing the behavior of VM transport the whole {@link QueueManager} should be override
-     * @param xaResourceFactory
-     */
-    @Deprecated
-    public static void setXaResourceFactory(XAResourceFactory xaResourceFactory)
-    {
-        VMConnector.xaResourceFactory = xaResourceFactory;
-    }
-
     VMMessageReceiver getReceiver(EndpointURI endpointUri) throws EndpointException
     {
         return (VMMessageReceiver)getReceiverByEndpoint(endpointUri);
@@ -148,48 +128,7 @@ public class VMConnector extends AbstractConnector
 
     QueueSession getQueueSession() throws InitialisationException
     {
-        Transaction tx = TransactionCoordination.getInstance().getTransaction();
-        if (tx != null)
-        {
-            if (tx.hasResource(queueManager))
-            {
-                final QueueSession queueSession = (QueueSession) tx.getResource(queueManager);
-                if (logger.isDebugEnabled())
-                {
-                    logger.debug("Retrieved VM queue session " + queueSession + " from current transaction " + tx);
-                }
-                return queueSession;
-            }
-        }
-
-        //This get printed every second for every thread
-//        if (logger.isDebugEnabled())
-//        {
-//            logger.debug("Retrieving new VM queue session from queue manager");
-//        }
-
-        QueueSession session = queueManager.getQueueSession();
-        if (tx != null)
-        {
-            //This get printed every second for every thread
-//            if (logger.isDebugEnabled())
-//            {
-//                logger.debug("Binding VM queue session " + session + " to current transaction " + tx);
-//            }
-            try
-            {
-                tx.bindResource(queueManager, session);
-                if (xaResourceFactory != null && tx instanceof XaTransaction)
-                {
-                    tx.bindResource(this, xaResourceFactory.create());
-                }
-            }
-            catch (TransactionException e)
-            {
-                throw new RuntimeException("Could not bind queue session to current transaction", e);
-            }
-        }
-        return session;
+        return queueManager.getQueueSession();
     }
 
     protected MessageReceiver getReceiverByEndpoint(EndpointURI endpointUri) throws EndpointException
@@ -257,15 +196,6 @@ public class VMConnector extends AbstractConnector
     public QueueManager getQueueManager()
     {
         return queueManager;
-    }
-
-    public void bindXaResourceIfRequired() throws TransactionException
-    {
-        Transaction tx = TransactionCoordination.getInstance().getTransaction();
-        if (xaResourceFactory != null && tx instanceof XaTransaction && !tx.hasResource(this))
-        {
-            tx.bindResource(this, xaResourceFactory.create());
-        }
     }
 
     @Override

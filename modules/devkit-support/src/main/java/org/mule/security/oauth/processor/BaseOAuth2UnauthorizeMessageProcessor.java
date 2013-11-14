@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.security.oauth.processor;
 
 import org.mule.api.DefaultMuleException;
@@ -15,15 +11,15 @@ import org.mule.api.MuleEvent;
 import org.mule.api.processor.MessageProcessor;
 import org.mule.common.connection.exception.UnableToAcquireConnectionException;
 import org.mule.config.i18n.CoreMessages;
+import org.mule.devkit.processor.DevkitBasedMessageProcessor;
 import org.mule.security.oauth.OAuth2Adapter;
 import org.mule.security.oauth.OAuth2Manager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 public abstract class BaseOAuth2UnauthorizeMessageProcessor<T extends OAuth2Manager<OAuth2Adapter>> extends
-    AbstractDevkitBasedMessageProcessor implements MessageProcessor
+    DevkitBasedMessageProcessor implements MessageProcessor
 {
 
     private static Logger logger = LoggerFactory.getLogger(BaseOAuth2UnauthorizeMessageProcessor.class);

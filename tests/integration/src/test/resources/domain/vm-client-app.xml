@@ -22,4 +22,9 @@
         </request-reply>
     </flow>
 
+    <flow name="clientFlowOneWay">
+        <!--TODO review this should not require exchange-pattern -->
+        <vm:outbound-endpoint path="helloWorldServiceOneWay" connector-ref="sharedVmConnector"/>
+    </flow>
+
 </mule>

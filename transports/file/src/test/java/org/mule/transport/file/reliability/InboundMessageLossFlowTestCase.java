@@ -1,17 +1,14 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.transport.file.reliability;
 
+import static org.mule.transport.file.FileTestUtils.createDataFile;
+import static org.mule.transport.file.FileTestUtils.createFolder;
 import org.mule.api.MuleEventContext;
-import org.mule.api.construct.FlowConstruct;
 import org.mule.construct.Flow;
 import org.mule.tck.functional.EventCallback;
 import org.mule.tck.functional.FunctionalTestComponent;
@@ -20,6 +17,8 @@ import org.mule.tck.probe.Probe;
 import java.io.File;
 
 import org.junit.Test;
+
+import org.mule.transport.file.FileTestUtils;
 import org.mule.util.concurrent.Latch;
 
 

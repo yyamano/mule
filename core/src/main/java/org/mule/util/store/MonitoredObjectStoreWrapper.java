@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.util.store;
 
 import org.mule.api.DefaultMuleException;
@@ -31,8 +27,8 @@ import java.util.PriorityQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The MonitoredObjectStoreWrapper wraps an ObjectStore which does not support direct
@@ -41,10 +37,11 @@ import org.apache.commons.logging.LogFactory;
 public class MonitoredObjectStoreWrapper<T extends Serializable>
     implements ListableObjectStore<T>, Runnable, MuleContextAware, Initialisable, Disposable
 {
+    private static Logger logger = LoggerFactory.getLogger(MonitoredObjectStoreWrapper.class);
+
     protected MuleContext context;
     protected ScheduledThreadPoolExecutor scheduler;
     ListableObjectStore<StoredObject<T>> baseStore;
-    private static Log logger = LogFactory.getLog(MonitoredObjectStoreWrapper.class);
 
     /**
      * the maximum number of entries that this store keeps around. Specify
@@ -105,6 +102,12 @@ public class MonitoredObjectStoreWrapper<T extends Serializable>
     public T retrieve(Serializable key) throws ObjectStoreException
     {
         return getStore().retrieve(key).getItem();
+    }
+    
+    @Override
+    public void clear() throws ObjectStoreException
+    {
+        this.getStore().clear();
     }
 
     @Override

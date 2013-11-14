@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.api.config;
 
 
@@ -117,7 +113,6 @@ public class MuleProperties
     public static final String MULE_HOME_DIRECTORY_PROPERTY = "mule.home";
     public static final String APP_HOME_DIRECTORY_PROPERTY = "app.home";
     public static final String APP_NAME_PROPERTY = "app.name";
-    public static final String MULE_VERSION_CHECKER = "_muleVersionChecker";
 
     // Object Name Keys
     public static final String OBJECT_MULE_CONTEXT = "_muleContext";

@@ -1,17 +1,16 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.security.oauth;
 
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
+import org.mule.api.NamedObject;
+import org.mule.api.devkit.ProcessAdapter;
+import org.mule.api.devkit.ProcessTemplate;
 import org.mule.api.store.ObjectDoesNotExistException;
 import org.mule.api.store.ObjectStoreException;
 import org.mule.common.security.oauth.exception.NotAuthorizedException;
@@ -23,7 +22,7 @@ import java.util.Map;
 import org.apache.commons.pool.KeyedPoolableObjectFactory;
 
 /**
- * Wrapper around {@link org.mule.api.annotations.oauth.OAuth} annotated class that
+ * Wrapper around {@link org.mule.api.annotations.oauth.OAuth2} annotated class that
  * will infuse it with access token management capabilities.
  * <p/>
  * It can receive a {@link org.mule.config.PoolingProfile} which is a configuration
@@ -31,7 +30,8 @@ import org.apache.commons.pool.KeyedPoolableObjectFactory;
  * 
  * @param <C> Actual connector object that represents a connection
  */
-public interface OAuth2Manager<C extends OAuth2Adapter> extends HttpCallbackAdapter
+public interface OAuth2Manager<C extends OAuth2Adapter>
+    extends HttpCallbackAdapter, ProcessAdapter<OAuth2Adapter>, OnNoTokenPolicyAware, NamedObject
 {
 
     /**
@@ -79,7 +79,7 @@ public interface OAuth2Manager<C extends OAuth2Adapter> extends HttpCallbackAdap
     /**
      * Retrieves accessTokenPoolFactory
      */
-    public KeyedPoolableObjectFactory getAccessTokenPoolFactory();
+    public KeyedPoolableObjectFactory<String, OAuth2Adapter> getAccessTokenPoolFactory();
 
     /**
      * Generates the full URL of an authorization endpoint including query params
@@ -95,23 +95,19 @@ public interface OAuth2Manager<C extends OAuth2Adapter> extends HttpCallbackAdap
                                     String redirectUri);
 
     /**
-     * Tries to use the adapter's restore an access token to retrieve the token. If
-     * the token is successfuly retrieved then it is set into the given adapter
-     * 
-     * @param adapter the adapter on which the access token will be set upon success
-     * @return <code>true</code> if a token could be retrieved and set into the
-     *         adapter. <code>false</code> otherwise
-     */
-    public boolean restoreAccessToken(OAuth2Adapter adapter);
-
-    /**
      * if refresh token is available, then it makes an http call to refresh the
-     * access token. All newly obtained tokens are set into the adapter
+     * access token. All newly obtained tokens are set into the adapter. After the
+     * token has been refreshed, {@link
+     * org.mule.security.oauth.OAuth2Manager.postAuth(OAuth2Adapter, String)} is
+     * invoked
      * 
      * @param adapter the connector's adapter
+     * @param accessTokenId the id of the token you're trying to refresh
      * @throws UnableToAcquireAccessTokenException
+     * @throws IllegalArgumentException if accessTokenId is null
      */
-    public void refreshAccessToken(OAuth2Adapter adapter) throws UnableToAcquireAccessTokenException;
+    public void refreshAccessToken(OAuth2Adapter adapter, String accessTokenId)
+        throws UnableToAcquireAccessTokenException;
 
     /**
      * Makes an http call to the adapter's accessTokenUrl and extracts the access
@@ -169,5 +165,22 @@ public interface OAuth2Manager<C extends OAuth2Adapter> extends HttpCallbackAdap
      */
     public MuleEvent restoreAuthorizationEvent(String eventId)
         throws ObjectStoreException, ObjectDoesNotExistException;
+
+    public <T> ProcessTemplate<T, OAuth2Adapter> getProcessTemplate();
+
+    public String getDefaultAccessTokenId();
+
+    /**
+     * Calls the {@link org.mule.security.oauth.OAuth2Connector.postAuth()} on the
+     * adapter. If it fails due to access token expiration and accessTokenId is not
+     * null, then the token is refresh and the operation is re-attempted. If token
+     * refreshment fails or if accessTokenId is null, then the original exception is
+     * thrown
+     * 
+     * @param adapter the connector adapter
+     * @param accessTokenId the id of the accessToken to be used
+     * @throws Exception
+     */
+    public void postAuth(OAuth2Adapter adapter, String accessTokenId) throws Exception;
 
 }

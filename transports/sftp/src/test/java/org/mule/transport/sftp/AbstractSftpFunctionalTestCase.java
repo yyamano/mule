@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
- * Copyright (c) MuleSource, Inc.  All rights reserved.  http://www.mulesource.com
- *
+ * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.transport.sftp;
 
 import org.mule.tck.junit4.FunctionalTestCase;
@@ -24,9 +20,10 @@ public abstract class AbstractSftpFunctionalTestCase extends FunctionalTestCase
 {
 
     public static final String TESTDIR = "testdir";
+    public static final String SFTP_PORT = "SFTP_PORT";
 
     @Rule
-    public DynamicPort sftpPort = new DynamicPort("SFTP_PORT");
+    public DynamicPort sftpPort = new DynamicPort(SFTP_PORT);
 
     protected SftpServer sftpServer;
     protected SftpClient sftpClient;
@@ -35,7 +32,7 @@ public abstract class AbstractSftpFunctionalTestCase extends FunctionalTestCase
     public void setUp() throws IOException
     {
         setUpServer();
-        setUpClient();
+        sftpClient = createDefaultSftpClient(sftpPort.getNumber());
         cleanUpTestFolder();
         createTestFolder();
         setUpTestData();
@@ -60,11 +57,13 @@ public abstract class AbstractSftpFunctionalTestCase extends FunctionalTestCase
         }
     }
 
-    private void setUpClient() throws IOException
+    protected static SftpClient createDefaultSftpClient(int number) throws IOException
     {
-        sftpClient = new SftpClient("localhost");
-        sftpClient.setPort(sftpPort.getNumber());
+        SftpClient sftpClient = new SftpClient("localhost");
+        sftpClient.setPort(number);
         sftpClient.login(SftpServer.USERNAME, SftpServer.PASSWORD);
+
+        return sftpClient;
     }
 
     protected void setUpTestData() throws IOException

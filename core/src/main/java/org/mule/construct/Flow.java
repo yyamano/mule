@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.construct;
 
 import org.mule.DefaultMuleEvent;
@@ -25,6 +21,7 @@ import org.mule.api.processor.MessageProcessor;
 import org.mule.api.processor.MessageProcessorChainBuilder;
 import org.mule.api.processor.ProcessingStrategy;
 import org.mule.api.processor.ProcessingStrategy.StageNameSource;
+import org.mule.api.transport.ReplyToHandler;
 import org.mule.config.i18n.CoreMessages;
 import org.mule.construct.flow.DefaultFlowProcessingStrategy;
 import org.mule.construct.processor.FlowConstructStatisticsMessageProcessor;
@@ -60,7 +57,10 @@ public class Flow extends AbstractPipeline implements MessageProcessor
     @Override
     public MuleEvent process(final MuleEvent event) throws MuleException
     {
-        final MuleEvent newEvent = new DefaultMuleEvent(event, this);
+        Object replyToDestination = event.getReplyToDestination();
+        ReplyToHandler replyToHandler = event.getReplyToHandler();
+
+        final MuleEvent newEvent = new DefaultMuleEvent(event, this, null, null);
         RequestContext.setEvent(newEvent);
         try
         {
@@ -81,7 +81,7 @@ public class Flow extends AbstractPipeline implements MessageProcessor
             });
             if (result != null && !VoidMuleEvent.getInstance().equals(result))
             {
-                result = new DefaultMuleEvent(result, event.getFlowConstruct());
+                result = new DefaultMuleEvent(result, event.getFlowConstruct(), replyToHandler, replyToDestination);
             }
             return result;
         }

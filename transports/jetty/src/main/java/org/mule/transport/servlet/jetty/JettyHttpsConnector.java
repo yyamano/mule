@@ -1,13 +1,9 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule.transport.servlet.jetty;
 
 import org.mule.api.MuleContext;
@@ -27,8 +23,10 @@ import java.security.Provider;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 
-import org.mortbay.jetty.AbstractConnector;
-import org.mortbay.jetty.security.SslSocketConnector;
+import org.eclipse.jetty.server.AbstractConnector;
+import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 /**
  * The <code>JettyHttpsConnector</code> can be using to embed a Jetty server to receive requests on an http inbound endpoint.
@@ -285,22 +283,60 @@ public class JettyHttpsConnector extends JettyHttpConnector implements TlsDirect
     @Override
     protected AbstractConnector createJettyConnector()
     {
-        SslSocketConnector cnn = new SslSocketConnector();
+        SslContextFactory sslContextFactory = createSslContextFactory();
+        SelectChannelConnector cnn = new SslSelectChannelConnector(sslContextFactory);
+
+        // get (from parent Mule connector) and set number of acceptor threads into the underlying SSL connector
+        cnn.setAcceptors(getAcceptors());
+
+        return cnn;
+    }
+
+    private SslContextFactory createSslContextFactory()
+    {
+        SslContextFactory sslContextFactory = new SslContextFactory();
 
         if (SystemUtils.isIbmJDK())
         {
-            cnn.setProtocol("SSL_TLS");
+            sslContextFactory.setProtocol("SSL_TLS");
+        }
+        if (tls.getKeyStore() != null)
+        {
+            sslContextFactory.setKeyStorePath(tls.getKeyStore());
+        }
+        if (tls.getKeyPassword() != null)
+        {
+            sslContextFactory.setKeyStorePassword(tls.getKeyPassword());
+        }
+        if (tls.getKeyStoreType() != null)
+        {
+            sslContextFactory.setKeyStoreType(tls.getKeyStoreType());
+        }
+        if (tls.getKeyManagerAlgorithm() != null)
+        {
+            sslContextFactory.setSslKeyManagerFactoryAlgorithm(tls.getKeyManagerAlgorithm());
+        }
+        if (tls.getProvider() != null)
+        {
+            sslContextFactory.setProvider(tls.getProvider().getName());
+        }
+        if (tls.getTrustStorePassword() != null)
+        {
+            sslContextFactory.setTrustStorePassword(tls.getTrustStorePassword());
+        }
+        if (tls.getTrustStore() != null)
+        {
+            sslContextFactory.setTrustStore(tls.getTrustStore());
+        }
+        if (tls.getTrustStoreType() != null)
+        {
+            sslContextFactory.setTrustStoreType(tls.getTrustStoreType());
+        }
+        if (tls.getTrustManagerAlgorithm() != null)
+        {
+            sslContextFactory.setSslKeyManagerFactoryAlgorithm(tls.getTrustManagerAlgorithm());
         }
 
-        if (tls.getKeyStore() != null) cnn.setKeystore(tls.getKeyStore());
-        if (tls.getKeyPassword() != null) cnn.setKeyPassword(tls.getKeyPassword());
-        if (tls.getKeyStoreType() != null) cnn.setKeystoreType(tls.getKeyStoreType());
-        if (tls.getKeyManagerAlgorithm() != null) cnn.setSslKeyManagerFactoryAlgorithm(tls.getKeyManagerAlgorithm());
-        if (tls.getProvider() != null) cnn.setProvider(tls.getProvider().getName());
-        if (tls.getTrustStorePassword() != null) cnn.setTrustPassword(tls.getTrustStorePassword());
-        if (tls.getTrustStore() != null) cnn.setTruststore(tls.getTrustStore());
-        if (tls.getTrustStoreType() != null) cnn.setTruststoreType(tls.getTrustStoreType());
-        if (tls.getTrustManagerAlgorithm() != null) cnn.setSslTrustManagerFactoryAlgorithm(tls.getTrustManagerAlgorithm());
-        return cnn;
+        return sslContextFactory;
     }
 }

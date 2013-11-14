@@ -1,18 +1,12 @@
 /*
- * $Id$
- * --------------------------------------------------------------------------------------
  * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
- *
  * The software in this package is published under the terms of the CPAL v1.0
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-
 package org.mule;
 
-import org.mule.api.MessagingException;
 import org.mule.api.MuleContext;
-import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
 import org.mule.api.MuleRuntimeException;
 import org.mule.api.SingleResourceTransactionFactoryManager;
@@ -41,6 +35,7 @@ import org.mule.api.registry.RegistrationException;
 import org.mule.api.registry.Registry;
 import org.mule.api.security.SecurityManager;
 import org.mule.api.store.ListableObjectStore;
+import org.mule.api.store.ObjectStoreManager;
 import org.mule.api.transaction.TransactionManagerFactory;
 import org.mule.client.DefaultLocalMuleClient;
 import org.mule.config.DefaultMuleConfiguration;
@@ -521,6 +516,12 @@ public class DefaultMuleContext implements MuleContext
             }
         }
         return queueManager;
+    }
+    
+    @Override
+    public ObjectStoreManager getObjectStoreManager()
+    {
+        return this.getRegistry().lookupObject(MuleProperties.OBJECT_STORE_MANAGER);
     }
 
     public void setQueueManager(QueueManager queueManager) throws RegistrationException
