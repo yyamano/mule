@@ -20,4 +20,5 @@ public interface Artifact
 
     String getArtifactName();
 
+    String[] getConfigResources();
 }

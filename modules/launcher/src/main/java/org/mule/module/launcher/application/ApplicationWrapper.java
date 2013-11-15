@@ -95,6 +95,12 @@ public class ApplicationWrapper implements Application
         return delegate.getAppName();
     }
 
+    @Override
+    public String[] getConfigResources()
+    {
+        return delegate.getConfigResources();
+    }
+
     public void start() throws DeploymentStartException
     {
         final ClassLoader originalCl = Thread.currentThread().getContextClassLoader();

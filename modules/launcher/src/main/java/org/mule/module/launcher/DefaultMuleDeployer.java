@@ -6,9 +6,7 @@
  */
 package org.mule.module.launcher;
 
-import org.mule.api.lifecycle.Stoppable;
 import org.mule.config.i18n.MessageFactory;
-import org.mule.module.launcher.application.Application;
 import org.mule.module.launcher.artifact.Artifact;
 import org.mule.module.launcher.artifact.ArtifactFactory;
 import org.mule.module.reboot.MuleContainerBootstrapUtils;
@@ -24,29 +22,29 @@ import java.net.URL;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public class DefaultMuleDeployer implements MuleDeployer
+public class DefaultMuleDeployer<T extends Artifact> implements MuleDeployer
 {
 
     protected transient final Log logger = LogFactory.getLog(getClass());
 
-    protected ArtifactFactory artifactFactory;
+    protected ArtifactFactory<T> artifactFactory;
 
     public void setArtifactFactory(ArtifactFactory artifactFactory)
     {
         this.artifactFactory = artifactFactory;
     }
 
-    public void deploy(Artifact app)
+    public void deploy(Artifact artifact)
     {
         try
         {
-            app.install();
-            app.init();
-            app.start();
+            artifact.install();
+            artifact.init();
+            artifact.start();
         }
         catch (Throwable t)
         {
-            app.dispose();
+            artifact.dispose();
 
             if (t instanceof DeploymentException)
             {
@@ -54,22 +52,22 @@ public class DefaultMuleDeployer implements MuleDeployer
                 throw ((DeploymentException) t);
             }
 
-            final String msg = String.format("Failed to deploy application [%s]", app.getArtifactName());
+            final String msg = String.format("Failed to deploy artifact [%s]", artifact.getArtifactName());
             throw new DeploymentException(MessageFactory.createStaticMessage(msg), t);
         }
     }
 
-    public void undeploy(Artifact app)
+    public void undeploy(Artifact artifact)
     {
         try
         {
-            tryToStopApp(app);
-            tryToDisposeApp(app);
+            tryToStopApp(artifact);
+            tryToDisposeApp(artifact);
 
-            final File appDir = new File(MuleContainerBootstrapUtils.getMuleAppsDir(), app.getArtifactName());
+            final File appDir = new File(artifactFactory.getArtifactDir(), artifact.getArtifactName());
             FileUtils.deleteDirectory(appDir);
             // remove a marker, harmless, but a tidy app dir is always better :)
-            File marker = new File(MuleContainerBootstrapUtils.getMuleAppsDir(), String.format("%s-anchor.txt", app.getArtifactName()));
+            File marker = new File(artifactFactory.getArtifactDir(), String.format("%s-anchor.txt", artifact.getArtifactName()));
             marker.delete();
             Introspector.flushCaches();
         }
@@ -81,20 +79,20 @@ public class DefaultMuleDeployer implements MuleDeployer
                 throw ((DeploymentException) t);
             }
 
-            final String msg = String.format("Failed to undeploy application [%s]", app.getArtifactName());
+            final String msg = String.format("Failed to undeploy artifact [%s]", artifact.getArtifactName());
             throw new DeploymentException(MessageFactory.createStaticMessage(msg), t);
         }
     }
 
-    private void tryToDisposeApp(Artifact app)
+    private void tryToDisposeApp(Artifact artifact)
     {
         try
         {
-            app.dispose();
+            artifact.dispose();
         }
         catch (Throwable t)
         {
-            logger.error(String.format("Unable to cleanly dispose application '%s'. Restart Mule if you get errors redeploying this application", app.getArtifactName()), t);
+            logger.error(String.format("Unable to cleanly dispose artifact '%s'. Restart Mule if you get errors redeploying this artifact", artifact.getArtifactName()), t);
         }
     }
 
@@ -107,14 +105,14 @@ public class DefaultMuleDeployer implements MuleDeployer
         }
         catch (Throwable t)
         {
-            logger.error(String.format("Unable to cleanly stop application '%s'. Restart Mule if you get errors redeploying this application", artifact.getArtifactName()), t);
+            logger.error(String.format("Unable to cleanly stop artifact '%s'. Restart Mule if you get errors redeploying this artifact", artifact.getArtifactName()), t);
         }
     }
 
-    public Artifact installFromDir(String packedMuleAppFileName) throws IOException
+    public T installFromDir(String packagedMuleArtifactName) throws IOException
     {
-        final File appsDir = MuleContainerBootstrapUtils.getMuleAppsDir();
-        File appFile = new File(appsDir, packedMuleAppFileName);
+        final File appsDir = artifactFactory.getArtifactDir();
+        File appFile = new File(appsDir, packagedMuleArtifactName);
 
         // basic security measure: outside apps dir use installFrom(url) and go through any
         // restrictions applied to it
@@ -126,24 +124,24 @@ public class DefaultMuleDeployer implements MuleDeployer
         return installFrom(appFile.toURL());
     }
 
-    public Artifact installFrom(URL url) throws IOException
+    public T installFrom(URL url) throws IOException
     {
         if (artifactFactory == null)
         {
-           throw new IllegalStateException("There is no application factory");
+           throw new IllegalStateException("There is no artifact factory");
         }
 
         // TODO plug in app-bloodhound/validator here?
         if (!url.toString().endsWith(".zip"))
         {
-            throw new IllegalArgumentException("Invalid Mule application archive: " + url);
+            throw new IllegalArgumentException("Invalid Mule artifact archive: " + url);
         }
 
         final String baseName = FilenameUtils.getBaseName(url.toString());
         if (baseName.contains("%20"))
         {
             throw new DeploymentInitException(
-                    MessageFactory.createStaticMessage("Mule application name may not contain spaces: " + baseName));
+                    MessageFactory.createStaticMessage("Mule artifact name may not contain spaces: " + baseName));
         }
 
         String appName;
@@ -151,13 +149,13 @@ public class DefaultMuleDeployer implements MuleDeployer
         boolean errorEncountered = false;
         try
         {
-            final File appsDir = MuleContainerBootstrapUtils.getMuleAppsDir();
+            final File appsDir = artifactFactory.getArtifactDir();
 
             final String fullPath = url.toURI().toString();
 
             if (logger.isInfoEnabled())
             {
-                logger.info("Exploding a Mule application archive: " + fullPath);
+                logger.info("Exploding a Mule artifact archive: " + fullPath);
             }
 
             appName = FilenameUtils.getBaseName(fullPath);
@@ -187,7 +185,7 @@ public class DefaultMuleDeployer implements MuleDeployer
         catch (Throwable t)
         {
             errorEncountered = true;
-            final String msg = "Failed to install app from URL: " + url;
+            final String msg = "Failed to install artifact from URL: " + url;
             throw new DeploymentInitException(MessageFactory.createStaticMessage(msg), t);
         }
         finally

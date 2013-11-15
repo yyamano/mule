@@ -6,15 +6,11 @@
  */
 package org.mule.module.launcher.application;
 
-import org.mule.module.launcher.DefaultMuleSharedDomainClassLoader;
 import org.mule.module.launcher.MuleApplicationClassLoader;
-import org.mule.module.launcher.MuleSharedDomainClassLoader;
 import org.mule.module.launcher.descriptor.ApplicationDescriptor;
 import org.mule.module.launcher.domain.ApplicationDomainClassLoaderFactory;
-import org.mule.module.launcher.domain.ApplicationDomainFactory;
 import org.mule.module.launcher.plugin.MulePluginsClassLoader;
 import org.mule.module.launcher.plugin.PluginDescriptor;
-import org.mule.util.StringUtils;
 
 import java.util.Set;
 

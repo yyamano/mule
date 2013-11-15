@@ -14,19 +14,19 @@ import java.net.URL;
 /**
  *
  */
-public interface MuleDeployer
+public interface MuleDeployer<T extends Artifact>
 {
 
-    void deploy(Artifact app);
+    void deploy(T artifact);
 
-    void undeploy(Artifact app);
+    void undeploy(T artifact);
 
     /**
      * Installs packaged Mule apps from $MULE_HOME/apps directory.
      * @param packedMuleAppFileName filename of the packed Mule app (only name + ext)
      */
-    Artifact installFromDir(String packedMuleAppFileName) throws IOException;
+    T installFromDir(String packedMuleAppFileName) throws IOException;
 
 
-    Artifact installFrom(URL url) throws IOException;
+    T installFrom(URL url) throws IOException;
 }

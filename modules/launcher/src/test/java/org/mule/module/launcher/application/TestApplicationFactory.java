@@ -6,7 +6,7 @@
  */
 package org.mule.module.launcher.application;
 
-import org.mule.module.launcher.domain.MuleApplicationDomainFactory;
+import org.mule.module.launcher.domain.DefaultDomainFactory;
 
 import java.io.IOException;
 
@@ -23,7 +23,7 @@ public class TestApplicationFactory extends DefaultApplicationFactory
     public TestApplicationFactory(ApplicationClassLoaderFactory applicationClassLoaderFactory)
     {
         //TODO fix test
-        super(applicationClassLoaderFactory, new MuleApplicationDomainFactory());
+        super(applicationClassLoaderFactory, new DefaultDomainFactory());
     }
 
     public Application createA(String appName) throws IOException

@@ -10,8 +10,10 @@ import org.mule.module.launcher.AppBloodhound;
 import org.mule.module.launcher.DefaultAppBloodhound;
 import org.mule.module.launcher.DeploymentListener;
 import org.mule.module.launcher.descriptor.ApplicationDescriptor;
-import org.mule.module.launcher.domain.ApplicationDomainFactory;
+import org.mule.module.launcher.domain.DomainFactory;
+import org.mule.module.reboot.MuleContainerBootstrapUtils;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -21,13 +23,13 @@ public class DefaultApplicationFactory implements ApplicationFactory
 {
 
     private final ApplicationClassLoaderFactory applicationClassLoaderFactory;
-    private final ApplicationDomainFactory applicationDomainFactory;
+    private final DomainFactory domainFactory;
     protected DeploymentListener deploymentListener;
 
-    public DefaultApplicationFactory(ApplicationClassLoaderFactory applicationClassLoaderFactory, ApplicationDomainFactory applicationDomainFactory)
+    public DefaultApplicationFactory(ApplicationClassLoaderFactory applicationClassLoaderFactory, DomainFactory domainFactory)
     {
         this.applicationClassLoaderFactory = applicationClassLoaderFactory;
-        this.applicationDomainFactory = applicationDomainFactory;
+        this.domainFactory = domainFactory;
     }
 
     public void setDeploymentListener(DeploymentListener deploymentListener)
@@ -48,6 +50,12 @@ public class DefaultApplicationFactory implements ApplicationFactory
         return createAppFrom(descriptor);
     }
 
+    @Override
+    public File getArtifactDir()
+    {
+        return MuleContainerBootstrapUtils.getMuleAppsDir();
+    }
+
     protected Application createAppFrom(ApplicationDescriptor descriptor) throws IOException
     {
         DefaultMuleApplication delegate;
@@ -57,7 +65,7 @@ public class DefaultApplicationFactory implements ApplicationFactory
         }
         else
         {
-            delegate = new DefaultMuleApplication(descriptor, applicationClassLoaderFactory, applicationDomainFactory.createAppDomain(descriptor.getDomain()));
+            delegate = new DefaultMuleApplication(descriptor, applicationClassLoaderFactory, domainFactory.createAppDomain(descriptor.getDomain()));
         }
 
         if (deploymentListener != null)

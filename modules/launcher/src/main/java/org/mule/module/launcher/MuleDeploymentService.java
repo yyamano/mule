@@ -6,6 +6,7 @@
  */
 package org.mule.module.launcher;
 
+import static org.mule.module.launcher.ArtifactDeployer.ARTIFACT_NAME_PROPERTY;
 import static org.mule.util.SplashScreen.miniSplash;
 
 import org.mule.config.StartupContext;
@@ -15,10 +16,12 @@ import org.mule.module.launcher.application.ApplicationFactory;
 import org.mule.module.launcher.application.CompositeApplicationClassLoaderFactory;
 import org.mule.module.launcher.application.DefaultApplicationFactory;
 import org.mule.module.launcher.application.MuleApplicationClassLoaderFactory;
+import org.mule.module.launcher.artifact.Artifact;
 import org.mule.module.launcher.domain.ApplicationDomainClassLoaderFactory;
-import org.mule.module.launcher.domain.ApplicationDomainFactory;
+import org.mule.module.launcher.domain.DefaultDomainFactory;
+import org.mule.module.launcher.domain.Domain;
+import org.mule.module.launcher.domain.DomainFactory;
 import org.mule.module.launcher.domain.MuleApplicationDomainClassLoaderFactory;
-import org.mule.module.launcher.domain.MuleApplicationDomainFactory;
 import org.mule.module.launcher.util.DebuggableReentrantLock;
 import org.mule.module.launcher.util.ElementAddedEvent;
 import org.mule.module.launcher.util.ElementRemovedEvent;
@@ -62,9 +65,10 @@ public class MuleDeploymentService implements DeploymentService
 
     protected static final int DEFAULT_CHANGES_CHECK_INTERVAL_MS = 5000;
 
-    private final ApplicationDomainFactory applicationDomainFactory;
+    private final DomainFactory domainFactory;
 
     public static final String CHANGE_CHECK_INTERVAL_PROPERTY = "mule.launcher.changeCheckInterval";
+
 
     protected ScheduledExecutorService appDirMonitorTimer;
 
@@ -73,13 +77,16 @@ public class MuleDeploymentService implements DeploymentService
     private ReentrantLock deploymentInProgressLock = new DebuggableReentrantLock(true);
 
     private ObservableList<Application> applications = new ObservableList<Application>();
+    private ObservableList<Domain> domains = new ObservableList<Domain>();
     private final File appsDir = MuleContainerBootstrapUtils.getMuleAppsDir();
-    private final File domainDir = MuleContainerBootstrapUtils.getMuleDomainsDir();
+    private final File domainsDir = MuleContainerBootstrapUtils.getMuleDomainsDir();
 
     private List<StartupListener> startupListeners = new ArrayList<StartupListener>();
 
     private CompositeDeploymentListener deploymentListener = new CompositeDeploymentListener();
-    private ArtifactDeployer artifactDeployer;
+    private CompositeDeploymentListener domainDeploymentListener = new CompositeDeploymentListener();
+    private ArtifactDeployer applicationDeployer;
+    private ArtifactDeployer domainDeployer;
 
     public MuleDeploymentService(PluginClassLoaderManager pluginClassLoaderManager)
     {
@@ -88,14 +95,15 @@ public class MuleDeploymentService implements DeploymentService
         ApplicationClassLoaderFactory applicationClassLoaderFactory = new MuleApplicationClassLoaderFactory(applicationDomainClassLoaderFactory);
         applicationClassLoaderFactory = new CompositeApplicationClassLoaderFactory(applicationClassLoaderFactory, pluginClassLoaderManager);
 
-        applicationDomainFactory = new MuleApplicationDomainFactory();
+        domainFactory = new DefaultDomainFactory();
 
-        DefaultApplicationFactory appFactory = new DefaultApplicationFactory(applicationClassLoaderFactory, applicationDomainFactory);
+        DefaultApplicationFactory appFactory = new DefaultApplicationFactory(applicationClassLoaderFactory, domainFactory);
         appFactory.setDeploymentListener(deploymentListener);
 
         DefaultMuleDeployer deployer = new DefaultMuleDeployer();
         deployer.setArtifactFactory(appFactory);
-        artifactDeployer = new ArtifactDeployer(deploymentListener, deployer, appFactory, applications, deploymentInProgressLock);
+        applicationDeployer = new ArtifactDeployer(deploymentListener, deployer, appFactory, applications, deploymentInProgressLock);
+        domainDeployer = new ArtifactDeployer(domainDeploymentListener, deployer, domainFactory, domains, deploymentInProgressLock);
     }
 
     @Override
@@ -113,25 +121,11 @@ public class MuleDeploymentService implements DeploymentService
         final Map<String, Object> options = StartupContext.get().getStartupOptions();
         String appString = (String) options.get("app");
 
-        String[] explodedDomains = domainDir.list(DirectoryFileFilter.DIRECTORY);
-        String[] packagedDomains = domainDir.list(ZIP_APPS_FILTER);
+        String[] explodedDomains = domainsDir.list(DirectoryFileFilter.DIRECTORY);
+        String[] packagedDomains = domainsDir.list(ZIP_APPS_FILTER);
 
         deployPackedDomains(packagedDomains);
         deployExplodedDomains(explodedDomains);
-
-        //Collection<MuleApplicationDomain> allDomains = applicationDomainFactory.createAllDomains();
-        //
-        //for (MuleApplicationDomain domain : allDomains)
-        //{
-        //    try
-        //    {
-        //        domain.start();
-        //    }
-        //    catch (MuleException e)
-        //    {
-        //        logger.warn(String.format("Failure deploying domain %s", domain.getName()),e);
-        //    }
-        //}
 
         if (appString == null)
         {
@@ -154,11 +148,11 @@ public class MuleDeploymentService implements DeploymentService
 
                     if (applicationFile.exists() && applicationFile.isFile())
                     {
-                        artifactDeployer.deployPackagedArtifact(app + ZIP_FILE_SUFFIX);
+                        applicationDeployer.deployPackagedArtifact(app + ZIP_FILE_SUFFIX);
                     }
                     else
                     {
-                        artifactDeployer.deployExplodedArtifact(app);
+                        applicationDeployer.deployExplodedArtifact(app);
                     }
                 }
                 catch (Exception e)
@@ -184,7 +178,7 @@ public class MuleDeploymentService implements DeploymentService
         // stated applications to launch
         if (!(appString != null))
         {
-            scheduleChangeMonitor(appsDir);
+            scheduleChangeMonitor(appsDir, domainsDir);
         }
         else
         {
@@ -195,19 +189,39 @@ public class MuleDeploymentService implements DeploymentService
         }
     }
 
-    private void deployExplodedDomains(String[] explodedDomains)
+    private void deployExplodedDomains(String[] domains)
     {
-        //To change body of created methods use File | Settings | File Templates.
+        for (String addedApp : domains)
+        {
+            try
+            {
+                applicationDeployer.deployExplodedArtifact(addedApp);
+            }
+            catch (DeploymentException e)
+            {
+                // Ignore and continue
+            }
+        }
     }
 
-    private void deployPackedDomains(String[] packagedDomains)
+    private void deployPackedDomains(String[] zips)
     {
-        //To change body of created methods use File | Settings | File Templates.
+        for (String zip : zips)
+        {
+            try
+            {
+                domainDeployer.deployPackagedArtifact(zip);
+            }
+            catch (Exception e)
+            {
+                // Ignore and continue
+            }
+        }
     }
 
     private void deleteAllAnchors()
     {
-        deleteAnchorsFromDirectory(domainDir);
+        deleteAnchorsFromDirectory(domainsDir);
         deleteAnchorsFromDirectory(appsDir);
     }
 
@@ -237,12 +251,12 @@ public class MuleDeploymentService implements DeploymentService
         return appNames.toArray(ArrayUtils.EMPTY_STRING_ARRAY);
     }
 
-    protected void scheduleChangeMonitor(File appsDir)
+    protected void scheduleChangeMonitor(File appsDir, File domainsDir)
     {
         final int reloadIntervalMs = getChangesCheckIntervalMs();
         appDirMonitorTimer = Executors.newSingleThreadScheduledExecutor(new AppDeployerMonitorThreadFactory());
 
-        appDirMonitorTimer.scheduleWithFixedDelay(new AppDirWatcher(appsDir),
+        appDirMonitorTimer.scheduleWithFixedDelay(new AppDirWatcher(appsDir, domainsDir),
                                                   0,
                                                   reloadIntervalMs,
                                                   TimeUnit.MILLISECONDS);
@@ -277,12 +291,12 @@ public class MuleDeploymentService implements DeploymentService
             // tear down apps in reverse order
             Collections.reverse(applications);
 
-            for (Application application : applications)
+            for (Artifact artifact : applications)
             {
                 try
                 {
-                    application.stop();
-                    application.dispose();
+                    artifact.stop();
+                    artifact.dispose();
                 }
                 catch (Throwable t)
                 {
@@ -312,10 +326,15 @@ public class MuleDeploymentService implements DeploymentService
         }
     }
 
+    private Domain findDomain(String domainName)
+    {
+        return (Domain) CollectionUtils.find(domains, new BeanPropertyValueEqualsPredicate(ARTIFACT_NAME_PROPERTY, domainName));
+    }
+
     @Override
     public Application findApplication(String appName)
     {
-        return (Application) CollectionUtils.find(applications, new BeanPropertyValueEqualsPredicate("appName", appName));
+        return (Application) CollectionUtils.find(applications, new BeanPropertyValueEqualsPredicate(ARTIFACT_NAME_PROPERTY, appName));
     }
 
     @Override
@@ -329,27 +348,28 @@ public class MuleDeploymentService implements DeploymentService
      */
     public Map<URL, Long> getApplicationsZombieMap()
     {
-        return artifactDeployer.getApplicationsZombieMap();
+        return applicationDeployer.getApplicationsZombieMap();
     }
 
     protected MuleDeployer getDeployer()
     {
-        return artifactDeployer.getDeployer();
+        return applicationDeployer.getDeployer();
     }
 
     public void setAppFactory(ApplicationFactory appFactory)
     {
-        this.artifactDeployer.setAppFactory(appFactory);
+        this.applicationDeployer.setArtifactFactory(appFactory);
     }
 
     public void setDeployer(MuleDeployer deployer)
     {
-        this.artifactDeployer.setDeployer(deployer);
+        this.applicationDeployer.setDeployer(deployer);
     }
 
     public ApplicationFactory getAppFactory()
     {
-        return artifactDeployer.getAppFactory();
+        //Cast required to maintain backward compatibility.
+        return (ApplicationFactory) applicationDeployer.getArtifactFactory();
     }
 
     @Override
@@ -359,19 +379,24 @@ public class MuleDeploymentService implements DeploymentService
 
     protected void undeploy(Application app)
     {
-        artifactDeployer.undeploy(app);
+        applicationDeployer.undeploy(app);
+    }
+
+    public void undeployDomain(String appName)
+    {
+        domainDeployer.undeploy(appName);
     }
 
     @Override
     public void undeploy(String appName)
     {
-        artifactDeployer.undeploy(appName);
+        applicationDeployer.undeploy(appName);
     }
 
     @Override
     public void deploy(URL appArchiveUrl) throws IOException
     {
-        artifactDeployer.deploy(appArchiveUrl);
+        applicationDeployer.deploy(appArchiveUrl);
     }
 
     @Override
@@ -404,7 +429,7 @@ public class MuleDeploymentService implements DeploymentService
         {
             try
             {
-                artifactDeployer.deployPackagedArtifact(zip);
+                applicationDeployer.deployPackagedArtifact(zip);
             }
             catch (Exception e)
             {
@@ -415,12 +440,11 @@ public class MuleDeploymentService implements DeploymentService
 
     private void deployExplodedApps(String[] apps)
     {
-
         for (String addedApp : apps)
         {
             try
             {
-                artifactDeployer.deployExplodedArtifact(addedApp);
+                applicationDeployer.deployExplodedArtifact(addedApp);
             }
             catch (DeploymentException e)
             {
@@ -434,17 +458,15 @@ public class MuleDeploymentService implements DeploymentService
      *
      * @return a non null list of file names
      */
-    private String[] findExpectedAnchorFiles()
+    private String[] findExpectedAnchorFiles(ObservableList<? extends Artifact> artifacts)
     {
-        String[] appAnchors = new String[applications.size()];
+        String[] anchors = new String[applications.size()];
         int i = 0;
-
-        for (Application application : applications)
+        for (Artifact artifact : artifacts)
         {
-            appAnchors[i++] = application.getAppName() + APP_ANCHOR_SUFFIX;
+            anchors[i++] = artifact.getArtifactName() + APP_ANCHOR_SUFFIX;
         }
-
-        return appAnchors;
+        return anchors;
     }
 
     /**
@@ -453,12 +475,14 @@ public class MuleDeploymentService implements DeploymentService
     protected class AppDirWatcher implements Runnable
     {
         protected File appsDir;
+        protected File domainsDir;
 
         protected volatile boolean dirty;
 
-        public AppDirWatcher(final File appsDir)
+        public AppDirWatcher(final File appsDir, final File domainsDir)
         {
             this.appsDir = appsDir;
+            this.domainsDir = domainsDir;
             applications.addPropertyChangeListener(new PropertyChangeListener()
             {
                 public void propertyChange(PropertyChangeEvent e)
@@ -477,8 +501,11 @@ public class MuleDeploymentService implements DeploymentService
 
         // Cycle is:
         //   undeploy removed apps
-        //   deploy archives
-        //   deploy exploded
+        //   undeploy removed domains
+        //   deploy domain archives
+        //   deploy domain exploded
+        //   deploy archives apps
+        //   deploy exploded apps
         public void run()
         {
             try
@@ -501,15 +528,32 @@ public class MuleDeploymentService implements DeploymentService
 
                 undeployRemovedApps();
 
+                undeployRemovedDomains();
+
+                // list new apps
+                String[] domains = appsDir.list(DirectoryFileFilter.DIRECTORY);
+
+                final String[] domainZips = appsDir.list(ZIP_APPS_FILTER);
+
+                deployPackedApps(domainZips);
+
+                // re-scan exploded apps and update our state, as deploying Mule app archives might have added some
+                if (domainZips.length > 0 || dirty)
+                {
+                    domains = appsDir.list(DirectoryFileFilter.DIRECTORY);
+                }
+
+                deployExplodedApps(domains);
+
                 // list new apps
                 String[] apps = appsDir.list(DirectoryFileFilter.DIRECTORY);
 
-                final String[] zips = appsDir.list(ZIP_APPS_FILTER);
+                final String[] appZips = appsDir.list(ZIP_APPS_FILTER);
 
-                deployPackedApps(zips);
+                deployPackedApps(appZips);
 
                 // re-scan exploded apps and update our state, as deploying Mule app archives might have added some
-                if (zips.length > 0 || dirty)
+                if (appZips.length > 0 || dirty)
                 {
                     apps = appsDir.list(DirectoryFileFilter.DIRECTORY);
                 }
@@ -531,6 +575,56 @@ public class MuleDeploymentService implements DeploymentService
             }
         }
 
+        private void undeployRemovedDomains()
+        {
+            // we care only about removed anchors
+            String[] currentAnchors = MuleDeploymentService.this.domainsDir.list(new SuffixFileFilter(APP_ANCHOR_SUFFIX));
+            if (logger.isDebugEnabled())
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.append(String.format("Current anchors:%n"));
+                for (String currentAnchor : currentAnchors)
+                {
+                    sb.append(String.format("  %s%n", currentAnchor));
+                }
+                logger.debug(sb.toString());
+            }
+
+            String[] domainAnchors = findExpectedAnchorFiles(domains);
+            @SuppressWarnings("unchecked")
+            final Collection<String> deletedAnchors = CollectionUtils.subtract(Arrays.asList(domainAnchors), Arrays.asList(currentAnchors));
+            if (logger.isDebugEnabled())
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.append(String.format("Deleted anchors:%n"));
+                for (String deletedAnchor : deletedAnchors)
+                {
+                    sb.append(String.format("  %s%n", deletedAnchor));
+                }
+                logger.debug(sb.toString());
+            }
+
+            for (String deletedAnchor : deletedAnchors)
+            {
+                String domainName = StringUtils.removeEnd(deletedAnchor, APP_ANCHOR_SUFFIX);
+                try
+                {
+                    if (findDomain(domainName) != null)
+                    {
+                        undeployDomain(domainName);
+                    }
+                    else if (logger.isDebugEnabled())
+                    {
+                        logger.debug(String.format("Domain [%s] has already been undeployed via API", domainName));
+                    }
+                }
+                catch (Throwable t)
+                {
+                    logger.error("Failed to undeploy domains: " + domainName, t);
+                }
+            }
+        }
+
         private void undeployRemovedApps()
         {
             // we care only about removed anchors
@@ -546,7 +640,7 @@ public class MuleDeploymentService implements DeploymentService
                 logger.debug(sb.toString());
             }
 
-            String[] appAnchors = findExpectedAnchorFiles();
+            String[] appAnchors = findExpectedAnchorFiles(applications);
             @SuppressWarnings("unchecked")
             final Collection<String> deletedAnchors = CollectionUtils.subtract(Arrays.asList(appAnchors), Arrays.asList(currentAnchors));
             if (logger.isDebugEnabled())

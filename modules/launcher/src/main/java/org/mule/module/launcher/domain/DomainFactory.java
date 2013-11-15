@@ -6,7 +6,7 @@
  */
 package org.mule.module.launcher.domain;
 
-import org.mule.context.MuleApplicationDomain;
+import org.mule.module.launcher.artifact.ArtifactFactory;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -14,10 +14,10 @@ import java.util.Collection;
 /**
  *
  */
-public interface ApplicationDomainFactory
+public interface DomainFactory extends ArtifactFactory<Domain>
 {
 
-    public MuleApplicationDomain createAppDomain(String appName) throws IOException;
+    public Domain createAppDomain(String appName) throws IOException;
 
-    Collection<MuleApplicationDomain> createAllDomains();
+    Collection<Domain> createAllDomains();
 }

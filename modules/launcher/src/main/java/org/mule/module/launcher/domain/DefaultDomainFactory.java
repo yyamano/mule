@@ -22,19 +22,19 @@ import java.util.Map;
 /**
  *
  */
-public class MuleApplicationDomainFactory implements ApplicationDomainFactory
+public class DefaultDomainFactory implements DomainFactory
 {
-    private Map<String, MuleApplicationDomain> domains = new HashMap<String, MuleApplicationDomain>();
+    private Map<String, Domain> domains = new HashMap<String, Domain>();
 
     @Override
-    public MuleApplicationDomain createAppDomain(String domainName) throws IOException
+    public Domain createAppDomain(String domainName) throws IOException
     {
         //TODO validate null pointer
         return domains.get(domainName);
     }
 
     @Override
-    public List<MuleApplicationDomain> createAllDomains()
+    public List<Domain> createAllDomains()
     {
         File domainFolder = MuleContainerBootstrapUtils.getMuleDomainsDir();
         Map<String, ClassLoader> domainClassLoader = new HashMap<String, ClassLoader>();
@@ -58,9 +58,21 @@ public class MuleApplicationDomainFactory implements ApplicationDomainFactory
             {
                 DefaultMuleDomainFactory defaultMuleDomainFactory = new DefaultMuleDomainFactory();
                 MuleApplicationDomain muleDomain = defaultMuleDomainFactory.createMuleDomain(domain, domainClassLoader.get(domain));
-                domains.put(domain,muleDomain);
+                domains.put(domain, (Domain) muleDomain);
             }
         }
-        return (List<MuleApplicationDomain>) Collections.unmodifiableCollection(domains.values());
+        return (List<Domain>) Collections.unmodifiableCollection(domains.values());
+    }
+
+    @Override
+    public Domain createArtifact(String artifactName) throws IOException
+    {
+        return domains.get(artifactName);
+    }
+
+    @Override
+    public File getArtifactDir()
+    {
+        return MuleContainerBootstrapUtils.getMuleDomainsDir();
     }
 }

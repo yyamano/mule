@@ -4,9 +4,9 @@ import static org.mule.util.SplashScreen.miniSplash;
 
 import org.mule.config.i18n.MessageFactory;
 import org.mule.module.launcher.application.Application;
-import org.mule.module.launcher.application.ApplicationFactory;
+import org.mule.module.launcher.artifact.Artifact;
+import org.mule.module.launcher.artifact.ArtifactFactory;
 import org.mule.module.launcher.util.ObservableList;
-import org.mule.module.reboot.MuleContainerBootstrapUtils;
 import org.mule.util.CollectionUtils;
 import org.mule.util.FileUtils;
 import org.mule.util.StringUtils;
@@ -29,29 +29,31 @@ import org.apache.commons.logging.LogFactory;
 /**
  *
  */
-public class ArtifactDeployer
+public class ArtifactDeployer<T extends Artifact>
 {
 
+    public static final String ARTIFACT_NAME_PROPERTY = "artifactName";
     protected transient final Log logger = LogFactory.getLog(getClass());
     public static final String ZIP_FILE_SUFFIX = ".zip";
     public static final String ANOTHER_DEPLOYMENT_OPERATION_IS_IN_PROGRESS = "Another deployment operation is in progress";
     public static final String INSTALL_OPERATION_HAS_BEEN_INTERRUPTED = "Install operation has been interrupted";
 
     private Map<String, ZombieFile> applicationZombieMap = new HashMap<String, ZombieFile>();
-    private final File appsDir = MuleContainerBootstrapUtils.getMuleAppsDir();
-    private ObservableList<Application> applications;
+    private File artifactDir;
+    private ObservableList<T> artifacts;
     private CompositeDeploymentListener deploymentListener;
     private ReentrantLock deploymentInProgressLcok;
-    protected MuleDeployer deployer;
-    protected ApplicationFactory appFactory;
+    protected MuleDeployer<T> deployer;
+    protected ArtifactFactory<T> artifactFactory;
 
-    public ArtifactDeployer(CompositeDeploymentListener deploymentListener, MuleDeployer deployer, ApplicationFactory appFactory, ObservableList<Application> applications, ReentrantLock lock)
+    public ArtifactDeployer(CompositeDeploymentListener deploymentListener, MuleDeployer deployer, ArtifactFactory artifactFactory, ObservableList<T> artifacts, ReentrantLock lock)
     {
         this.deploymentListener = deploymentListener;
         this.deployer = deployer;
-        this.appFactory = appFactory;
-        this.applications = applications;
+        this.artifactFactory = artifactFactory;
+        this.artifacts = artifacts;
         this.deploymentInProgressLcok = lock;
+        this.artifactDir = artifactFactory.getArtifactDir();
     }
 
 
@@ -62,7 +64,7 @@ public class ArtifactDeployer
 
         final String appName = StringUtils.removeEnd(zip, ZIP_FILE_SUFFIX);
 
-        appZip = new File(appsDir, zip);
+        appZip = new File(artifactDir, zip);
         url = appZip.toURI().toURL();
 
         ZombieFile zombieFile = applicationZombieMap.get(appName);
@@ -76,7 +78,7 @@ public class ArtifactDeployer
         }
 
         // check if this app is running first, undeploy it then
-        Application app = (Application) CollectionUtils.find(applications, new BeanPropertyValueEqualsPredicate("appName", appName));
+        T app = (T) CollectionUtils.find(artifacts, new BeanPropertyValueEqualsPredicate(ARTIFACT_NAME_PROPERTY, appName));
         if (app != null)
         {
             undeploy(appName);
@@ -88,7 +90,7 @@ public class ArtifactDeployer
     public void deployExplodedArtifact(String artifactName) throws DeploymentException
     {
         @SuppressWarnings("rawtypes")
-        Collection<String> deployedAppNames = CollectionUtils.collect(applications, new BeanToPropertyValueTransformer("appName"));
+        Collection<String> deployedAppNames = CollectionUtils.collect(artifacts, new BeanToPropertyValueTransformer(ARTIFACT_NAME_PROPERTY));
 
         if (deployedAppNames.contains(artifactName) && (!applicationZombieMap.containsKey(artifactName)))
         {
@@ -117,18 +119,18 @@ public class ArtifactDeployer
             logger.info("================== New Exploded Application: " + addedApp);
         }
 
-        Application application;
+        T artifact;
         try
         {
-            application = appFactory.createArtifact(addedApp);
+            artifact = artifactFactory.createArtifact(addedApp);
 
             // add to the list of known apps first to avoid deployment loop on failure
-            onApplicationInstalled(application);
+            onArtifactInstalled(artifact);
         }
         catch (Throwable t)
         {
-            final File appsDir1 = MuleContainerBootstrapUtils.getMuleAppsDir();
-            File appDir1 = new File(appsDir1, addedApp);
+            final File artifactDir1 = artifactDir;
+            File appDir1 = new File(artifactDir1, addedApp);
 
             addZombieFile(addedApp, appDir1);
 
@@ -148,12 +150,12 @@ public class ArtifactDeployer
             }
         }
 
-        deployApplication(application);
+        deployArtifact(artifact);
     }
 
-    protected void onApplicationInstalled(Application a)
+    protected void onArtifactInstalled(T a)
     {
-        trackApplication(a);
+        trackArtifact(a);
     }
 
     public void undeploy(String appName)
@@ -162,20 +164,20 @@ public class ArtifactDeployer
         {
             return;
         }
-        Application app = (Application) CollectionUtils.find(applications, new BeanPropertyValueEqualsPredicate("appName", appName));
+        T app = (T) CollectionUtils.find(artifacts, new BeanPropertyValueEqualsPredicate(ARTIFACT_NAME_PROPERTY, appName));
         undeploy(app);
     }
 
     public void deploy(URL appArchiveUrl) throws IOException
     {
-        Application application;
+        T artifact;
 
         try
         {
             try
             {
-                application = guardedInstallFrom(appArchiveUrl);
-                trackApplication(application);
+                artifact = guardedInstallFrom(appArchiveUrl);
+                trackArtifact(artifact);
             }
             catch (Throwable t)
             {
@@ -193,7 +195,7 @@ public class ArtifactDeployer
                 throw t;
             }
 
-            deployApplication(application);
+            deployArtifact(artifact);
         }
         catch (Throwable t)
         {
@@ -208,7 +210,7 @@ public class ArtifactDeployer
         }
     }
 
-    private void guardedDeploy(Application application)
+    private void guardedDeploy(T artifact)
     {
         try
         {
@@ -217,7 +219,7 @@ public class ArtifactDeployer
                 return;
             }
 
-            deployer.deploy(application);
+            deployer.deploy(artifact);
         }
         catch (InterruptedException e)
         {
@@ -232,41 +234,41 @@ public class ArtifactDeployer
         }
     }
 
-    public void deployApplication(Application application) throws DeploymentException
+    public void deployArtifact(T artifact) throws DeploymentException
     {
         try
         {
-            deploymentListener.onDeploymentStart(application.getAppName());
-            guardedDeploy(application);
-            deploymentListener.onDeploymentSuccess(application.getAppName());
-            applicationZombieMap.remove(application.getAppName());
+            deploymentListener.onDeploymentStart(artifact.getArtifactName());
+            guardedDeploy(artifact);
+            deploymentListener.onDeploymentSuccess(artifact.getArtifactName());
+            applicationZombieMap.remove(artifact.getArtifactName());
         }
         catch (Throwable t)
         {
             // error text has been created by the deployer already
-            String msg = miniSplash(String.format("Failed to deploy app '%s', see below", application.getAppName()));
+            String msg = miniSplash(String.format("Failed to deploy app '%s', see below", artifact.getArtifactName()));
             logger.error(msg, t);
 
-            addZombieApp(application);
+            addZombieApp(artifact);
 
-            deploymentListener.onDeploymentFailure(application.getAppName(), t);
+            deploymentListener.onDeploymentFailure(artifact.getArtifactName(), t);
             if (t instanceof DeploymentException)
             {
                 throw (DeploymentException) t;
             }
             else
             {
-                msg = "Failed to deploy application: " + application.getAppName();
+                msg = "Failed to deploy application: " + artifact.getArtifactName();
                 throw new DeploymentException(MessageFactory.createStaticMessage(msg), t);
             }
         }
     }
 
-    protected void addZombieApp(Application application)
+    protected void addZombieApp(Artifact artifact)
     {
-        final File appDir = new File(MuleContainerBootstrapUtils.getMuleAppsDir(), application.getAppName()) ;
+        final File appDir = new File(artifactFactory.getArtifactDir(), artifact.getArtifactName()) ;
 
-        String resource = application.getDescriptor().getConfigResources()[0];
+        String resource = artifact.getConfigResources()[0];
         File resourceFile = new File(appDir, resource);
         ZombieFile zombieFile = new ZombieFile();
 
@@ -277,7 +279,7 @@ public class ArtifactDeployer
                 zombieFile.url = resourceFile.toURI().toURL();
                 zombieFile.lastUpdated = resourceFile.lastModified();
 
-                applicationZombieMap.put(application.getAppName(), zombieFile);
+                applicationZombieMap.put(artifact.getArtifactName(), zombieFile);
             }
             catch (MalformedURLException e)
             {
@@ -317,41 +319,41 @@ public class ArtifactDeployer
 
     public Application findApplication(String appName)
     {
-        return (Application) CollectionUtils.find(applications, new BeanPropertyValueEqualsPredicate("appName", appName));
+        return (Application) CollectionUtils.find(artifacts, new BeanPropertyValueEqualsPredicate(ARTIFACT_NAME_PROPERTY, appName));
     }
 
-    private void trackApplication(Application application)
+    private void trackArtifact(T artifact)
     {
-        Application previousApplication = findApplication(application.getAppName());
-        applications.remove(previousApplication);
+        Application previousApplication = findApplication(artifact.getArtifactName());
+        artifacts.remove(previousApplication);
 
-        applications.add(application);
+        artifacts.add(artifact);
     }
 
-    protected void undeploy(Application app)
+    protected void undeploy(T app)
     {
         if (logger.isInfoEnabled())
         {
-            logger.info("================== Request to Undeploy Application: " + app.getAppName());
+            logger.info("================== Request to Undeploy Application: " + app.getArtifactName());
         }
 
         try
         {
-            deploymentListener.onUndeploymentStart(app.getAppName());
+            deploymentListener.onUndeploymentStart(app.getArtifactName());
 
-            applications.remove(app);
+            artifacts.remove(app);
             guardedUndeploy(app);
 
-            deploymentListener.onUndeploymentSuccess(app.getAppName());
+            deploymentListener.onUndeploymentSuccess(app.getArtifactName());
         }
         catch (RuntimeException e)
         {
-            deploymentListener.onUndeploymentFailure(app.getAppName(), e);
+            deploymentListener.onUndeploymentFailure(app.getArtifactName(), e);
             throw e;
         }
     }
 
-    private Application guardedInstallFrom(URL appArchiveUrl) throws IOException
+    private T guardedInstallFrom(URL appArchiveUrl) throws IOException
     {
         try
         {
@@ -359,9 +361,7 @@ public class ArtifactDeployer
             {
                 throw new IOException(ANOTHER_DEPLOYMENT_OPERATION_IS_IN_PROGRESS);
             }
-
-            //TODO see how to remove this cast.
-            return (Application) deployer.installFrom(appArchiveUrl);
+            return deployer.installFrom(appArchiveUrl);
         }
         catch (InterruptedException e)
         {
@@ -377,7 +377,7 @@ public class ArtifactDeployer
         }
     }
 
-    private void guardedUndeploy(Application app)
+    private void guardedUndeploy(T app)
     {
         try
         {
@@ -418,14 +418,14 @@ public class ArtifactDeployer
         this.deployer = deployer;
     }
 
-    public void setAppFactory(ApplicationFactory appFactory)
+    public void setArtifactFactory(ArtifactFactory<T> artifactFactory)
     {
-        this.appFactory = appFactory;
+        this.artifactFactory = artifactFactory;
     }
 
-    public ApplicationFactory getAppFactory()
+    public ArtifactFactory getArtifactFactory()
     {
-        return appFactory;
+        return artifactFactory;
     }
 
     public MuleDeployer getDeployer()

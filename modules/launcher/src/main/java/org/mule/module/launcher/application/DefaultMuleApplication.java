@@ -34,6 +34,7 @@ import org.mule.module.launcher.DeploymentStopException;
 import org.mule.module.launcher.InstallException;
 import org.mule.module.launcher.MuleDeploymentService;
 import org.mule.module.launcher.descriptor.ApplicationDescriptor;
+import org.mule.module.launcher.domain.Domain;
 import org.mule.module.reboot.MuleContainerBootstrapUtils;
 import org.mule.util.ClassUtils;
 import org.mule.util.ExceptionUtils;
@@ -60,7 +61,7 @@ public class DefaultMuleApplication implements Application
 
     protected transient final Log logger = LogFactory.getLog(getClass());
     protected transient final Log deployLogger = LogFactory.getLog(MuleDeploymentService.class);
-    private MuleApplicationDomain applicationDomain;
+    private Domain domain;
 
     protected ScheduledExecutorService watchTimer;
 
@@ -80,10 +81,10 @@ public class DefaultMuleApplication implements Application
         this.deploymentListener = new NullDeploymentListener();
     }
 
-    public DefaultMuleApplication(ApplicationDescriptor descriptor, ApplicationClassLoaderFactory applicationClassLoaderFactory, MuleApplicationDomain applicationDomain)
+    public DefaultMuleApplication(ApplicationDescriptor descriptor, ApplicationClassLoaderFactory applicationClassLoaderFactory, Domain domain)
     {
         this(descriptor,applicationClassLoaderFactory);
-        this.applicationDomain = applicationDomain;
+        this.domain = domain;
     }
 
     public void setDeploymentListener(DeploymentListener deploymentListener)
@@ -233,7 +234,7 @@ public class DefaultMuleApplication implements Application
     protected ConfigurationBuilder createConfigurationBuilder() throws Exception
     {
         String configBuilderClassName = determineConfigBuilderClassName();
-        if (applicationDomain == null || !applicationDomain.containsSharedResources())
+        if (domain == null || !domain.containsSharedResources())
         {
             return (ConfigurationBuilder) ClassUtils.instanciateClass(configBuilderClassName,
               new Object[] { absoluteResourcePaths }, getDeploymentClassLoader());
@@ -244,7 +245,7 @@ public class DefaultMuleApplication implements Application
                                                                                                            new Object[] {absoluteResourcePaths}, getDeploymentClassLoader());
             if (configurationBuilder instanceof DomainAwareConfigurationBuilder)
             {
-                ((DomainAwareConfigurationBuilder)configurationBuilder).setDomainContext(applicationDomain.getContext());
+                ((DomainAwareConfigurationBuilder)configurationBuilder).setDomainContext(domain.getContext());
             }
             else
             {
@@ -403,6 +404,12 @@ public class DefaultMuleApplication implements Application
     public String getArtifactName()
     {
         return descriptor.getAppName();
+    }
+
+    @Override
+    public String[] getConfigResources()
+    {
+        return descriptor.getConfigResources();
     }
 
     @Override
