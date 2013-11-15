@@ -229,7 +229,7 @@ public class DefaultMuleApplication implements Application
     protected ConfigurationBuilder createConfigurationBuilder() throws Exception
     {
         String configBuilderClassName = determineConfigBuilderClassName();
-        if (applicationDomain != null && applicationDomain.getContext() == null)
+        if (applicationDomain == null || !applicationDomain.containsSharedResources())
         {
             return (ConfigurationBuilder) ClassUtils.instanciateClass(configBuilderClassName,
               new Object[] { absoluteResourcePaths }, getDeploymentClassLoader());

@@ -9,7 +9,6 @@ package org.mule.module.launcher;
 import static org.mule.util.SplashScreen.miniSplash;
 
 import org.mule.config.StartupContext;
-import org.mule.config.i18n.MessageFactory;
 import org.mule.module.launcher.application.Application;
 import org.mule.module.launcher.application.ApplicationClassLoaderFactory;
 import org.mule.module.launcher.application.ApplicationFactory;
@@ -27,20 +26,17 @@ import org.mule.module.launcher.util.ObservableList;
 import org.mule.module.reboot.MuleContainerBootstrapUtils;
 import org.mule.util.ArrayUtils;
 import org.mule.util.CollectionUtils;
-import org.mule.util.FileUtils;
 import org.mule.util.StringUtils;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +46,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.beanutils.BeanPropertyValueEqualsPredicate;
-import org.apache.commons.beanutils.BeanToPropertyValueTransformer;
 import org.apache.commons.io.filefilter.AndFileFilter;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.FileFileFilter;
@@ -65,9 +60,6 @@ public class MuleDeploymentService implements DeploymentService
     public static final String ZIP_FILE_SUFFIX = ".zip";
     public static final IOFileFilter ZIP_APPS_FILTER = new AndFileFilter(new SuffixFileFilter(ZIP_FILE_SUFFIX), FileFileFilter.FILE);
 
-    public static final String ANOTHER_DEPLOYMENT_OPERATION_IS_IN_PROGRESS = "Another deployment operation is in progress";
-    public static final String INSTALL_OPERATION_HAS_BEEN_INTERRUPTED = "Install operation has been interrupted";
-
     protected static final int DEFAULT_CHANGES_CHECK_INTERVAL_MS = 5000;
 
     private final ApplicationDomainFactory applicationDomainFactory;
@@ -77,18 +69,17 @@ public class MuleDeploymentService implements DeploymentService
     protected ScheduledExecutorService appDirMonitorTimer;
 
     protected transient final Log logger = LogFactory.getLog(getClass());
-    protected MuleDeployer deployer;
-    protected ApplicationFactory appFactory;
     // fair lock
-    private ReentrantLock lock = new DebuggableReentrantLock(true);
+    private ReentrantLock deploymentInProgressLock = new DebuggableReentrantLock(true);
 
     private ObservableList<Application> applications = new ObservableList<Application>();
-    private Map<String, ZombieFile> zombieMap = new HashMap<String, ZombieFile>();
     private final File appsDir = MuleContainerBootstrapUtils.getMuleAppsDir();
+    private final File domainDir = MuleContainerBootstrapUtils.getMuleDomainsDir();
 
     private List<StartupListener> startupListeners = new ArrayList<StartupListener>();
 
     private CompositeDeploymentListener deploymentListener = new CompositeDeploymentListener();
+    private ArtifactDeployer artifactDeployer;
 
     public MuleDeploymentService(PluginClassLoaderManager pluginClassLoaderManager)
     {
@@ -101,11 +92,10 @@ public class MuleDeploymentService implements DeploymentService
 
         DefaultApplicationFactory appFactory = new DefaultApplicationFactory(applicationClassLoaderFactory, applicationDomainFactory);
         appFactory.setDeploymentListener(deploymentListener);
-        this.appFactory = appFactory;
 
         DefaultMuleDeployer deployer = new DefaultMuleDeployer();
-        deployer.setApplicationFactory(this.appFactory);
-        this.deployer = deployer;
+        deployer.setApplicationFactory(appFactory);
+        artifactDeployer = new ArtifactDeployer(deploymentListener, deployer, appFactory, applications, deploymentInProgressLock);
     }
 
     @Override
@@ -123,7 +113,25 @@ public class MuleDeploymentService implements DeploymentService
         final Map<String, Object> options = StartupContext.get().getStartupOptions();
         String appString = (String) options.get("app");
 
-        applicationDomainFactory.createAllDomains();
+        String[] explodedDomains = domainDir.list(DirectoryFileFilter.DIRECTORY);
+        String[] packagedDomains = domainDir.list(ZIP_APPS_FILTER);
+
+        deployPackedDomains(packagedDomains);
+        deployExplodedDomains(explodedDomains);
+
+        //Collection<MuleApplicationDomain> allDomains = applicationDomainFactory.createAllDomains();
+        //
+        //for (MuleApplicationDomain domain : allDomains)
+        //{
+        //    try
+        //    {
+        //        domain.start();
+        //    }
+        //    catch (MuleException e)
+        //    {
+        //        logger.warn(String.format("Failure deploying domain %s", domain.getName()),e);
+        //    }
+        //}
 
         if (appString == null)
         {
@@ -146,11 +154,11 @@ public class MuleDeploymentService implements DeploymentService
 
                     if (applicationFile.exists() && applicationFile.isFile())
                     {
-                        deployPackedApp(app + ZIP_FILE_SUFFIX);
+                        artifactDeployer.deployPackagedArtifact(app + ZIP_FILE_SUFFIX);
                     }
                     else
                     {
-                        deployExplodedApp(app);
+                        artifactDeployer.deployExplodedArtifact(app);
                     }
                 }
                 catch (Exception e)
@@ -187,44 +195,30 @@ public class MuleDeploymentService implements DeploymentService
         }
     }
 
-    private void deleteAllAnchors()
+    private void deployExplodedDomains(String[] explodedDomains)
     {
-        // Deletes any leftover anchor files from previous shutdowns
-        String[] appAnchors = appsDir.list(new SuffixFileFilter(APP_ANCHOR_SUFFIX));
-        for (String anchor : appAnchors)
-        {
-            // ignore result
-            new File(appsDir, anchor).delete();
-        }
+        //To change body of created methods use File | Settings | File Templates.
     }
 
-    private void deployApplication(Application application) throws DeploymentException
+    private void deployPackedDomains(String[] packagedDomains)
     {
-        try
-        {
-            deploymentListener.onDeploymentStart(application.getAppName());
-            guardedDeploy(application);
-            deploymentListener.onDeploymentSuccess(application.getAppName());
-            zombieMap.remove(application.getAppName());
-        }
-        catch (Throwable t)
-        {
-            // error text has been created by the deployer already
-            String msg = miniSplash(String.format("Failed to deploy app '%s', see below", application.getAppName()));
-            logger.error(msg, t);
+        //To change body of created methods use File | Settings | File Templates.
+    }
 
-            addZombieApp(application);
+    private void deleteAllAnchors()
+    {
+        deleteAnchorsFromDirectory(domainDir);
+        deleteAnchorsFromDirectory(appsDir);
+    }
 
-            deploymentListener.onDeploymentFailure(application.getAppName(), t);
-            if (t instanceof DeploymentException)
-            {
-                throw (DeploymentException) t;
-            }
-            else
-            {
-                msg = "Failed to deploy application: " + application.getAppName();
-                throw new DeploymentException(MessageFactory.createStaticMessage(msg), t);
-            }
+    private void deleteAnchorsFromDirectory(final File directory)
+    {
+        // Deletes any leftover anchor files from previous shutdowns
+        String[] anchors = directory.list(new SuffixFileFilter(APP_ANCHOR_SUFFIX));
+        for (String anchor : anchors)
+        {
+            // ignore result
+            new File(directory, anchor).delete();
         }
     }
 
@@ -277,7 +271,7 @@ public class MuleDeploymentService implements DeploymentService
     {
         stopAppDirMonitorTimer();
 
-        lock.lock();
+        deploymentInProgressLock.lock();
         try
         {
             // tear down apps in reverse order
@@ -298,7 +292,7 @@ public class MuleDeploymentService implements DeploymentService
         }
         finally
         {
-            lock.unlock();
+            deploymentInProgressLock.unlock();
         }
     }
 
@@ -333,254 +327,51 @@ public class MuleDeploymentService implements DeploymentService
     /**
      * @return URL/lastModified of apps which previously failed to deploy
      */
-    public Map<URL, Long> getZombieMap()
+    public Map<URL, Long> getApplicationsZombieMap()
     {
-        Map<URL, Long> result = new HashMap<URL, Long>();
-
-        for (String app : zombieMap.keySet())
-        {
-            ZombieFile file = zombieMap.get(app);
-            result.put(file.url, file.lastUpdated);
-        }
-
-        return result;
+        return artifactDeployer.getApplicationsZombieMap();
     }
 
     protected MuleDeployer getDeployer()
     {
-        return deployer;
+        return artifactDeployer.getDeployer();
     }
 
     public void setAppFactory(ApplicationFactory appFactory)
     {
-        this.appFactory = appFactory;
+        this.artifactDeployer.setAppFactory(appFactory);
     }
 
     public void setDeployer(MuleDeployer deployer)
     {
-        this.deployer = deployer;
+        this.artifactDeployer.setDeployer(deployer);
     }
 
     public ApplicationFactory getAppFactory()
     {
-        return appFactory;
+        return artifactDeployer.getAppFactory();
     }
 
     @Override
     public ReentrantLock getLock() {
-        return lock;
-    }
-
-    protected void onApplicationInstalled(Application a)
-    {
-        trackApplication(a);
-    }
-
-    private void trackApplication(Application application)
-    {
-        Application previousApplication = findApplication(application.getAppName());
-        applications.remove(previousApplication);
-
-        applications.add(application);
+        return deploymentInProgressLock;
     }
 
     protected void undeploy(Application app)
     {
-        if (logger.isInfoEnabled())
-        {
-            logger.info("================== Request to Undeploy Application: " + app.getAppName());
-        }
-
-        try
-        {
-            deploymentListener.onUndeploymentStart(app.getAppName());
-
-            applications.remove(app);
-            guardedUndeploy(app);
-
-            deploymentListener.onUndeploymentSuccess(app.getAppName());
-        }
-        catch (RuntimeException e)
-        {
-            deploymentListener.onUndeploymentFailure(app.getAppName(), e);
-            throw e;
-        }
+        artifactDeployer.undeploy(app);
     }
 
     @Override
     public void undeploy(String appName)
     {
-        Application app = (Application) CollectionUtils.find(applications, new BeanPropertyValueEqualsPredicate("appName", appName));
-        undeploy(app);
+        artifactDeployer.undeploy(appName);
     }
 
     @Override
     public void deploy(URL appArchiveUrl) throws IOException
     {
-        Application application;
-
-        try
-        {
-            try
-            {
-                application = guardedInstallFrom(appArchiveUrl);
-                trackApplication(application);
-            }
-            catch (Throwable t)
-            {
-                File appArchive = new File(appArchiveUrl.toURI());
-                String appName = StringUtils.removeEnd(appArchive.getName(), ZIP_FILE_SUFFIX);
-
-                //// error text has been created by the deployer already
-                final String msg = miniSplash(String.format("Failed to deploy app '%s', see below", appName));
-                logger.error(msg, t);
-
-                addZombieFile(appName, appArchive);
-
-                deploymentListener.onDeploymentFailure(appName, t);
-
-                throw t;
-            }
-
-            deployApplication(application);
-        }
-        catch (Throwable t)
-        {
-            if (t instanceof DeploymentException)
-            {
-                // re-throw
-                throw ((DeploymentException) t);
-            }
-
-            final String msg = "Failed to deploy from URL: " + appArchiveUrl;
-            throw new DeploymentException(MessageFactory.createStaticMessage(msg), t);
-        }
-    }
-
-    private void guardedDeploy(Application application)
-    {
-        try
-        {
-            if (!lock.tryLock(0, TimeUnit.SECONDS))
-            {
-                return;
-            }
-
-            deployer.deploy(application);
-        }
-        catch (InterruptedException e)
-        {
-            Thread.currentThread().interrupt();
-        }
-        finally
-        {
-            if (lock.isHeldByCurrentThread())
-            {
-                lock.unlock();
-            }
-        }
-    }
-
-    private void guardedUndeploy(Application app)
-    {
-        try
-        {
-            if (!lock.tryLock(0, TimeUnit.SECONDS))
-            {
-                return;
-            }
-
-            deployer.undeploy(app);
-        }
-        catch (InterruptedException e)
-        {
-            Thread.currentThread().interrupt();
-        }
-        finally
-        {
-            if (lock.isHeldByCurrentThread())
-            {
-                lock.unlock();
-            }
-        }
-    }
-
-    private Application guardedInstallFrom(URL appArchiveUrl) throws IOException
-    {
-        try
-        {
-            if (!lock.tryLock(0, TimeUnit.SECONDS))
-            {
-                throw new IOException(ANOTHER_DEPLOYMENT_OPERATION_IS_IN_PROGRESS);
-            }
-
-            return deployer.installFrom(appArchiveUrl);
-        }
-        catch (InterruptedException e)
-        {
-            Thread.currentThread().interrupt();
-            throw new IOException(INSTALL_OPERATION_HAS_BEEN_INTERRUPTED);
-        }
-        finally
-        {
-            if (lock.isHeldByCurrentThread())
-            {
-                lock.unlock();
-            }
-        }
-    }
-
-    protected void addZombieApp(Application application)
-    {
-        final File appDir = new File(MuleContainerBootstrapUtils.getMuleAppsDir(), application.getAppName()) ;
-
-        String resource = application.getDescriptor().getConfigResources()[0];
-        File resourceFile = new File(appDir, resource);
-        ZombieFile zombieFile = new ZombieFile();
-
-        if (resourceFile.exists())
-        {
-            try
-            {
-                zombieFile.url = resourceFile.toURI().toURL();
-                zombieFile.lastUpdated = resourceFile.lastModified();
-
-                zombieMap.put(application.getAppName(), zombieFile);
-            }
-            catch (MalformedURLException e)
-            {
-                // Ignore resource
-            }
-        }
-    }
-
-    protected void addZombieFile(String appName, File marker)
-    {
-        // no sync required as deploy operations are single-threaded
-        if (marker == null)
-        {
-            return;
-        }
-
-        if (!marker.exists())
-        {
-            return;
-        }
-
-        try
-        {
-            long lastModified = marker.lastModified();
-
-            ZombieFile zombieFile = new ZombieFile();
-            zombieFile.url = marker.toURI().toURL();
-            zombieFile.lastUpdated = lastModified;
-
-            zombieMap.put(appName, zombieFile);
-        }
-        catch (MalformedURLException e)
-        {
-            logger.debug(String.format("Failed to mark an exploded app [%s] as a zombie", marker.getName()), e);
-        }
+        artifactDeployer.deploy(appArchiveUrl);
     }
 
     @Override
@@ -613,7 +404,7 @@ public class MuleDeploymentService implements DeploymentService
         {
             try
             {
-                deployPackedApp(zip);
+                artifactDeployer.deployPackagedArtifact(zip);
             }
             catch (Exception e)
             {
@@ -622,117 +413,20 @@ public class MuleDeploymentService implements DeploymentService
         }
     }
 
-    private void deployPackedApp(String zip) throws Exception
-    {
-        URL url;
-        File appZip;
-
-        final String appName = StringUtils.removeEnd(zip, ZIP_FILE_SUFFIX);
-
-        appZip = new File(appsDir, zip);
-        url = appZip.toURI().toURL();
-
-        ZombieFile zombieFile = zombieMap.get(appName);
-        if (zombieFile != null)
-        {
-            if (isZombieFile(url, zombieFile) && !updatedZombieApp(zombieFile))
-            {
-                // Skips the file because it was already deployed with failure
-                return;
-            }
-        }
-
-        // check if this app is running first, undeploy it then
-        Application app = (Application) CollectionUtils.find(applications, new BeanPropertyValueEqualsPredicate("appName", appName));
-        if (app != null)
-        {
-            undeploy(appName);
-        }
-
-        deploy(url);
-    }
-
     private void deployExplodedApps(String[] apps)
     {
-        @SuppressWarnings("rawtypes")
-        Collection<String> deployedAppNames = CollectionUtils.collect(applications, new BeanToPropertyValueTransformer("appName"));
 
         for (String addedApp : apps)
         {
-            ZombieFile zombieFile = zombieMap.get(addedApp);
-
-            if ((zombieFile != null) && (!updatedZombieApp(zombieFile)))
-            {
-                continue;
-            }
-
-            if (deployedAppNames.contains(addedApp) && (!zombieMap.containsKey(addedApp)))
-            {
-                continue;
-            }
-
             try
             {
-                deployExplodedApp(addedApp);
+                artifactDeployer.deployExplodedArtifact(addedApp);
             }
             catch (DeploymentException e)
             {
                 // Ignore and continue
             }
         }
-    }
-
-    private void deployExplodedApp(String addedApp) throws DeploymentException
-    {
-        if (logger.isInfoEnabled())
-        {
-            logger.info("================== New Exploded Application: " + addedApp);
-        }
-
-        Application application;
-        try
-        {
-            application = appFactory.createApp(addedApp);
-
-            // add to the list of known apps first to avoid deployment loop on failure
-            onApplicationInstalled(application);
-        }
-        catch (Throwable t)
-        {
-            final File appsDir1 = MuleContainerBootstrapUtils.getMuleAppsDir();
-            File appDir1 = new File(appsDir1, addedApp);
-
-            addZombieFile(addedApp, appDir1);
-
-            String msg = miniSplash(String.format("Failed to deploy exploded application: '%s', see below", addedApp));
-            logger.error(msg, t);
-
-            deploymentListener.onDeploymentFailure(addedApp, t);
-
-            if (t instanceof DeploymentException)
-            {
-                throw (DeploymentException) t;
-            }
-            else
-            {
-                msg = "Failed to deploy application: " + addedApp;
-                throw new DeploymentException(MessageFactory.createStaticMessage(msg), t);
-            }
-        }
-
-        deployApplication(application);
-    }
-
-    private boolean isZombieFile(URL url, ZombieFile zombieFile)
-    {
-        return zombieFile.url.equals(url);
-    }
-
-    private boolean updatedZombieApp(ZombieFile zombieFile)
-    {
-        long currentTimeStamp = FileUtils.getFileTimeStamp(zombieFile.url);
-
-        return zombieFile.lastUpdated != currentTimeStamp;
     }
 
     /**
@@ -795,12 +489,12 @@ public class MuleDeploymentService implements DeploymentService
                 }
                 // use non-barging lock to preserve fairness, according to javadocs
                 // if there's a lock present - wait for next poll to do anything
-                if (!lock.tryLock(0, TimeUnit.SECONDS))
+                if (!deploymentInProgressLock.tryLock(0, TimeUnit.SECONDS))
                 {
                     if (logger.isDebugEnabled())
                     {
                         logger.debug("Another deployment operation in progress, will skip this cycle. Owner thread: " +
-                                     ((DebuggableReentrantLock) lock).getOwner());
+                                     ((DebuggableReentrantLock) deploymentInProgressLock).getOwner());
                     }
                     return;
                 }
@@ -829,9 +523,9 @@ public class MuleDeploymentService implements DeploymentService
             }
             finally
             {
-                if (lock.isHeldByCurrentThread())
+                if (deploymentInProgressLock.isHeldByCurrentThread())
                 {
-                    lock.unlock();
+                    deploymentInProgressLock.unlock();
                 }
                 dirty = false;
             }
@@ -871,11 +565,6 @@ public class MuleDeploymentService implements DeploymentService
                 String appName = StringUtils.removeEnd(deletedAnchor, APP_ANCHOR_SUFFIX);
                 try
                 {
-                    if (zombieMap.containsKey(appName))
-                    {
-                        continue;
-                    }
-
                     if (findApplication(appName) != null)
                     {
                         undeploy(appName);
@@ -893,9 +582,4 @@ public class MuleDeploymentService implements DeploymentService
         }
     }
 
-    private static class ZombieFile
-    {
-        URL url;
-        Long lastUpdated;
-    }
 }

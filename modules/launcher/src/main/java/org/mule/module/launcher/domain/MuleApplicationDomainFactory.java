@@ -14,7 +14,9 @@ import org.mule.module.reboot.MuleContainerBootstrapUtils;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,7 +34,7 @@ public class MuleApplicationDomainFactory implements ApplicationDomainFactory
     }
 
     @Override
-    public void createAllDomains()
+    public List<MuleApplicationDomain> createAllDomains()
     {
         File domainFolder = MuleContainerBootstrapUtils.getMuleDomainsDir();
         Map<String, ClassLoader> domainClassLoader = new HashMap<String, ClassLoader>();
@@ -59,5 +61,6 @@ public class MuleApplicationDomainFactory implements ApplicationDomainFactory
                 domains.put(domain,muleDomain);
             }
         }
+        return (List<MuleApplicationDomain>) Collections.unmodifiableCollection(domains.values());
     }
 }

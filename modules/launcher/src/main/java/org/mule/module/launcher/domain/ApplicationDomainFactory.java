@@ -9,6 +9,7 @@ package org.mule.module.launcher.domain;
 import org.mule.context.MuleApplicationDomain;
 
 import java.io.IOException;
+import java.util.Collection;
 
 /**
  *
@@ -18,5 +19,5 @@ public interface ApplicationDomainFactory
 
     public MuleApplicationDomain createAppDomain(String appName) throws IOException;
 
-    void createAllDomains();
+    Collection<MuleApplicationDomain> createAllDomains();
 }

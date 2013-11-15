@@ -44,16 +44,18 @@ public class MuleApplicationDomainContextBuilder implements ApplicationDomainCon
             //TODO add logging
             URL resource = classLoader.getResource(this.domainConfigFileLocation);
             ApplicationContext domainApplicationContext = null;
+            MuleContext muleContext = null;
             if (resource != null)
             {
-                MuleContext muleContext = new DefaultMuleContextFactory().createMuleContext();
+                muleContext = new DefaultMuleContextFactory().createMuleContext();
                 SpringXmlConfigurationBuilder springXmlConfigurationBuilder = new SpringXmlConfigurationBuilder(new String[] {domainConfigFileLocation});
                 springXmlConfigurationBuilder.setUseMinimalConfigResource(true);
                 springXmlConfigurationBuilder.doConfigure(muleContext);
                 domainApplicationContext = springXmlConfigurationBuilder.getApplicationContext();
-                muleContext.start();
             }
-            return new MuleApplicationDomain(domain,domainApplicationContext);
+            MuleApplicationDomain muleApplicationDomain = new MuleApplicationDomain(domain, muleContext, domainApplicationContext);
+            muleApplicationDomain.start();
+            return muleApplicationDomain;
         }
         catch (Exception e)
         {
