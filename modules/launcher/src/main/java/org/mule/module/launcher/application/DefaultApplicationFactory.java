@@ -35,7 +35,7 @@ public class DefaultApplicationFactory implements ApplicationFactory
         this.deploymentListener = deploymentListener;
     }
 
-    public Application createApp(String appName) throws IOException
+    public Application createArtifact(String appName) throws IOException
     {
         if (appName.contains(" "))
         {

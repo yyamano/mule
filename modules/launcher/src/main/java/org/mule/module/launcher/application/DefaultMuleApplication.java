@@ -123,10 +123,14 @@ public class DefaultMuleApplication implements Application
         deploymentClassLoader = applicationClassLoaderFactory.create(descriptor);
     }
 
+    /**
+     * @deprecated use getArtifactName instead.
+     */
+    @Deprecated
     @Override
     public String getAppName()
     {
-        return descriptor.getAppName();
+        return getArtifactName();
     }
 
     @Override
@@ -396,8 +400,19 @@ public class DefaultMuleApplication implements Application
     }
 
     @Override
+    public String getArtifactName()
+    {
+        return descriptor.getAppName();
+    }
+
+    @Override
     public void stop()
     {
+        if (this.muleContext == null || !this.muleContext.getLifecycleManager().isDirectTransition(Stoppable.PHASE_NAME))
+        {
+            return;
+        }
+
         if (this.muleContext == null)
         {
             // app never started, maybe due to a previous error

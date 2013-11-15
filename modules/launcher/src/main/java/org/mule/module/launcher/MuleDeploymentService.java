@@ -94,7 +94,7 @@ public class MuleDeploymentService implements DeploymentService
         appFactory.setDeploymentListener(deploymentListener);
 
         DefaultMuleDeployer deployer = new DefaultMuleDeployer();
-        deployer.setApplicationFactory(appFactory);
+        deployer.setArtifactFactory(appFactory);
         artifactDeployer = new ArtifactDeployer(deploymentListener, deployer, appFactory, applications, deploymentInProgressLock);
     }
 

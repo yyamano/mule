@@ -9,7 +9,8 @@ package org.mule.module.launcher;
 import org.mule.api.lifecycle.Stoppable;
 import org.mule.config.i18n.MessageFactory;
 import org.mule.module.launcher.application.Application;
-import org.mule.module.launcher.application.ApplicationFactory;
+import org.mule.module.launcher.artifact.Artifact;
+import org.mule.module.launcher.artifact.ArtifactFactory;
 import org.mule.module.reboot.MuleContainerBootstrapUtils;
 import org.mule.util.FileUtils;
 import org.mule.util.FilenameUtils;
@@ -28,14 +29,14 @@ public class DefaultMuleDeployer implements MuleDeployer
 
     protected transient final Log logger = LogFactory.getLog(getClass());
 
-    protected ApplicationFactory applicationFactory;
+    protected ArtifactFactory artifactFactory;
 
-    public void setApplicationFactory(ApplicationFactory applicationFactory)
+    public void setArtifactFactory(ArtifactFactory artifactFactory)
     {
-        this.applicationFactory = applicationFactory;
+        this.artifactFactory = artifactFactory;
     }
 
-    public void deploy(Application app)
+    public void deploy(Artifact app)
     {
         try
         {
@@ -53,22 +54,22 @@ public class DefaultMuleDeployer implements MuleDeployer
                 throw ((DeploymentException) t);
             }
 
-            final String msg = String.format("Failed to deploy application [%s]", app.getAppName());
+            final String msg = String.format("Failed to deploy application [%s]", app.getArtifactName());
             throw new DeploymentException(MessageFactory.createStaticMessage(msg), t);
         }
     }
 
-    public void undeploy(Application app)
+    public void undeploy(Artifact app)
     {
         try
         {
             tryToStopApp(app);
             tryToDisposeApp(app);
 
-            final File appDir = new File(MuleContainerBootstrapUtils.getMuleAppsDir(), app.getAppName());
+            final File appDir = new File(MuleContainerBootstrapUtils.getMuleAppsDir(), app.getArtifactName());
             FileUtils.deleteDirectory(appDir);
             // remove a marker, harmless, but a tidy app dir is always better :)
-            File marker = new File(MuleContainerBootstrapUtils.getMuleAppsDir(), String.format("%s-anchor.txt", app.getAppName()));
+            File marker = new File(MuleContainerBootstrapUtils.getMuleAppsDir(), String.format("%s-anchor.txt", app.getArtifactName()));
             marker.delete();
             Introspector.flushCaches();
         }
@@ -80,12 +81,12 @@ public class DefaultMuleDeployer implements MuleDeployer
                 throw ((DeploymentException) t);
             }
 
-            final String msg = String.format("Failed to undeploy application [%s]", app.getAppName());
+            final String msg = String.format("Failed to undeploy application [%s]", app.getArtifactName());
             throw new DeploymentException(MessageFactory.createStaticMessage(msg), t);
         }
     }
 
-    private void tryToDisposeApp(Application app)
+    private void tryToDisposeApp(Artifact app)
     {
         try
         {
@@ -93,28 +94,24 @@ public class DefaultMuleDeployer implements MuleDeployer
         }
         catch (Throwable t)
         {
-            logger.error(String.format("Unable to cleanly dispose application '%s'. Restart Mule if you get errors redeploying this application", app.getAppName()), t);
+            logger.error(String.format("Unable to cleanly dispose application '%s'. Restart Mule if you get errors redeploying this application", app.getArtifactName()), t);
         }
     }
 
-    private void tryToStopApp(Application app)
+    private void tryToStopApp(Artifact artifact)
     {
-        if (app.getMuleContext() == null || !app.getMuleContext().getLifecycleManager().isDirectTransition(Stoppable.PHASE_NAME))
-        {
-            return;
-        }
 
         try
         {
-            app.stop();
+            artifact.stop();
         }
         catch (Throwable t)
         {
-            logger.error(String.format("Unable to cleanly stop application '%s'. Restart Mule if you get errors redeploying this application", app.getAppName()), t);
+            logger.error(String.format("Unable to cleanly stop application '%s'. Restart Mule if you get errors redeploying this application", artifact.getArtifactName()), t);
         }
     }
 
-    public Application installFromAppDir(String packedMuleAppFileName) throws IOException
+    public Artifact installFromDir(String packedMuleAppFileName) throws IOException
     {
         final File appsDir = MuleContainerBootstrapUtils.getMuleAppsDir();
         File appFile = new File(appsDir, packedMuleAppFileName);
@@ -129,9 +126,9 @@ public class DefaultMuleDeployer implements MuleDeployer
         return installFrom(appFile.toURL());
     }
 
-    public Application installFrom(URL url) throws IOException
+    public Artifact installFrom(URL url) throws IOException
     {
-        if (applicationFactory == null)
+        if (artifactFactory == null)
         {
            throw new IllegalStateException("There is no application factory");
         }
@@ -210,6 +207,6 @@ public class DefaultMuleDeployer implements MuleDeployer
         }
 
         // appname is never null by now
-        return applicationFactory.createApp(appName);
+        return artifactFactory.createArtifact(appName);
     }
 }

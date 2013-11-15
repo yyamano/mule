@@ -120,7 +120,7 @@ public class ArtifactDeployer
         Application application;
         try
         {
-            application = appFactory.createApp(addedApp);
+            application = appFactory.createArtifact(addedApp);
 
             // add to the list of known apps first to avoid deployment loop on failure
             onApplicationInstalled(application);
@@ -360,7 +360,8 @@ public class ArtifactDeployer
                 throw new IOException(ANOTHER_DEPLOYMENT_OPERATION_IS_IN_PROGRESS);
             }
 
-            return deployer.installFrom(appArchiveUrl);
+            //TODO see how to remove this cast.
+            return (Application) deployer.installFrom(appArchiveUrl);
         }
         catch (InterruptedException e)
         {

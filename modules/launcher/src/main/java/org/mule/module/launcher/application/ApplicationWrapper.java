@@ -89,6 +89,12 @@ public class ApplicationWrapper implements Application
         delegate.redeploy();
     }
 
+    @Override
+    public String getArtifactName()
+    {
+        return delegate.getAppName();
+    }
+
     public void start() throws DeploymentStartException
     {
         final ClassLoader originalCl = Thread.currentThread().getContextClassLoader();
@@ -129,7 +135,7 @@ public class ApplicationWrapper implements Application
 
     public String getAppName()
     {
-        return delegate.getAppName();
+        return getArtifactName();
     }
 
     public ApplicationDescriptor getDescriptor()

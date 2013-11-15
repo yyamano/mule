@@ -26,10 +26,9 @@ public class TestApplicationFactory extends DefaultApplicationFactory
         super(applicationClassLoaderFactory, new MuleApplicationDomainFactory());
     }
 
-    @Override
-    public Application createApp(String appName) throws IOException
+    public Application createA(String appName) throws IOException
     {
-        Application app = super.createApp(appName);
+        Application app = super.createArtifact(appName);
 
         TestApplicationWrapper testApplicationWrapper = new TestApplicationWrapper(app);
         testApplicationWrapper.setFailOnDisposeApplication(failOnDisposeApplication);
