@@ -16,4 +16,9 @@ public interface DeploymentListenerManager
     void addDeploymentListener(DeploymentListener listener);
 
     void removeDeploymentListener(DeploymentListener listener);
+
+    void addDomainDeploymentListener(DeploymentListener listener);
+
+    void removeDomainDeploymentListener(DeploymentListener listener);
+
 }

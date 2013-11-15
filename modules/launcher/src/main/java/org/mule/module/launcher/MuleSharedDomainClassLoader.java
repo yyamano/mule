@@ -35,20 +35,35 @@ public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader
         try
         {
             this.domain = domain;
-            File domainDir = new File(MuleContainerBootstrapUtils.getMuleHome(), "lib/shared/" + domain);
-            if (!domainDir.exists())
+
+            //TODO add support for old domain dir.
+            //File oldDomainDir = new File(MuleContainerBootstrapUtils.getMuleHome(), "lib/shared/" + domain);
+            //if (!oldDomainDir.exists())
+            //{
+            //    throw new IllegalArgumentException(
+            //            String.format("Shared ClassLoader Domain '%s' doesn't exist", domain));
+            //}
+            //
+            //if (!oldDomainDir.canRead())
+            //{
+            //    throw new IllegalArgumentException(
+            //            String.format("Shared ClassLoader Domain '%s' is not accessible", domain));
+            //}
+
+            File newDomainDir = new File(MuleContainerBootstrapUtils.getMuleDomainsDir() + File.separator + domain + File.separator + "lib");
+            if (!newDomainDir.exists())
             {
                 throw new IllegalArgumentException(
                         String.format("Shared ClassLoader Domain '%s' doesn't exist", domain));
             }
 
-            if (!domainDir.canRead())
+            if (!newDomainDir.canRead())
             {
                 throw new IllegalArgumentException(
                         String.format("Shared ClassLoader Domain '%s' is not accessible", domain));
             }
 
-            Collection<File> jars = FileUtils.listFiles(domainDir, new String[] {"jar"}, false);
+            Collection<File> jars = FileUtils.listFiles(newDomainDir, new String[] {"jar"}, false);
 
             if (logger.isDebugEnabled())
             {

@@ -14,13 +14,12 @@ import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.lifecycle.Startable;
 import org.mule.api.lifecycle.Stoppable;
 
-public class MuleApplicationDomain implements Startable, Stoppable, Initialisable, Disposable
+public class MuleApplicationDomain
 {
 
     private final MuleContext muleContext;
     private String domain;
     private Object context;
-    private boolean domainSuccessfullyDeployed;
 
     public MuleApplicationDomain(String domain, MuleContext muleContext, Object context)
     {
@@ -39,38 +38,8 @@ public class MuleApplicationDomain implements Startable, Stoppable, Initialisabl
         return context;
     }
 
-    @Override
-    public void start() throws MuleException
+    public MuleContext getMuleContext()
     {
-        this.muleContext.start();
-        domainSuccessfullyDeployed = true;
-    }
-
-    @Override
-    public void stop() throws MuleException
-    {
-        this.muleContext.stop();
-    }
-
-    @Override
-    public void dispose()
-    {
-        this.muleContext.dispose();
-    }
-
-    @Override
-    public void initialise() throws InitialisationException
-    {
-        this.muleContext.initialise();
-    }
-
-    public boolean isDomainSuccessfullyDeployed()
-    {
-        return domainSuccessfullyDeployed;
-    }
-
-    public boolean containsSharedResources()
-    {
-        return this.context != null;
+        return muleContext;
     }
 }

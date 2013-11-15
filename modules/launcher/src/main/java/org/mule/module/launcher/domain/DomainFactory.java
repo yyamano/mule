@@ -19,5 +19,4 @@ public interface DomainFactory extends ArtifactFactory<Domain>
 
     public Domain createAppDomain(String appName) throws IOException;
 
-    Collection<Domain> createAllDomains();
 }

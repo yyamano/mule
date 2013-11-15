@@ -65,8 +65,6 @@ public class MuleDeploymentService implements DeploymentService
 
     protected static final int DEFAULT_CHANGES_CHECK_INTERVAL_MS = 5000;
 
-    private final DomainFactory domainFactory;
-
     public static final String CHANGE_CHECK_INTERVAL_PROPERTY = "mule.launcher.changeCheckInterval";
 
 
@@ -85,8 +83,8 @@ public class MuleDeploymentService implements DeploymentService
 
     private CompositeDeploymentListener deploymentListener = new CompositeDeploymentListener();
     private CompositeDeploymentListener domainDeploymentListener = new CompositeDeploymentListener();
-    private ArtifactDeployer applicationDeployer;
-    private ArtifactDeployer domainDeployer;
+    private ArtifactDeployer<Application> applicationDeployer;
+    private ArtifactDeployer<Domain> domainDeployer;
 
     public MuleDeploymentService(PluginClassLoaderManager pluginClassLoaderManager)
     {
@@ -95,15 +93,20 @@ public class MuleDeploymentService implements DeploymentService
         ApplicationClassLoaderFactory applicationClassLoaderFactory = new MuleApplicationClassLoaderFactory(applicationDomainClassLoaderFactory);
         applicationClassLoaderFactory = new CompositeApplicationClassLoaderFactory(applicationClassLoaderFactory, pluginClassLoaderManager);
 
-        domainFactory = new DefaultDomainFactory();
+        DomainFactory domainFactory = new DefaultDomainFactory();
+        ApplicationFactory applicationFactory = new DefaultApplicationFactory(applicationClassLoaderFactory, domainFactory);
 
         DefaultApplicationFactory appFactory = new DefaultApplicationFactory(applicationClassLoaderFactory, domainFactory);
         appFactory.setDeploymentListener(deploymentListener);
 
-        DefaultMuleDeployer deployer = new DefaultMuleDeployer();
-        deployer.setArtifactFactory(appFactory);
-        applicationDeployer = new ArtifactDeployer(deploymentListener, deployer, appFactory, applications, deploymentInProgressLock);
-        domainDeployer = new ArtifactDeployer(domainDeploymentListener, deployer, domainFactory, domains, deploymentInProgressLock);
+        DefaultMuleDeployer<Application> applicationMuleDeployer = new DefaultMuleDeployer<Application>();
+        applicationMuleDeployer.setArtifactFactory(applicationFactory);
+
+        DefaultMuleDeployer<Domain> domainMuleDeployer = new DefaultMuleDeployer<Domain>();
+        domainMuleDeployer.setArtifactFactory(domainFactory);
+
+        this.applicationDeployer = new ArtifactDeployer(deploymentListener, applicationMuleDeployer, appFactory, applications, deploymentInProgressLock);
+        this.domainDeployer = new ArtifactDeployer(domainDeploymentListener, domainMuleDeployer, domainFactory, domains, deploymentInProgressLock);
     }
 
     @Override
@@ -195,7 +198,7 @@ public class MuleDeploymentService implements DeploymentService
         {
             try
             {
-                applicationDeployer.deployExplodedArtifact(addedApp);
+                domainDeployer.deployExplodedArtifact(addedApp);
             }
             catch (DeploymentException e)
             {
@@ -326,7 +329,7 @@ public class MuleDeploymentService implements DeploymentService
         }
     }
 
-    private Domain findDomain(String domainName)
+    public Domain findDomain(String domainName)
     {
         return (Domain) CollectionUtils.find(domains, new BeanPropertyValueEqualsPredicate(ARTIFACT_NAME_PROPERTY, domainName));
     }
@@ -341,6 +344,12 @@ public class MuleDeploymentService implements DeploymentService
     public List<Application> getApplications()
     {
         return Collections.unmodifiableList(applications);
+    }
+
+    @Override
+    public List<Domain> getDomains()
+    {
+        return Collections.unmodifiableList(domains);
     }
 
     /**
@@ -421,6 +430,18 @@ public class MuleDeploymentService implements DeploymentService
     public void removeDeploymentListener(DeploymentListener listener)
     {
         deploymentListener.removeDeploymentListener(listener);
+    }
+
+    @Override
+    public void addDomainDeploymentListener(DeploymentListener listener)
+    {
+        domainDeploymentListener.addDeploymentListener(listener);
+    }
+
+    @Override
+    public void removeDomainDeploymentListener(DeploymentListener listener)
+    {
+        domainDeploymentListener.removeDeploymentListener(listener);
     }
 
     private void deployPackedApps(String[] zips)

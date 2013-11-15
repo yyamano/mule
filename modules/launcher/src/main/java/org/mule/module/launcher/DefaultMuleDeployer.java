@@ -29,7 +29,7 @@ public class DefaultMuleDeployer<T extends Artifact> implements MuleDeployer
 
     protected ArtifactFactory<T> artifactFactory;
 
-    public void setArtifactFactory(ArtifactFactory artifactFactory)
+    public void setArtifactFactory(ArtifactFactory<T> artifactFactory)
     {
         this.artifactFactory = artifactFactory;
     }

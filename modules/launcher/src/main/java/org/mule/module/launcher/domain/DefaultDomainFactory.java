@@ -6,17 +6,15 @@
  */
 package org.mule.module.launcher.domain;
 
-import org.mule.context.DefaultMuleDomainFactory;
+import org.mule.api.MuleRuntimeException;
+import org.mule.context.ApplicationDomainContextBuilder;
 import org.mule.context.MuleApplicationDomain;
 import org.mule.module.launcher.MuleSharedDomainClassLoader;
 import org.mule.module.reboot.MuleContainerBootstrapUtils;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,6 +22,8 @@ import java.util.Map;
  */
 public class DefaultDomainFactory implements DomainFactory
 {
+    public static final String DOMAIN_CONTEXT_BUILDER = "org.mule.config.spring.MuleApplicationDomainContextBuilder";
+
     private Map<String, Domain> domains = new HashMap<String, Domain>();
 
     @Override
@@ -32,42 +32,65 @@ public class DefaultDomainFactory implements DomainFactory
         //TODO validate null pointer
         return domains.get(domainName);
     }
-
-    @Override
-    public List<Domain> createAllDomains()
-    {
-        File domainFolder = MuleContainerBootstrapUtils.getMuleDomainsDir();
-        Map<String, ClassLoader> domainClassLoader = new HashMap<String, ClassLoader>();
-        FileFilter onlyDirectoriesFilter = new FileFilter()
-        {
-            @Override
-            public boolean accept(File file)
-            {
-                return file.isDirectory();
-            }
-        };
-        File[] domainFolders = domainFolder.listFiles(onlyDirectoriesFilter);
-        if (domainFolder != null && domainFolders.length > 0)
-        {
-            for (File domainDir : domainFolders)
-            {
-                domainClassLoader.put(domainDir.getName(),new MuleSharedDomainClassLoader(domainDir.getName(),getClass().getClassLoader()));
-            }
-
-            for (String domain : domainClassLoader.keySet())
-            {
-                DefaultMuleDomainFactory defaultMuleDomainFactory = new DefaultMuleDomainFactory();
-                MuleApplicationDomain muleDomain = defaultMuleDomainFactory.createMuleDomain(domain, domainClassLoader.get(domain));
-                domains.put(domain, (Domain) muleDomain);
-            }
-        }
-        return (List<Domain>) Collections.unmodifiableCollection(domains.values());
-    }
+    //
+    //@Override
+    //public List<Domain> createAllDomains()
+    //{
+    //    File domainFolder = MuleContainerBootstrapUtils.getMuleDomainsDir();
+    //    Map<String, ClassLoader> domainClassLoader = new HashMap<String, ClassLoader>();
+    //    FileFilter onlyDirectoriesFilter = new FileFilter()
+    //    {
+    //        @Override
+    //        public boolean accept(File file)
+    //        {
+    //            return file.isDirectory();
+    //        }
+    //    };
+    //    File[] domainFolders = domainFolder.listFiles(onlyDirectoriesFilter);
+    //    if (domainFolder != null && domainFolders.length > 0)
+    //    {
+    //        for (File domainDir : domainFolders)
+    //        {
+    //            domainClassLoader.put(domainDir.getName(),new MuleSharedDomainClassLoader(domainDir.getName(),getClass().getClassLoader()));
+    //        }
+    //
+    //        for (String domain : domainClassLoader.keySet())
+    //        {
+    //            DefaultMuleDomainFactory defaultMuleDomainFactory = new DefaultMuleDomainFactory();
+    //            MuleApplicationDomain muleDomain = defaultMuleDomainFactory.createMuleDomain(domain, domainClassLoader.get(domain));
+    //            domains.put(domain, (Domain) muleDomain);
+    //        }
+    //    }
+    //    return (List<Domain>) Collections.unmodifiableCollection(domains.values());
+    //}
 
     @Override
     public Domain createArtifact(String artifactName) throws IOException
     {
-        return domains.get(artifactName);
+        MuleSharedDomainClassLoader muleSharedDomainClassLoader = new MuleSharedDomainClassLoader(artifactName, getClass().getClassLoader());
+        //TODO review how to get this instance without depending on spring module
+        try
+        {
+            ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+            Thread.currentThread().setContextClassLoader(muleSharedDomainClassLoader);
+            try
+            {
+                ApplicationDomainContextBuilder applicationDomainContextBuilder =  (ApplicationDomainContextBuilder) Class.forName(DOMAIN_CONTEXT_BUILDER).newInstance();
+                applicationDomainContextBuilder.setDomain(artifactName);
+                applicationDomainContextBuilder.setClassLoader(muleSharedDomainClassLoader);
+                applicationDomainContextBuilder.setClassLoader(muleSharedDomainClassLoader);
+                MuleApplicationDomain muleApplicationDomain = applicationDomainContextBuilder.build();
+                return new DefaultMuleDomain(artifactName, muleApplicationDomain.getMuleContext(), muleApplicationDomain.getContext());
+            }
+            finally
+            {
+                Thread.currentThread().setContextClassLoader(originalClassLoader);
+            }
+        }
+        catch (Exception e)
+        {
+            throw new MuleRuntimeException(e);
+        }
     }
 
     @Override

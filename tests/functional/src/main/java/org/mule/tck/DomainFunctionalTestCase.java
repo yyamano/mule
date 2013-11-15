@@ -11,11 +11,9 @@ import org.mule.api.config.ConfigurationBuilder;
 import org.mule.api.context.MuleContextBuilder;
 import org.mule.api.context.MuleContextFactory;
 import org.mule.config.DefaultMuleConfiguration;
-import org.mule.config.spring.MuleApplicationDomainContextBuilder;
 import org.mule.config.spring.SpringXmlConfigurationBuilder;
 import org.mule.context.DefaultMuleContextBuilder;
 import org.mule.context.DefaultMuleContextFactory;
-import org.mule.context.DefaultMuleDomainFactory;
 import org.mule.context.MuleApplicationDomain;
 import org.mule.tck.junit4.AbstractMuleContextTestCase;
 import org.mule.tck.probe.PollingProber;
@@ -77,11 +75,11 @@ public abstract class DomainFunctionalTestCase extends org.mule.tck.junit4.Abstr
 
     private void createDomain()
     {
-        DefaultMuleDomainFactory defaultMuleDomainFactory = new DefaultMuleDomainFactory();
-        MuleApplicationDomainContextBuilder applicationDomainContextBuilder = new MuleApplicationDomainContextBuilder();
-        defaultMuleDomainFactory.setApplicationDomainContextBuilder(applicationDomainContextBuilder);
-        applicationDomainContextBuilder.setDomainConfigFileLocation(getDomainConfig());
-        domain = defaultMuleDomainFactory.createMuleDomain("domain", getClass().getClassLoader());
+        //DefaultMuleDomainFactory defaultMuleDomainFactory = new DefaultMuleDomainFactory();
+        //MuleApplicationDomainContextBuilder applicationDomainContextBuilder = new MuleApplicationDomainContextBuilder();
+        //defaultMuleDomainFactory.setApplicationDomainContextBuilder(applicationDomainContextBuilder);
+        //applicationDomainContextBuilder.setDomainConfigFileLocation(getDomainConfig());
+        //domain = defaultMuleDomainFactory.createMuleDomain("domain", getClass().getClassLoader());
     }
 
     @After

@@ -54,7 +54,6 @@ public class MuleApplicationDomainContextBuilder implements ApplicationDomainCon
                 domainApplicationContext = springXmlConfigurationBuilder.getApplicationContext();
             }
             MuleApplicationDomain muleApplicationDomain = new MuleApplicationDomain(domain, muleContext, domainApplicationContext);
-            muleApplicationDomain.start();
             return muleApplicationDomain;
         }
         catch (Exception e)

@@ -3,7 +3,6 @@ package org.mule.module.launcher;
 import static org.mule.util.SplashScreen.miniSplash;
 
 import org.mule.config.i18n.MessageFactory;
-import org.mule.module.launcher.application.Application;
 import org.mule.module.launcher.artifact.Artifact;
 import org.mule.module.launcher.artifact.ArtifactFactory;
 import org.mule.module.launcher.util.ObservableList;
@@ -38,7 +37,7 @@ public class ArtifactDeployer<T extends Artifact>
     public static final String ANOTHER_DEPLOYMENT_OPERATION_IS_IN_PROGRESS = "Another deployment operation is in progress";
     public static final String INSTALL_OPERATION_HAS_BEEN_INTERRUPTED = "Install operation has been interrupted";
 
-    private Map<String, ZombieFile> applicationZombieMap = new HashMap<String, ZombieFile>();
+    private Map<String, ZombieFile> artifactZombieMap = new HashMap<String, ZombieFile>();
     private File artifactDir;
     private ObservableList<T> artifacts;
     private CompositeDeploymentListener deploymentListener;
@@ -62,12 +61,12 @@ public class ArtifactDeployer<T extends Artifact>
         URL url;
         File appZip;
 
-        final String appName = StringUtils.removeEnd(zip, ZIP_FILE_SUFFIX);
+        final String artifactName = StringUtils.removeEnd(zip, ZIP_FILE_SUFFIX);
 
         appZip = new File(artifactDir, zip);
         url = appZip.toURI().toURL();
 
-        ZombieFile zombieFile = applicationZombieMap.get(appName);
+        ZombieFile zombieFile = artifactZombieMap.get(artifactName);
         if (zombieFile != null)
         {
             if (zombieFile.isFor(url) && !zombieFile.updatedZombieApp())
@@ -78,10 +77,10 @@ public class ArtifactDeployer<T extends Artifact>
         }
 
         // check if this app is running first, undeploy it then
-        T app = (T) CollectionUtils.find(artifacts, new BeanPropertyValueEqualsPredicate(ARTIFACT_NAME_PROPERTY, appName));
-        if (app != null)
+        T artifact = (T) CollectionUtils.find(artifacts, new BeanPropertyValueEqualsPredicate(ARTIFACT_NAME_PROPERTY, artifactName));
+        if (artifact != null)
         {
-            undeploy(appName);
+            undeploy(artifactName);
         }
 
         deploy(url);
@@ -92,12 +91,12 @@ public class ArtifactDeployer<T extends Artifact>
         @SuppressWarnings("rawtypes")
         Collection<String> deployedAppNames = CollectionUtils.collect(artifacts, new BeanToPropertyValueTransformer(ARTIFACT_NAME_PROPERTY));
 
-        if (deployedAppNames.contains(artifactName) && (!applicationZombieMap.containsKey(artifactName)))
+        if (deployedAppNames.contains(artifactName) && (!artifactZombieMap.containsKey(artifactName)))
         {
             return;
         }
 
-        ZombieFile zombieFile = applicationZombieMap.get(artifactName);
+        ZombieFile zombieFile = artifactZombieMap.get(artifactName);
 
         if ((zombieFile != null) && (!zombieFile.updatedZombieApp()))
         {
@@ -107,9 +106,9 @@ public class ArtifactDeployer<T extends Artifact>
         deployExplodedApp(artifactName);
     }
 
-    public Map<String, ZombieFile> getApplicationZombieMap()
+    public Map<String, ZombieFile> getArtifactZombieMap()
     {
-        return applicationZombieMap;
+        return artifactZombieMap;
     }
 
     private void deployExplodedApp(String addedApp) throws DeploymentException
@@ -160,7 +159,7 @@ public class ArtifactDeployer<T extends Artifact>
 
     public void undeploy(String appName)
     {
-        if (applicationZombieMap.containsKey(appName))
+        if (artifactZombieMap.containsKey(appName))
         {
             return;
         }
@@ -168,7 +167,7 @@ public class ArtifactDeployer<T extends Artifact>
         undeploy(app);
     }
 
-    public void deploy(URL appArchiveUrl) throws IOException
+    public void deploy(URL artifactAchivedUrl) throws IOException
     {
         T artifact;
 
@@ -176,12 +175,12 @@ public class ArtifactDeployer<T extends Artifact>
         {
             try
             {
-                artifact = guardedInstallFrom(appArchiveUrl);
+                artifact = guardedInstallFrom(artifactAchivedUrl);
                 trackArtifact(artifact);
             }
             catch (Throwable t)
             {
-                File appArchive = new File(appArchiveUrl.toURI());
+                File appArchive = new File(artifactAchivedUrl.toURI());
                 String appName = StringUtils.removeEnd(appArchive.getName(), ZIP_FILE_SUFFIX);
 
                 //// error text has been created by the deployer already
@@ -205,7 +204,7 @@ public class ArtifactDeployer<T extends Artifact>
                 throw ((DeploymentException) t);
             }
 
-            final String msg = "Failed to deploy from URL: " + appArchiveUrl;
+            final String msg = "Failed to deploy from URL: " + artifactAchivedUrl;
             throw new DeploymentException(MessageFactory.createStaticMessage(msg), t);
         }
     }
@@ -241,7 +240,7 @@ public class ArtifactDeployer<T extends Artifact>
             deploymentListener.onDeploymentStart(artifact.getArtifactName());
             guardedDeploy(artifact);
             deploymentListener.onDeploymentSuccess(artifact.getArtifactName());
-            applicationZombieMap.remove(artifact.getArtifactName());
+            artifactZombieMap.remove(artifact.getArtifactName());
         }
         catch (Throwable t)
         {
@@ -279,7 +278,7 @@ public class ArtifactDeployer<T extends Artifact>
                 zombieFile.url = resourceFile.toURI().toURL();
                 zombieFile.lastUpdated = resourceFile.lastModified();
 
-                applicationZombieMap.put(artifact.getArtifactName(), zombieFile);
+                artifactZombieMap.put(artifact.getArtifactName(), zombieFile);
             }
             catch (MalformedURLException e)
             {
@@ -309,7 +308,7 @@ public class ArtifactDeployer<T extends Artifact>
             zombieFile.url = marker.toURI().toURL();
             zombieFile.lastUpdated = lastModified;
 
-            applicationZombieMap.put(appName, zombieFile);
+            artifactZombieMap.put(appName, zombieFile);
         }
         catch (MalformedURLException e)
         {
@@ -317,14 +316,14 @@ public class ArtifactDeployer<T extends Artifact>
         }
     }
 
-    public Application findApplication(String appName)
+    public T findArtifact(String appName)
     {
-        return (Application) CollectionUtils.find(artifacts, new BeanPropertyValueEqualsPredicate(ARTIFACT_NAME_PROPERTY, appName));
+        return (T) CollectionUtils.find(artifacts, new BeanPropertyValueEqualsPredicate(ARTIFACT_NAME_PROPERTY, appName));
     }
 
     private void trackArtifact(T artifact)
     {
-        Application previousApplication = findApplication(artifact.getArtifactName());
+        T previousApplication = findArtifact(artifact.getArtifactName());
         artifacts.remove(previousApplication);
 
         artifacts.add(artifact);
@@ -353,7 +352,7 @@ public class ArtifactDeployer<T extends Artifact>
         }
     }
 
-    private T guardedInstallFrom(URL appArchiveUrl) throws IOException
+    private T guardedInstallFrom(URL artifactUrl) throws IOException
     {
         try
         {
@@ -361,7 +360,7 @@ public class ArtifactDeployer<T extends Artifact>
             {
                 throw new IOException(ANOTHER_DEPLOYMENT_OPERATION_IS_IN_PROGRESS);
             }
-            return deployer.installFrom(appArchiveUrl);
+            return deployer.installFrom(artifactUrl);
         }
         catch (InterruptedException e)
         {
@@ -405,9 +404,9 @@ public class ArtifactDeployer<T extends Artifact>
     {
         Map<URL, Long> result = new HashMap<URL, Long>();
 
-        for (String app : applicationZombieMap.keySet())
+        for (String app : artifactZombieMap.keySet())
         {
-            ZombieFile file = applicationZombieMap.get(app);
+            ZombieFile file = artifactZombieMap.get(app);
             result.put(file.url, file.lastUpdated);
         }
         return result;

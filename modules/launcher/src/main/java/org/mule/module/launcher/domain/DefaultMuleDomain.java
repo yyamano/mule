@@ -34,6 +34,12 @@ public class DefaultMuleDomain implements Domain
     }
 
     @Override
+    public MuleContext getMuleContext()
+    {
+        return muleContext;
+    }
+
+    @Override
     public void install() throws InstallException
     {
     }
@@ -48,7 +54,10 @@ public class DefaultMuleDomain implements Domain
     {
         try
         {
-            this.muleContext.start();
+            if (this.muleContext != null)
+            {
+                this.muleContext.start();
+            }
             domainSuccessfullyDeployed = true;
         }
         catch (Exception e)
@@ -62,7 +71,10 @@ public class DefaultMuleDomain implements Domain
     {
         try
         {
-            this.muleContext.stop();
+            if (this.muleContext != null)
+            {
+                this.muleContext.stop();
+            }
         }
         catch (Exception e)
         {
@@ -73,7 +85,10 @@ public class DefaultMuleDomain implements Domain
     @Override
     public void dispose()
     {
-        this.muleContext.dispose();
+        if (this.muleContext != null)
+        {
+            this.muleContext.dispose();
+        }
     }
 
     @Override
@@ -84,7 +99,7 @@ public class DefaultMuleDomain implements Domain
     @Override
     public String getArtifactName()
     {
-        return null;
+        return domain;
     }
 
     @Override
@@ -97,7 +112,10 @@ public class DefaultMuleDomain implements Domain
     {
         try
         {
-            this.muleContext.initialise();
+            if (this.muleContext != null)
+            {
+                this.muleContext.initialise();
+            }
         }
         catch (InitialisationException e)
         {

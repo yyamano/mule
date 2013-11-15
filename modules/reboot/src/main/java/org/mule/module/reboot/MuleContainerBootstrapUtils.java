@@ -20,9 +20,8 @@ public final class MuleContainerBootstrapUtils
 {
     private static final String MULE_APPS_FILENAME = "apps";
     private static final String MULE_LIB_FILENAME = "lib/mule";
-    private static final String MULE_DOMAIN_FILENAME = "lib" + File.separator + "shared";
+    private static final String MULE_DOMAIN_FILENAME = "domains";
     private static final String MULE_TMP_FILENAME = "tmp";
-
     public static final String MULE_LOCAL_JAR_FILENAME = "mule-local-install.jar";
 
     private MuleContainerBootstrapUtils()

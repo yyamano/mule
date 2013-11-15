@@ -7,6 +7,7 @@
 package org.mule.module.launcher;
 
 import org.mule.module.launcher.application.Application;
+import org.mule.module.launcher.domain.Domain;
 
 import java.io.IOException;
 import java.net.URL;
@@ -32,6 +33,10 @@ public interface DeploymentService extends DeploymentListenerManager
      * @return immutable applications list
      */
     List<Application> getApplications();
+
+    Domain findDomain(String domainName);
+
+    List<Domain> getDomains();
 
     void addStartupListener(StartupListener listener);
 
