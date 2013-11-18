@@ -36,32 +36,7 @@ public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader
         {
             this.domain = domain;
 
-            //TODO add support for old domain dir.
-            //File oldDomainDir = new File(MuleContainerBootstrapUtils.getMuleHome(), "lib/shared/" + domain);
-            //if (!oldDomainDir.exists())
-            //{
-            //    throw new IllegalArgumentException(
-            //            String.format("Shared ClassLoader Domain '%s' doesn't exist", domain));
-            //}
-            //
-            //if (!oldDomainDir.canRead())
-            //{
-            //    throw new IllegalArgumentException(
-            //            String.format("Shared ClassLoader Domain '%s' is not accessible", domain));
-            //}
-
-            File newDomainDir = new File(MuleContainerBootstrapUtils.getMuleDomainsDir() + File.separator + domain + File.separator + "lib");
-            if (!newDomainDir.exists())
-            {
-                throw new IllegalArgumentException(
-                        String.format("Shared ClassLoader Domain '%s' doesn't exist", domain));
-            }
-
-            if (!newDomainDir.canRead())
-            {
-                throw new IllegalArgumentException(
-                        String.format("Shared ClassLoader Domain '%s' is not accessible", domain));
-            }
+            File newDomainDir = validateAndRetrieveDomainDirectory(domain);
 
             Collection<File> jars = FileUtils.listFiles(newDomainDir, new String[] {"jar"}, false);
 
@@ -127,5 +102,48 @@ public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader
             }
         }
         return resource;
+    }
+
+    private File validateAndRetrieveDomainDirectory(String domain) throws Exception
+    {
+        File newDomainDir = new File(MuleContainerBootstrapUtils.getMuleDomainsDir() + File.separator + domain + File.separator + "lib");
+        Exception newDomainValidationException = null;
+        if (!newDomainDir.exists())
+        {
+            newDomainValidationException = new IllegalArgumentException(
+                    String.format("Shared ClassLoader Domain '%s' doesn't exist", domain));
+        }
+
+        if (!newDomainDir.canRead())
+        {
+            newDomainValidationException = new IllegalArgumentException(
+                    String.format("Shared ClassLoader Domain '%s' is not accessible", domain));
+        }
+
+        File oldDomainDir = new File(MuleContainerBootstrapUtils.getMuleHome(), "lib/shared/" + domain);
+        Exception oldDomainValidationException = null;
+        if (newDomainValidationException != null)
+        {
+            //fallback to old domain directory
+            if (!oldDomainDir.exists())
+            {
+                oldDomainValidationException = new IllegalArgumentException(
+                        String.format("Shared ClassLoader Domain '%s' doesn't exist", domain));
+            }
+
+            if (!oldDomainDir.canRead())
+            {
+                oldDomainValidationException = new IllegalArgumentException(
+                        String.format("Shared ClassLoader Domain '%s' is not accessible", domain));
+            }
+        }
+
+        if (newDomainValidationException != null && oldDomainValidationException != null)
+        {
+            throw newDomainValidationException;
+        }
+
+        File domainDir = (newDomainValidationException == null ? newDomainDir : oldDomainDir);
+        return domainDir;
     }
 }

@@ -59,12 +59,12 @@ public class ArtifactDeployer<T extends Artifact>
     public void deployPackagedArtifact(String zip) throws Exception
     {
         URL url;
-        File appZip;
+        File artifactZip;
 
         final String artifactName = StringUtils.removeEnd(zip, ZIP_FILE_SUFFIX);
 
-        appZip = new File(artifactDir, zip);
-        url = appZip.toURI().toURL();
+        artifactZip = new File(artifactDir, zip);
+        url = artifactZip.toURI().toURL();
 
         ZombieFile zombieFile = artifactZombieMap.get(artifactName);
         if (zombieFile != null)
@@ -76,7 +76,7 @@ public class ArtifactDeployer<T extends Artifact>
             }
         }
 
-        // check if this app is running first, undeploy it then
+        // check if this artifact is running first, undeploy it then
         T artifact = (T) CollectionUtils.find(artifacts, new BeanPropertyValueEqualsPredicate(ARTIFACT_NAME_PROPERTY, artifactName));
         if (artifact != null)
         {
@@ -115,7 +115,7 @@ public class ArtifactDeployer<T extends Artifact>
     {
         if (logger.isInfoEnabled())
         {
-            logger.info("================== New Exploded Application: " + addedApp);
+            logger.info("================== New Exploded Artifact: " + addedApp);
         }
 
         T artifact;
@@ -123,17 +123,17 @@ public class ArtifactDeployer<T extends Artifact>
         {
             artifact = artifactFactory.createArtifact(addedApp);
 
-            // add to the list of known apps first to avoid deployment loop on failure
+            // add to the list of known artifacts first to avoid deployment loop on failure
             onArtifactInstalled(artifact);
         }
         catch (Throwable t)
         {
             final File artifactDir1 = artifactDir;
-            File appDir1 = new File(artifactDir1, addedApp);
+            File artifactDir = new File(artifactDir1, addedApp);
 
-            addZombieFile(addedApp, appDir1);
+            addZombieFile(addedApp, artifactDir);
 
-            String msg = miniSplash(String.format("Failed to deploy exploded application: '%s', see below", addedApp));
+            String msg = miniSplash(String.format("Failed to deploy exploded artifact: '%s', see below", addedApp));
             logger.error(msg, t);
 
             deploymentListener.onDeploymentFailure(addedApp, t);
@@ -144,7 +144,7 @@ public class ArtifactDeployer<T extends Artifact>
             }
             else
             {
-                msg = "Failed to deploy application: " + addedApp;
+                msg = "Failed to deploy artifact: " + addedApp;
                 throw new DeploymentException(MessageFactory.createStaticMessage(msg), t);
             }
         }
@@ -157,14 +157,14 @@ public class ArtifactDeployer<T extends Artifact>
         trackArtifact(a);
     }
 
-    public void undeploy(String appName)
+    public void undeploy(String artifactName)
     {
-        if (artifactZombieMap.containsKey(appName))
+        if (artifactZombieMap.containsKey(artifactName))
         {
             return;
         }
-        T app = (T) CollectionUtils.find(artifacts, new BeanPropertyValueEqualsPredicate(ARTIFACT_NAME_PROPERTY, appName));
-        undeploy(app);
+        T artifact = (T) CollectionUtils.find(artifacts, new BeanPropertyValueEqualsPredicate(ARTIFACT_NAME_PROPERTY, artifactName));
+        undeploy(artifact);
     }
 
     public void deploy(URL artifactAchivedUrl) throws IOException
@@ -180,16 +180,16 @@ public class ArtifactDeployer<T extends Artifact>
             }
             catch (Throwable t)
             {
-                File appArchive = new File(artifactAchivedUrl.toURI());
-                String appName = StringUtils.removeEnd(appArchive.getName(), ZIP_FILE_SUFFIX);
+                File artifactArchive = new File(artifactAchivedUrl.toURI());
+                String artifactName = StringUtils.removeEnd(artifactArchive.getName(), ZIP_FILE_SUFFIX);
 
                 //// error text has been created by the deployer already
-                final String msg = miniSplash(String.format("Failed to deploy app '%s', see below", appName));
+                final String msg = miniSplash(String.format("Failed to deploy artifact '%s', see below", artifactName));
                 logger.error(msg, t);
 
-                addZombieFile(appName, appArchive);
+                addZombieFile(artifactName, artifactArchive);
 
-                deploymentListener.onDeploymentFailure(appName, t);
+                deploymentListener.onDeploymentFailure(artifactName, t);
 
                 throw t;
             }
@@ -245,7 +245,7 @@ public class ArtifactDeployer<T extends Artifact>
         catch (Throwable t)
         {
             // error text has been created by the deployer already
-            String msg = miniSplash(String.format("Failed to deploy app '%s', see below", artifact.getArtifactName()));
+            String msg = miniSplash(String.format("Failed to deploy artifact '%s', see below", artifact.getArtifactName()));
             logger.error(msg, t);
 
             addZombieApp(artifact);
@@ -257,7 +257,7 @@ public class ArtifactDeployer<T extends Artifact>
             }
             else
             {
-                msg = "Failed to deploy application: " + artifact.getArtifactName();
+                msg = "Failed to deploy artifact: " + artifact.getArtifactName();
                 throw new DeploymentException(MessageFactory.createStaticMessage(msg), t);
             }
         }
@@ -265,10 +265,7 @@ public class ArtifactDeployer<T extends Artifact>
 
     protected void addZombieApp(Artifact artifact)
     {
-        final File appDir = new File(artifactFactory.getArtifactDir(), artifact.getArtifactName()) ;
-
-        String resource = artifact.getConfigResources()[0];
-        File resourceFile = new File(appDir, resource);
+        File resourceFile = artifact.getConfigResourcesFile()[0];
         ZombieFile zombieFile = new ZombieFile();
 
         if (resourceFile.exists())
@@ -287,7 +284,7 @@ public class ArtifactDeployer<T extends Artifact>
         }
     }
 
-    protected void addZombieFile(String appName, File marker)
+    protected void addZombieFile(String artifactName, File marker)
     {
         // no sync required as deploy operations are single-threaded
         if (marker == null)
@@ -308,46 +305,46 @@ public class ArtifactDeployer<T extends Artifact>
             zombieFile.url = marker.toURI().toURL();
             zombieFile.lastUpdated = lastModified;
 
-            artifactZombieMap.put(appName, zombieFile);
+            artifactZombieMap.put(artifactName, zombieFile);
         }
         catch (MalformedURLException e)
         {
-            logger.debug(String.format("Failed to mark an exploded app [%s] as a zombie", marker.getName()), e);
+            logger.debug(String.format("Failed to mark an exploded artifact [%s] as a zombie", marker.getName()), e);
         }
     }
 
-    public T findArtifact(String appName)
+    public T findArtifact(String artifactName)
     {
-        return (T) CollectionUtils.find(artifacts, new BeanPropertyValueEqualsPredicate(ARTIFACT_NAME_PROPERTY, appName));
+        return (T) CollectionUtils.find(artifacts, new BeanPropertyValueEqualsPredicate(ARTIFACT_NAME_PROPERTY, artifactName));
     }
 
     private void trackArtifact(T artifact)
     {
-        T previousApplication = findArtifact(artifact.getArtifactName());
-        artifacts.remove(previousApplication);
+        T previousArtifact = findArtifact(artifact.getArtifactName());
+        artifacts.remove(previousArtifact);
 
         artifacts.add(artifact);
     }
 
-    protected void undeploy(T app)
+    protected void undeploy(T artifact)
     {
         if (logger.isInfoEnabled())
         {
-            logger.info("================== Request to Undeploy Application: " + app.getArtifactName());
+            logger.info("================== Request to Undeploy Artifact: " + artifact.getArtifactName());
         }
 
         try
         {
-            deploymentListener.onUndeploymentStart(app.getArtifactName());
+            deploymentListener.onUndeploymentStart(artifact.getArtifactName());
 
-            artifacts.remove(app);
-            guardedUndeploy(app);
+            artifacts.remove(artifact);
+            guardedUndeploy(artifact);
 
-            deploymentListener.onUndeploymentSuccess(app.getArtifactName());
+            deploymentListener.onUndeploymentSuccess(artifact.getArtifactName());
         }
         catch (RuntimeException e)
         {
-            deploymentListener.onUndeploymentFailure(app.getArtifactName(), e);
+            deploymentListener.onUndeploymentFailure(artifact.getArtifactName(), e);
             throw e;
         }
     }
@@ -376,7 +373,7 @@ public class ArtifactDeployer<T extends Artifact>
         }
     }
 
-    private void guardedUndeploy(T app)
+    private void guardedUndeploy(T artifact)
     {
         try
         {
@@ -385,7 +382,7 @@ public class ArtifactDeployer<T extends Artifact>
                 return;
             }
 
-            deployer.undeploy(app);
+            deployer.undeploy(artifact);
         }
         catch (InterruptedException e)
         {
@@ -400,13 +397,13 @@ public class ArtifactDeployer<T extends Artifact>
         }
     }
 
-    public Map<URL, Long> getApplicationsZombieMap()
+    public Map<URL, Long> getArtifactsZombieMap()
     {
         Map<URL, Long> result = new HashMap<URL, Long>();
 
-        for (String app : artifactZombieMap.keySet())
+        for (String artifact : artifactZombieMap.keySet())
         {
-            ZombieFile file = artifactZombieMap.get(app);
+            ZombieFile file = artifactZombieMap.get(artifact);
             result.put(file.url, file.lastUpdated);
         }
         return result;
@@ -430,6 +427,29 @@ public class ArtifactDeployer<T extends Artifact>
     public MuleDeployer getDeployer()
     {
         return deployer;
+    }
+
+    public void redeploy(T artifact)
+    {
+        artifact.redeploy();
+        //anchor creation should not be required here once MULE-7126 gets fixed.
+        File anchorFile = new File(artifactFactory.getArtifactDir(), String.format("%s%s", artifact.getArtifactName(), MuleDeploymentService.ARTIFACT_ANCHOR_SUFFIX));
+        try
+        {
+            FileUtils.writeStringToFile(anchorFile, DefaultMuleDeployer.ANCHOR_FILE_BLURB);
+        }
+        catch (Throwable t)
+        {
+            artifact.dispose();
+            if (t instanceof DeploymentException)
+            {
+                // re-throw as is
+                throw ((DeploymentException) t);
+            }
+            final String msg = String.format("Failed to deploy artifact [%s]", artifact.getArtifactName());
+            throw new DeploymentException(MessageFactory.createStaticMessage(msg), t);
+        }
+        artifactZombieMap.remove(artifact.getArtifactName());
     }
 
     private static class ZombieFile

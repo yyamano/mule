@@ -9,7 +9,6 @@ package org.mule.module.launcher;
 import org.mule.config.i18n.MessageFactory;
 import org.mule.module.launcher.artifact.Artifact;
 import org.mule.module.launcher.artifact.ArtifactFactory;
-import org.mule.module.reboot.MuleContainerBootstrapUtils;
 import org.mule.util.FileUtils;
 import org.mule.util.FilenameUtils;
 
@@ -25,6 +24,7 @@ import org.apache.commons.logging.LogFactory;
 public class DefaultMuleDeployer<T extends Artifact> implements MuleDeployer
 {
 
+    protected static final String ANCHOR_FILE_BLURB = "Delete this file while Mule is running to undeploy this artifact in a clean way.";
     protected transient final Log logger = LogFactory.getLog(getClass());
 
     protected ArtifactFactory<T> artifactFactory;
@@ -41,6 +41,9 @@ public class DefaultMuleDeployer<T extends Artifact> implements MuleDeployer
             artifact.install();
             artifact.init();
             artifact.start();
+            // save artifact's state in the marker file
+            File marker = getArtifactMarkerFile(artifact);
+            FileUtils.writeStringToFile(marker, ANCHOR_FILE_BLURB);
         }
         catch (Throwable t)
         {
@@ -64,10 +67,10 @@ public class DefaultMuleDeployer<T extends Artifact> implements MuleDeployer
             tryToStopApp(artifact);
             tryToDisposeApp(artifact);
 
-            final File appDir = new File(artifactFactory.getArtifactDir(), artifact.getArtifactName());
-            FileUtils.deleteDirectory(appDir);
-            // remove a marker, harmless, but a tidy app dir is always better :)
-            File marker = new File(artifactFactory.getArtifactDir(), String.format("%s-anchor.txt", artifact.getArtifactName()));
+            final File artifactDir = new File(artifactFactory.getArtifactDir(), artifact.getArtifactName());
+            FileUtils.deleteDirectory(artifactDir);
+            // remove a marker, harmless, but a tidy artifact dir is always better :)
+            File marker = getArtifactMarkerFile(artifact);
             marker.delete();
             Introspector.flushCaches();
         }
@@ -111,17 +114,17 @@ public class DefaultMuleDeployer<T extends Artifact> implements MuleDeployer
 
     public T installFromDir(String packagedMuleArtifactName) throws IOException
     {
-        final File appsDir = artifactFactory.getArtifactDir();
-        File appFile = new File(appsDir, packagedMuleArtifactName);
+        final File artifactsDir = artifactFactory.getArtifactDir();
+        File artifactFile = new File(artifactsDir, packagedMuleArtifactName);
 
-        // basic security measure: outside apps dir use installFrom(url) and go through any
+        // basic security measure: outside artifacts dir use installFrom(url) and go through any
         // restrictions applied to it
-        if (!appFile.getParentFile().equals(appsDir))
+        if (!artifactFile.getParentFile().equals(artifactsDir))
         {
-            throw new SecurityException("installFromAppDir() can only deploy from $MULE_HOME/apps. Use installFrom(url) instead.");
+            throw new SecurityException("installFromAppDir() can only deploy from $MULE_HOME/" + artifactFactory.getArtifactDir() + ". Use installFrom(url) instead.");
         }
 
-        return installFrom(appFile.toURL());
+        return installFrom(artifactFile.toURL());
     }
 
     public T installFrom(URL url) throws IOException
@@ -144,12 +147,12 @@ public class DefaultMuleDeployer<T extends Artifact> implements MuleDeployer
                     MessageFactory.createStaticMessage("Mule artifact name may not contain spaces: " + baseName));
         }
 
-        String appName;
-        File appDir = null;
+        String artifactName;
+        File artifactDir = null;
         boolean errorEncountered = false;
         try
         {
-            final File appsDir = artifactFactory.getArtifactDir();
+            final File aritfactsDir = artifactFactory.getArtifactDir();
 
             final String fullPath = url.toURI().toString();
 
@@ -158,12 +161,12 @@ public class DefaultMuleDeployer<T extends Artifact> implements MuleDeployer
                 logger.info("Exploding a Mule artifact archive: " + fullPath);
             }
 
-            appName = FilenameUtils.getBaseName(fullPath);
-            appDir = new File(appsDir, appName);
+            artifactName = FilenameUtils.getBaseName(fullPath);
+            artifactDir = new File(aritfactsDir, artifactName);
             // normalize the full path + protocol to make unzip happy
             final File source = new File(url.toURI());
 
-            FileUtils.unzip(source, appDir);
+            FileUtils.unzip(source, artifactDir);
             if ("file".equals(url.getProtocol()))
             {
                 FileUtils.deleteQuietly(source);
@@ -190,21 +193,26 @@ public class DefaultMuleDeployer<T extends Artifact> implements MuleDeployer
         }
         finally
         {
-            // delete an app dir, as it's broken
-            if (errorEncountered && appDir != null && appDir.exists())
+            // delete an artifact dir, as it's broken
+            if (errorEncountered && artifactDir != null && artifactDir.exists())
             {
-                final boolean couldNotDelete = FileUtils.deleteTree(appDir);
+                final boolean couldNotDelete = FileUtils.deleteTree(artifactDir);
                 /*
                 if (couldNotDelete)
                 {
-                    final String msg = String.format("Couldn't delete app directory '%s' after it failed to install", appDir);
+                    final String msg = String.format("Couldn't delete artifact directory '%s' after it failed to install", aritfactDir);
                     logger.error(msg);
                 }
                 */
             }
         }
 
-        // appname is never null by now
-        return artifactFactory.createArtifact(appName);
+        // artifactName is never null by now
+        return artifactFactory.createArtifact(artifactName);
+    }
+
+    private File getArtifactMarkerFile(Artifact artifact)
+    {
+        return new File(artifactFactory.getArtifactDir(), String.format("%s%s", artifact.getArtifactName(), MuleDeploymentService.ARTIFACT_ANCHOR_SUFFIX));
     }
 }

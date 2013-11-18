@@ -3,6 +3,8 @@ package org.mule.module.launcher.artifact;
 import org.mule.module.launcher.DeploymentStartException;
 import org.mule.module.launcher.InstallException;
 
+import java.io.File;
+
 public interface Artifact
 {
 
@@ -20,5 +22,6 @@ public interface Artifact
 
     String getArtifactName();
 
-    String[] getConfigResources();
+    File[] getConfigResourcesFile();
+
 }

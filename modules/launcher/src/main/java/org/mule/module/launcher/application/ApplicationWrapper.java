@@ -11,6 +11,7 @@ import org.mule.module.launcher.DeploymentStartException;
 import org.mule.module.launcher.InstallException;
 import org.mule.module.launcher.descriptor.ApplicationDescriptor;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -92,13 +93,13 @@ public class ApplicationWrapper implements Application
     @Override
     public String getArtifactName()
     {
-        return delegate.getAppName();
+        return delegate.getArtifactName();
     }
 
     @Override
-    public String[] getConfigResources()
+    public File[] getConfigResourcesFile()
     {
-        return delegate.getConfigResources();
+        return delegate.getConfigResourcesFile();
     }
 
     public void start() throws DeploymentStartException

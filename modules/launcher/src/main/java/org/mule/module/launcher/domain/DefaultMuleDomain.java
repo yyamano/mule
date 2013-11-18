@@ -8,6 +8,8 @@ import org.mule.module.launcher.DeploymentStartException;
 import org.mule.module.launcher.DeploymentStopException;
 import org.mule.module.launcher.InstallException;
 
+import java.io.File;
+
 public class DefaultMuleDomain implements Domain
 {
 
@@ -103,9 +105,10 @@ public class DefaultMuleDomain implements Domain
     }
 
     @Override
-    public String[] getConfigResources()
+    public File[] getConfigResourcesFile()
     {
-        return new String[0];
+        //TODO change to retrieve actual config resources
+        return new File[0];
     }
 
     public void initialise()

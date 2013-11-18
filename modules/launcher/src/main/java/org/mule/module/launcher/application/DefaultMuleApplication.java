@@ -57,8 +57,6 @@ import org.apache.commons.logging.LogFactory;
 public class DefaultMuleApplication implements Application
 {
     protected static final int DEFAULT_RELOAD_CHECK_INTERVAL_MS = 3000;
-    protected static final String ANCHOR_FILE_BLURB = "Delete this file while Mule is running to undeploy this app in a clean way.";
-
     protected transient final Log logger = LogFactory.getLog(getClass());
     protected transient final Log deployLogger = LogFactory.getLog(MuleDeploymentService.class);
     private Domain domain;
@@ -73,12 +71,14 @@ public class DefaultMuleApplication implements Application
     protected String[] absoluteResourcePaths;
 
     protected DeploymentListener deploymentListener;
+    private File[] configResourcesFile;
 
     protected DefaultMuleApplication(ApplicationDescriptor appDesc, ApplicationClassLoaderFactory applicationClassLoaderFactory)
     {
         this.descriptor = appDesc;
         this.applicationClassLoaderFactory = applicationClassLoaderFactory;
         this.deploymentListener = new NullDeploymentListener();
+        loadConfigResources();
     }
 
     public DefaultMuleApplication(ApplicationDescriptor descriptor, ApplicationClassLoaderFactory applicationClassLoaderFactory, Domain domain)
@@ -105,22 +105,14 @@ public class DefaultMuleApplication implements Application
             logger.info(miniSplash(String.format("New app '%s'", descriptor.getAppName())));
         }
 
-        // convert to absolute paths
-        final String[] configResources = descriptor.getConfigResources();
-        absoluteResourcePaths = new String[configResources.length];
-        for (int i = 0; i < configResources.length; i++)
+        for (File configResource : configResourcesFile)
         {
-            String resource = configResources[i];
-            final File file = toAbsoluteFile(resource);
-            if (!file.exists())
+            if (!configResource.exists())
             {
-                String message = String.format("Config for app '%s' not found: %s", getAppName(), file);
+                String message = String.format("Config for app '%s' not found: %s", getArtifactName(), configResource);
                 throw new InstallException(MessageFactory.createStaticMessage(message));
             }
-
-            absoluteResourcePaths[i] = file.getAbsolutePath();
         }
-
         deploymentClassLoader = applicationClassLoaderFactory.create(descriptor);
     }
 
@@ -156,9 +148,6 @@ public class DefaultMuleApplication implements Application
         try
         {
             this.muleContext.start();
-            // save app's state in the marker file
-            File marker = new File(MuleContainerBootstrapUtils.getMuleAppsDir(), String.format("%s-anchor.txt", getAppName()));
-            FileUtils.writeStringToFile(marker, ANCHOR_FILE_BLURB);
 
             // null CCL ensures we log at 'system' level
             // TODO create a more usable wrapper for any logger to be logged at sys level
@@ -174,13 +163,6 @@ public class DefaultMuleApplication implements Application
             }
         }
         catch (MuleException e)
-        {
-            // log it here so it ends up in app log, sys log will only log a message without stacktrace
-            logger.error(null, ExceptionUtils.getRootCause(e));
-            // TODO add app name to the exception field
-            throw new DeploymentStartException(CoreMessages.createStaticMessage(ExceptionUtils.getRootCauseMessage(e)), e);
-        }
-        catch (IOException e)
         {
             // log it here so it ends up in app log, sys log will only log a message without stacktrace
             logger.error(null, ExceptionUtils.getRootCause(e));
@@ -213,14 +195,9 @@ public class DefaultMuleApplication implements Application
                 DefaultMuleContextFactory muleContextFactory = new DefaultMuleContextFactory();
                 if (deploymentListener != null)
                 {
-                    muleContextFactory.addListener(new MuleContextDeploymentListener(getAppName(), deploymentListener));
+                    muleContextFactory.addListener(new MuleContextDeploymentListener(getArtifactName(), deploymentListener));
                 }
                 this.muleContext = muleContextFactory.createMuleContext(builders, new ApplicationMuleContextBuilder(descriptor));
-
-                if (descriptor.isRedeploymentEnabled())
-                {
-                    createRedeployMonitor();
-                }
             }
         }
         catch (Exception e)
@@ -280,10 +257,10 @@ public class DefaultMuleApplication implements Application
         final Map<String,String> appProperties = descriptor.getAppProperties();
 
         // Add the app.home variable to the context
-        File appPath = new File(MuleContainerBootstrapUtils.getMuleAppsDir(), getAppName());
+        File appPath = new File(MuleContainerBootstrapUtils.getMuleAppsDir(), getArtifactName());
         appProperties.put(MuleProperties.APP_HOME_DIRECTORY_PROPERTY, appPath.getAbsolutePath());
 
-        appProperties.put(MuleProperties.APP_NAME_PROPERTY, getAppName());
+        appProperties.put(MuleProperties.APP_NAME_PROPERTY, getArtifactName());
 
         return new SimpleConfigurationBuilder(appProperties);
     }
@@ -352,6 +329,12 @@ public class DefaultMuleApplication implements Application
         }
     }
 
+    /**
+     * This method should be avoid.
+     *
+     * This logic belongs to DefaultMuleDeployer instead.
+     * SEE MULE-7126.
+     */
     @Override
     public void redeploy()
     {
@@ -360,7 +343,7 @@ public class DefaultMuleApplication implements Application
             logger.info(miniSplash(String.format("Redeploying app '%s'", descriptor.getAppName())));
         }
 
-        String appName = getAppName();
+        String appName = getArtifactName();
 
         deploymentListener.onUndeploymentStart(appName);
         try
@@ -407,9 +390,9 @@ public class DefaultMuleApplication implements Application
     }
 
     @Override
-    public String[] getConfigResources()
+    public File[] getConfigResourcesFile()
     {
-        return descriptor.getConfigResources();
+        return configResourcesFile;
     }
 
     @Override
@@ -488,23 +471,6 @@ public class DefaultMuleApplication implements Application
         muleContext = null;
     }
 
-    protected void createRedeployMonitor() throws NotificationException
-    {
-        if (logger.isInfoEnabled())
-        {
-            logger.info("Monitoring for hot-deployment: " + StringUtils.join(absoluteResourcePaths, ';'));
-        }
-
-        List<File> configFiles = new ArrayList<File>();
-        for (String path : absoluteResourcePaths)
-        {
-            configFiles.add(new File(path));
-        }
-
-        // register a config monitor only after context has started, as it may take some time
-        new ConfigFileWatcher(configFiles).register();
-    }
-
     protected void scheduleConfigMonitor(AbstractFileWatcher watcher)
     {
         final int reloadIntervalMs = DEFAULT_RELOAD_CHECK_INTERVAL_MS;
@@ -526,66 +492,22 @@ public class DefaultMuleApplication implements Application
     protected File toAbsoluteFile(String path)
     {
         final String muleHome = System.getProperty(MuleProperties.MULE_HOME_DIRECTORY_PROPERTY);
-        String configPath = String.format("%s/apps/%s/%s", muleHome, getAppName(), path);
+        String configPath = String.format("%s/apps/%s/%s", muleHome, getArtifactName(), path);
         return new File(configPath);
     }
 
-    protected class ConfigFileWatcher extends AbstractFileWatcher
+    private void loadConfigResources()
     {
-        public ConfigFileWatcher(List<File> watchedResources)
+        // convert to absolute paths
+        final String[] configResources = descriptor.getConfigResources();
+        absoluteResourcePaths = new String[configResources.length];
+        configResourcesFile = new File[absoluteResourcePaths.length];
+        for (int i = 0; i < configResources.length; i++)
         {
-            super(watchedResources);
-        }
-
-        public void register() throws NotificationException
-        {
-            muleContext.registerListener(new FileWatcherNotificationListener(this));
-        }
-
-        @Override
-        protected synchronized void onChange(File file)
-        {
-            if (logger.isInfoEnabled())
-            {
-                logger.info("================== Reloading " + file);
-            }
-
-            // grab the proper classloader for our context
-            final ClassLoader cl = getDeploymentClassLoader();
-            Thread.currentThread().setContextClassLoader(cl);
-            redeploy();
-        }
-    }
-
-    protected class FileWatcherNotificationListener implements MuleContextNotificationListener<MuleContextNotification>
-    {
-        private AbstractFileWatcher watcher;
-
-        public FileWatcherNotificationListener(AbstractFileWatcher watcher)
-        {
-            this.watcher = watcher;
-        }
-
-        @Override
-        public void onNotification(MuleContextNotification notification)
-        {
-            final int action = notification.getAction();
-            switch (action)
-            {
-                case MuleContextNotification.CONTEXT_STARTED :
-                    scheduleConfigMonitor(watcher);
-                    break;
-
-                case MuleContextNotification.CONTEXT_STOPPING :
-                    if (watchTimer != null)
-                    {
-                        // edge case when app startup was interrupted and we haven't
-                        // started monitoring it yet
-                        watchTimer.shutdownNow();
-                    }
-                    muleContext.unregisterListener(this);
-                    break;
-            }
+            String resource = configResources[i];
+            final File file = toAbsoluteFile(resource);
+            configResourcesFile[i] = file;
+            absoluteResourcePaths[i] = file.getAbsolutePath();
         }
     }
 

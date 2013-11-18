@@ -388,7 +388,6 @@ public class ObservableList<E> implements List<E>
     }
 
     // observable interface
-
     public void addPropertyChangeListener(PropertyChangeListener listener)
     {
         pcs.addPropertyChangeListener(listener);
