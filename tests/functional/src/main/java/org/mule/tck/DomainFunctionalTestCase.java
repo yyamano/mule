@@ -76,7 +76,7 @@ public abstract class DomainFunctionalTestCase extends org.mule.tck.junit4.Abstr
     private void createDomain()
     {
         //DefaultMuleDomainFactory defaultMuleDomainFactory = new DefaultMuleDomainFactory();
-        //MuleApplicationDomainContextBuilder applicationDomainContextBuilder = new MuleApplicationDomainContextBuilder();
+        //MuleDomainContextBuilder applicationDomainContextBuilder = new MuleDomainContextBuilder();
         //defaultMuleDomainFactory.setApplicationDomainContextBuilder(applicationDomainContextBuilder);
         //applicationDomainContextBuilder.setDomainConfigFileLocation(getDomainConfig());
         //domain = defaultMuleDomainFactory.createMuleDomain("domain", getClass().getClassLoader());

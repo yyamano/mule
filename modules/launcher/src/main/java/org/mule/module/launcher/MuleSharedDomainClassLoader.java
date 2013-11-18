@@ -36,31 +36,36 @@ public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader
         {
             this.domain = domain;
 
-            File newDomainDir = validateAndRetrieveDomainDirectory(domain);
+            File domainLibraries = validateAndGetDomainLibraryFolder();
 
-            Collection<File> jars = FileUtils.listFiles(newDomainDir, new String[] {"jar"}, false);
+            addURL(domainLibraries.getParentFile().toURI().toURL());
 
-            if (logger.isDebugEnabled())
+            if (domainLibraries.exists())
             {
+                Collection<File> jars = FileUtils.listFiles(domainLibraries, new String[] {"jar"}, false);
+
+                if (logger.isDebugEnabled())
                 {
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("Loading Shared ClassLoader Domain: ").append(domain).append(SystemUtils.LINE_SEPARATOR);
-                    sb.append("=============================").append(SystemUtils.LINE_SEPARATOR);
-
-                    for (File jar : jars)
                     {
-                        sb.append(jar.toURI().toURL()).append(SystemUtils.LINE_SEPARATOR);
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("Loading Shared ClassLoader Domain: ").append(domain).append(SystemUtils.LINE_SEPARATOR);
+                        sb.append("=============================").append(SystemUtils.LINE_SEPARATOR);
+
+                        for (File jar : jars)
+                        {
+                            sb.append(jar.toURI().toURL()).append(SystemUtils.LINE_SEPARATOR);
+                        }
+
+                        sb.append("=============================").append(SystemUtils.LINE_SEPARATOR);
+
+                        logger.debug(sb.toString());
                     }
-
-                    sb.append("=============================").append(SystemUtils.LINE_SEPARATOR);
-
-                    logger.debug(sb.toString());
                 }
-            }
 
-            for (File jar : jars)
-            {
-                addURL(jar.toURI().toURL());
+                for (File jar : jars)
+                {
+                    addURL(jar.toURI().toURL());
+                }
             }
         }
         catch (Throwable t)
@@ -104,9 +109,9 @@ public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader
         return resource;
     }
 
-    private File validateAndRetrieveDomainDirectory(String domain) throws Exception
+    private File validateAndGetDomainLibraryFolder() throws Exception
     {
-        File newDomainDir = new File(MuleContainerBootstrapUtils.getMuleDomainsDir() + File.separator + domain + File.separator + "lib");
+        File newDomainDir = new File(MuleContainerBootstrapUtils.getMuleDomainsDir() + File.separator + domain);
         Exception newDomainValidationException = null;
         if (!newDomainDir.exists())
         {
@@ -143,7 +148,6 @@ public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader
             throw newDomainValidationException;
         }
 
-        File domainDir = (newDomainValidationException == null ? newDomainDir : oldDomainDir);
-        return domainDir;
+        return (newDomainValidationException == null ? new File(newDomainDir,"lib") : oldDomainDir);
     }
 }

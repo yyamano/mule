@@ -17,7 +17,7 @@ import java.net.URL;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-public class MuleApplicationDomainContextBuilder implements ApplicationDomainContextBuilder
+public class MuleDomainContextBuilder implements ApplicationDomainContextBuilder
 {
 
     private String domain;

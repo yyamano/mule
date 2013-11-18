@@ -17,11 +17,11 @@ import org.mule.module.launcher.application.CompositeApplicationClassLoaderFacto
 import org.mule.module.launcher.application.DefaultApplicationFactory;
 import org.mule.module.launcher.application.MuleApplicationClassLoaderFactory;
 import org.mule.module.launcher.artifact.Artifact;
-import org.mule.module.launcher.domain.ApplicationDomainClassLoaderFactory;
+import org.mule.module.launcher.domain.DomainClassLoaderFactory;
 import org.mule.module.launcher.domain.DefaultDomainFactory;
 import org.mule.module.launcher.domain.Domain;
 import org.mule.module.launcher.domain.DomainFactory;
-import org.mule.module.launcher.domain.MuleApplicationDomainClassLoaderFactory;
+import org.mule.module.launcher.domain.MuleDomainClassLoaderFactory;
 import org.mule.module.launcher.util.DebuggableReentrantLock;
 import org.mule.module.launcher.util.ElementAddedEvent;
 import org.mule.module.launcher.util.ElementRemovedEvent;
@@ -89,12 +89,13 @@ public class MuleDeploymentService implements DeploymentService
 
     public MuleDeploymentService(PluginClassLoaderManager pluginClassLoaderManager)
     {
-        ApplicationDomainClassLoaderFactory applicationDomainClassLoaderFactory = new MuleApplicationDomainClassLoaderFactory();
+        DomainClassLoaderFactory domainClassLoaderFactory = new MuleDomainClassLoaderFactory();
 
-        ApplicationClassLoaderFactory applicationClassLoaderFactory = new MuleApplicationClassLoaderFactory(applicationDomainClassLoaderFactory);
+        ApplicationClassLoaderFactory applicationClassLoaderFactory = new MuleApplicationClassLoaderFactory(domainClassLoaderFactory);
         applicationClassLoaderFactory = new CompositeApplicationClassLoaderFactory(applicationClassLoaderFactory, pluginClassLoaderManager);
 
-        DomainFactory domainFactory = new DefaultDomainFactory();
+        DefaultDomainFactory domainFactory = new DefaultDomainFactory(domainClassLoaderFactory);
+        domainFactory.setDeploymentListener(domainDeploymentListener);
         DefaultApplicationFactory applicationFactory = new DefaultApplicationFactory(applicationClassLoaderFactory, domainFactory);
         applicationFactory.setDeploymentListener(deploymentListener);
 

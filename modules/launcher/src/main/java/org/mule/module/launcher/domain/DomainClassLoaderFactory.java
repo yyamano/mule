@@ -6,7 +6,7 @@
  */
 package org.mule.module.launcher.domain;
 
-public interface ApplicationDomainClassLoaderFactory
+public interface DomainClassLoaderFactory
 {
 
     ClassLoader create(String domain);

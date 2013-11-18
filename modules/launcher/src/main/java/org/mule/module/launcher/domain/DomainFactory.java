@@ -17,6 +17,7 @@ import java.util.Collection;
 public interface DomainFactory extends ArtifactFactory<Domain>
 {
 
+    //TODO remove to a domain repository.
     public Domain createAppDomain(String appName) throws IOException;
 
 }

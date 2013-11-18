@@ -235,10 +235,12 @@ public class DefaultMuleContext implements MuleContext
     {
         getLifecycleManager().checkPhase(Startable.PHASE_NAME);
 
-        if (getSecurityManager() == null)
-        {
-            throw new MuleRuntimeException(CoreMessages.objectIsNull("securityManager"));
-        }
+
+        //TODO PLG review if this check is really necessary
+        //if (getSecurityManager() == null)
+        //{
+        //    throw new MuleRuntimeException(CoreMessages.objectIsNull("securityManager"));
+        //}
         if (getQueueManager() == null)
         {
             throw new MuleRuntimeException(CoreMessages.objectIsNull("queueManager"));

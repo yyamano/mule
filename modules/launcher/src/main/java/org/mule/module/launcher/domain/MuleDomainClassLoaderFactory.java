@@ -10,7 +10,7 @@ import org.mule.module.launcher.DefaultMuleSharedDomainClassLoader;
 import org.mule.module.launcher.MuleSharedDomainClassLoader;
 import org.mule.util.StringUtils;
 
-public class MuleApplicationDomainClassLoaderFactory implements ApplicationDomainClassLoaderFactory
+public class MuleDomainClassLoaderFactory implements DomainClassLoaderFactory
 {
 
     @Override

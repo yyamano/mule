@@ -9,6 +9,7 @@ package org.mule.module.launcher.domain;
 import org.mule.api.MuleRuntimeException;
 import org.mule.context.ApplicationDomainContextBuilder;
 import org.mule.context.MuleApplicationDomain;
+import org.mule.module.launcher.DeploymentListener;
 import org.mule.module.launcher.MuleSharedDomainClassLoader;
 import org.mule.module.reboot.MuleContainerBootstrapUtils;
 
@@ -22,9 +23,20 @@ import java.util.Map;
  */
 public class DefaultDomainFactory implements DomainFactory
 {
-    public static final String DOMAIN_CONTEXT_BUILDER = "org.mule.config.spring.MuleApplicationDomainContextBuilder";
+    private final DomainClassLoaderFactory domainClassLoaderFactory;
 
     private Map<String, Domain> domains = new HashMap<String, Domain>();
+    protected DeploymentListener deploymentListener;
+
+    public DefaultDomainFactory(DomainClassLoaderFactory domainClassLoaderFactory)
+    {
+        this.domainClassLoaderFactory = domainClassLoaderFactory;
+    }
+
+    public void setDeploymentListener(DeploymentListener deploymentListener)
+    {
+        this.deploymentListener = deploymentListener;
+    }
 
     @Override
     public Domain createAppDomain(String domainName) throws IOException
@@ -67,30 +79,13 @@ public class DefaultDomainFactory implements DomainFactory
     @Override
     public Domain createArtifact(String artifactName) throws IOException
     {
-        MuleSharedDomainClassLoader muleSharedDomainClassLoader = new MuleSharedDomainClassLoader(artifactName, getClass().getClassLoader());
-        //TODO review how to get this instance without depending on spring module
-        try
+        if (artifactName.contains(" "))
         {
-            ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
-            Thread.currentThread().setContextClassLoader(muleSharedDomainClassLoader);
-            try
-            {
-                ApplicationDomainContextBuilder applicationDomainContextBuilder =  (ApplicationDomainContextBuilder) Class.forName(DOMAIN_CONTEXT_BUILDER).newInstance();
-                applicationDomainContextBuilder.setDomain(artifactName);
-                applicationDomainContextBuilder.setClassLoader(muleSharedDomainClassLoader);
-                applicationDomainContextBuilder.setClassLoader(muleSharedDomainClassLoader);
-                MuleApplicationDomain muleApplicationDomain = applicationDomainContextBuilder.build();
-                return new DefaultMuleDomain(artifactName, muleApplicationDomain.getMuleContext(), muleApplicationDomain.getContext());
-            }
-            finally
-            {
-                Thread.currentThread().setContextClassLoader(originalClassLoader);
-            }
+            throw new IllegalArgumentException("Mule application name may not contain spaces: " + artifactName);
         }
-        catch (Exception e)
-        {
-            throw new MuleRuntimeException(e);
-        }
+        DefaultMuleDomain defaultMuleDomain = new DefaultMuleDomain(domainClassLoaderFactory, artifactName);
+        defaultMuleDomain.setDeploymentListener(deploymentListener);
+        return defaultMuleDomain;
     }
 
     @Override

@@ -8,7 +8,7 @@ package org.mule.module.launcher.application;
 
 import org.mule.module.launcher.MuleApplicationClassLoader;
 import org.mule.module.launcher.descriptor.ApplicationDescriptor;
-import org.mule.module.launcher.domain.ApplicationDomainClassLoaderFactory;
+import org.mule.module.launcher.domain.DomainClassLoaderFactory;
 import org.mule.module.launcher.plugin.MulePluginsClassLoader;
 import org.mule.module.launcher.plugin.PluginDescriptor;
 
@@ -21,18 +21,18 @@ import java.util.Set;
 public class MuleApplicationClassLoaderFactory implements ApplicationClassLoaderFactory
 {
 
-    private final ApplicationDomainClassLoaderFactory applicationDomainClassLoaderFactory;
+    private final DomainClassLoaderFactory domainClassLoaderFactory;
 
-    public MuleApplicationClassLoaderFactory(ApplicationDomainClassLoaderFactory applicationDomainClassLoaderFactory)
+    public MuleApplicationClassLoaderFactory(DomainClassLoaderFactory domainClassLoaderFactory)
     {
-        this.applicationDomainClassLoaderFactory = applicationDomainClassLoaderFactory;
+        this.domainClassLoaderFactory = domainClassLoaderFactory;
     }
 
     @Override
     public ClassLoader create(ApplicationDescriptor descriptor)
     {
         final String domain = descriptor.getDomain();
-        ClassLoader parent = applicationDomainClassLoaderFactory.create(domain);;
+        ClassLoader parent = domainClassLoaderFactory.create(domain);;
 
         final Set<PluginDescriptor> plugins = descriptor.getPlugins();
         if (!plugins.isEmpty())
