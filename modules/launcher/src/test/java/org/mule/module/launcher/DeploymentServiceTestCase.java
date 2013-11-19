@@ -1485,7 +1485,6 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         assertEquals("Application has not been properly registered with Mule", 1, deploymentService.getApplications().size());
         assertDomainDir(NONE, new String[] {"dummy-domain"}, true);
     }
-    */
 
     @Test
     public void testBrokenDomainArchiveWithoutArgument() throws Exception
@@ -1564,7 +1563,7 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         reset(domainDeploymentListener);
 
         assertNoDeploymentInvoked(domainDeploymentListener);
-    }
+    }*/
 
     @Test
     public void receivesDomainMuleContextDeploymentNotifications() throws Exception
@@ -2261,7 +2260,7 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
 
     private void addExplodedDomainFromResource(String resource, String domainName) throws IOException, URISyntaxException
     {
-        addExplodedArtifactFromResource(resource, domainName, "default-mule-config.xml", domainsDir);
+        addExplodedArtifactFromResource(resource, domainName, "mule-domain-config.xml", domainsDir);
     }
 
     private void addExplodedAppFromResource(String resource, String appName) throws IOException, URISyntaxException
@@ -2269,28 +2268,28 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         addExplodedArtifactFromResource(resource, appName, "mule-config.xml", appsDir);
     }
 
-    private void addExplodedArtifactFromResource(String resource, String appName, String configFileName, File destinationDir) throws IOException, URISyntaxException
+    private void addExplodedArtifactFromResource(String resource, String artifactName, String configFileName, File destinationDir) throws IOException, URISyntaxException
     {
         URL url = getClass().getResource(resource);
         assertNotNull("Test resource not found: " + url, url);
 
-        String appFolder = appName;
-        if (appFolder == null)
+        String artifactFolder = artifactName;
+        if (artifactFolder == null)
         {
             File file = new File(url.getFile());
             int index = file.getName().lastIndexOf(".");
 
             if (index > 0)
             {
-                appFolder = file.getName().substring(0, index);
+                artifactFolder = file.getName().substring(0, index);
             }
             else
             {
-                appFolder = file.getName();
+                artifactFolder = file.getName();
             }
         }
 
-        addExplodedArtifact(url, appFolder, configFileName, destinationDir);
+        addExplodedArtifact(url, artifactFolder, configFileName, destinationDir);
     }
 
     /**
