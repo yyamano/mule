@@ -14,7 +14,6 @@ import org.mule.config.DefaultMuleConfiguration;
 import org.mule.config.spring.SpringXmlConfigurationBuilder;
 import org.mule.context.DefaultMuleContextBuilder;
 import org.mule.context.DefaultMuleContextFactory;
-import org.mule.context.MuleApplicationDomain;
 import org.mule.tck.junit4.AbstractMuleContextTestCase;
 import org.mule.tck.probe.PollingProber;
 import org.mule.tck.probe.Probe;
@@ -31,7 +30,6 @@ public abstract class DomainFunctionalTestCase extends org.mule.tck.junit4.Abstr
 
     private List<MuleContext> muleContexts = new ArrayList<MuleContext>();
     private List<MuleContext> disposedContexts = new ArrayList<MuleContext>();
-    private MuleApplicationDomain domain;
 
     protected abstract String getDomainConfig();
 
@@ -55,7 +53,7 @@ public abstract class DomainFunctionalTestCase extends org.mule.tck.junit4.Abstr
     protected ConfigurationBuilder getBuilder(String configResource) throws Exception
     {
         SpringXmlConfigurationBuilder springXmlConfigurationBuilder = new SpringXmlConfigurationBuilder(configResource);
-        springXmlConfigurationBuilder.setDomainContext(domain.getContext());
+        //springXmlConfigurationBuilder.setDomainContext(domain.getMuleContext());
         return springXmlConfigurationBuilder;
     }
 

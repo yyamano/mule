@@ -218,7 +218,7 @@ public class DefaultMuleApplication implements Application
                                                                                                            new Object[] {absoluteResourcePaths}, getDeploymentClassLoader());
             if (configurationBuilder instanceof DomainAwareConfigurationBuilder)
             {
-                ((DomainAwareConfigurationBuilder)configurationBuilder).setDomainContext(domain.getContext());
+                ((DomainAwareConfigurationBuilder)configurationBuilder).setDomainContext(domain.getMuleContext());
             }
             else
             {

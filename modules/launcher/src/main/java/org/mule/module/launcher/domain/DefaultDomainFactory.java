@@ -17,8 +17,6 @@ import java.util.Map;
 public class DefaultDomainFactory implements DomainFactory
 {
 
-    public static final String DEFAULT_DOMAIN_NAME = "default";
-
     private final DomainClassLoaderFactory domainClassLoaderFactory;
 
     private Map<String, Domain> domains = new HashMap<String, Domain>();

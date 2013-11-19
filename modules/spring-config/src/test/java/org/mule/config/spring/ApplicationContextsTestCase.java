@@ -143,7 +143,7 @@ public class ApplicationContextsTestCase extends AbstractMuleTestCase
         ApplicationContext appContext = new ClassPathXmlApplicationContext("application-context.xml");
 
         SpringXmlConfigurationBuilder builder = new SpringXmlConfigurationBuilder("mule-config.xml");
-        builder.setDomainContext(appContext);
+        builder.setParentContext(appContext);
         builder.configure(context);
 
         context.start();

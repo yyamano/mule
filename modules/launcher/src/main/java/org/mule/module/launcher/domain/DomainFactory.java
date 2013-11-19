@@ -16,6 +16,7 @@ import java.util.Collection;
  */
 public interface DomainFactory extends ArtifactFactory<Domain>
 {
+    String DEFAULT_DOMAIN_NAME = "default";
 
     public Domain createDefaultDomain() throws IOException;
 

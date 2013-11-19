@@ -38,9 +38,7 @@ public class DefaultMuleDomain implements Domain
     private final String domainConfigFileLocation = "mule-domain-config.xml";
     private MuleContext muleContext;
     private DeploymentListener deploymentListener;
-    private Object context;
     private ClassLoader deploymentClassLoader;
-    private boolean domainSuccessfullyDeployed;
 
     private File configResourceFile;
 
@@ -59,11 +57,6 @@ public class DefaultMuleDomain implements Domain
     public String getName()
     {
         return domain;
-    }
-
-    public Object getContext()
-    {
-        return context;
     }
 
     @Override
@@ -116,7 +109,6 @@ public class DefaultMuleDomain implements Domain
                         muleContextFactory.addListener(new MuleContextDeploymentListener(getArtifactName(), deploymentListener));
                     }
                     this.muleContext = muleContextFactory.createMuleContext(builders, new DomainMuleContextBuilder(domain));
-                    this.context = this.muleContext.getRegistry().get("springApplicationContext");
                 }
             }
         }
@@ -192,7 +184,6 @@ public class DefaultMuleDomain implements Domain
                     throw new DeploymentStartException(CoreMessages.createStaticMessage(ExceptionUtils.getRootCauseMessage(e)), e);
                 }
             }
-            domainSuccessfullyDeployed = true;
         }
         catch (Exception e)
         {
@@ -257,13 +248,8 @@ public class DefaultMuleDomain implements Domain
         }
     }
 
-    public boolean isDomainSuccessfullyDeployed()
-    {
-        return domainSuccessfullyDeployed;
-    }
-
     public boolean containsSharedResources()
     {
-        return this.context != null;
+        return this.muleContext != null;
     }
 }

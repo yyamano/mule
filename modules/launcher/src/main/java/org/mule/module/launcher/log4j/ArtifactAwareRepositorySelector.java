@@ -7,8 +7,8 @@
 package org.mule.module.launcher.log4j;
 
 import org.mule.module.launcher.MuleApplicationClassLoader;
-import org.mule.module.launcher.MuleSharedDomainClassLoader;
 import org.mule.module.launcher.application.ApplicationClassLoader;
+import org.mule.module.launcher.artifact.ArtifactClassLoader;
 import org.mule.module.reboot.MuleContainerBootstrapUtils;
 import org.mule.module.reboot.MuleContainerSystemClassLoader;
 
@@ -30,7 +30,7 @@ import org.apache.log4j.spi.RepositorySelector;
 import org.apache.log4j.spi.RootLogger;
 import org.apache.log4j.xml.DOMConfigurator;
 
-public class ApplicationAwareRepositorySelector implements RepositorySelector
+public class ArtifactAwareRepositorySelector implements RepositorySelector
 {
     protected static final String PATTERN_LAYOUT = "%-5p %d [%t] %c: %m%n";
 
@@ -67,71 +67,16 @@ public class ApplicationAwareRepositorySelector implements RepositorySelector
                 ConfigWatchDog configWatchDog = null;
                 if (ccl instanceof ApplicationClassLoader)
                 {
-                    ApplicationClassLoader muleCL = (ApplicationClassLoader) ccl;
-                    URL appLogConfig = getAppLoggingConfig(muleCL);
-                    final String appName = muleCL.getAppName();
-                    if (appLogConfig == null)
+                    String logFileNamePatter;
+                    if (ccl instanceof ApplicationClassLoader)
                     {
-                        // fallback to defaults
-                        String logName = String.format("mule-app-%s.log", appName);
-                        File logDir = new File(MuleContainerBootstrapUtils.getMuleHome(), "logs");
-                        File logFile = new File(logDir, logName);
-                        DailyRollingFileAppender fileAppender = new DailyRollingFileAppender(new PatternLayout(PATTERN_LAYOUT), logFile.getAbsolutePath(), "'.'yyyy-MM-dd");
-                        fileAppender.setAppend(true);
-                        fileAppender.activateOptions();
-                        root.addAppender(fileAppender);
+                        logFileNamePatter = "mule-app-%s.log";
                     }
                     else
                     {
-                        configureFrom(appLogConfig, repository);
-                        if (appLogConfig.toExternalForm().startsWith("file:"))
-                        {
-                            // if it's not a file, no sense in monitoring it for changes
-                            configWatchDog = new ConfigWatchDog(ccl, appLogConfig.getFile(), repository);
-                            configWatchDog.setName(String.format("[%s].log4j.config.monitor", appName));
-                        }
-                        else
-                        {
-                            if (logger.isInfoEnabled())
-                            {
-                                logger.info(String.format("Logging config %s is not an external file, will not be monitored for changes", appLogConfig));
-                            }
-                        }
+                        logFileNamePatter = "mule-domain-%s.log";
                     }
-                }
-                else if (ccl instanceof MuleSharedDomainClassLoader)
-                {
-                    //TODO add an interface for every domain class loader that can return the domain name or unify it with getName for app name in appCl and domain name for domainCl
-                    MuleSharedDomainClassLoader domainClassLoader = (MuleSharedDomainClassLoader) ccl;
-                    //TODO add support for log4j.xml in domain folder
-                    //URL appLogConfig = getAppLoggingConfig(muleCL);
-                    //final String appName = muleCL.getAppName();
-                    //if (appLogConfig == null)
-                    //{
-                    //    // fallback to defaults
-                    //    String logName = String.format("mule-app-%s.log", appName);
-                    //    File logDir = new File(MuleContainerBootstrapUtils.getMuleHome(), "logs");
-                    //    File logFile = new File(logDir, logName);
-                    //    DailyRollingFileAppender fileAppender = new DailyRollingFileAppender(new PatternLayout(PATTERN_LAYOUT), logFile.getAbsolutePath(), "'.'yyyy-MM-dd");
-                    //    fileAppender.setAppend(true);
-                    //    fileAppender.activateOptions();
-                    //    root.addAppender(fileAppender);
-                    //}
-                    //else
-                    //{
-                    File defaultSystemLog = new File(MuleContainerBootstrapUtils.getMuleHome(), "conf/log4j.xml");
-                    if (!defaultSystemLog.exists() && !defaultSystemLog.canRead())
-                    {
-                        defaultSystemLog = new File(MuleContainerBootstrapUtils.getMuleHome(), "conf/log4j.properties");
-                    }
-                    configureFrom(defaultSystemLog.toURL(), repository);
-                    String logName = String.format("mule-domain-%s.log", domainClassLoader.getDomain());
-                    File logDir = new File(MuleContainerBootstrapUtils.getMuleHome(), "logs");
-                    File logFile = new File(logDir, logName);
-                    DailyRollingFileAppender fileAppender = new DailyRollingFileAppender(new PatternLayout(PATTERN_LAYOUT), logFile.getAbsolutePath(), "'.'yyyy-MM-dd");
-                    fileAppender.setAppend(true);
-                    fileAppender.activateOptions();
-                    root.addAppender(fileAppender);
+                    configWatchDog = configureLoggerAndRetrieveWatchdog((ArtifactClassLoader) ccl, repository, root, configWatchDog, logFileNamePatter);
                 }
                 else
                 {
@@ -180,7 +125,42 @@ public class ApplicationAwareRepositorySelector implements RepositorySelector
         return repository;
     }
 
-    private URL getAppLoggingConfig(ApplicationClassLoader muleCL)
+    private ConfigWatchDog configureLoggerAndRetrieveWatchdog(ArtifactClassLoader artifactClassLoader, LoggerRepository repository, RootLogger root, ConfigWatchDog configWatchDog, String logFileNameTemplate) throws IOException
+    {
+        URL artifactLogConfig = getArtifactLoggingConfig(artifactClassLoader);
+        final String artifactName = artifactClassLoader.getArtifactName();
+        if (artifactLogConfig == null)
+        {
+            // fallback to defaults
+            String logName = String.format(logFileNameTemplate, artifactName);
+            File logDir = new File(MuleContainerBootstrapUtils.getMuleHome(), "logs");
+            File logFile = new File(logDir, logName);
+            DailyRollingFileAppender fileAppender = new DailyRollingFileAppender(new PatternLayout(PATTERN_LAYOUT), logFile.getAbsolutePath(), "'.'yyyy-MM-dd");
+            fileAppender.setAppend(true);
+            fileAppender.activateOptions();
+            root.addAppender(fileAppender);
+        }
+        else
+        {
+            configureFrom(artifactLogConfig, repository);
+            if (artifactLogConfig.toExternalForm().startsWith("file:"))
+            {
+                // if it's not a file, no sense in monitoring it for changes
+                configWatchDog = new ConfigWatchDog(artifactClassLoader.getClassLoader(), artifactLogConfig.getFile(), repository);
+                configWatchDog.setName(String.format("[%s].log4j.config.monitor", artifactName));
+            }
+            else
+            {
+                if (logger.isInfoEnabled())
+                {
+                    logger.info(String.format("Logging config %s is not an external file, will not be monitored for changes", artifactLogConfig));
+                }
+            }
+        }
+        return configWatchDog;
+    }
+
+    private URL getArtifactLoggingConfig(ArtifactClassLoader muleCL)
     {
         // Checks if there's an app-specific logging configuration available,
         // scope the lookup to this classloader only, as getResource() will delegate to parents
@@ -194,7 +174,7 @@ public class ApplicationAwareRepositorySelector implements RepositorySelector
 
         if (appLogConfig != null && logger.isInfoEnabled())
         {
-            logger.info(String.format("Found logging config for application '%s' at '%s'", muleCL.getAppName(), appLogConfig));
+            logger.info(String.format("Found logging config for application '%s' at '%s'", muleCL.getArtifactName(), appLogConfig));
         }
 
         return appLogConfig;
@@ -273,7 +253,7 @@ public class ApplicationAwareRepositorySelector implements RepositorySelector
                     public void execute()
                     {
                         final ClassLoader ccl = Thread.currentThread().getContextClassLoader();
-                        ApplicationAwareRepositorySelector.this.cache.remove(ccl);
+                        ArtifactAwareRepositorySelector.this.cache.remove(ccl);
                         interrupted = true;
                     }
                 });

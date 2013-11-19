@@ -28,12 +28,6 @@ public class DomainWrapper implements Domain
     }
 
     @Override
-    public Object getContext()
-    {
-        return delegate.getContext();
-    }
-
-    @Override
     public MuleContext getMuleContext()
     {
         return delegate.getMuleContext();

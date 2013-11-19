@@ -17,7 +17,7 @@ public class MuleDomainClassLoaderFactory implements DomainClassLoaderFactory
     public ClassLoader create(String domain)
     {
         ClassLoader classLoader;
-        if (StringUtils.isBlank(domain) || DefaultMuleSharedDomainClassLoader.DEFAULT_DOMAIN_NAME.equals(domain))
+        if (StringUtils.isBlank(domain) || DomainFactory.DEFAULT_DOMAIN_NAME.equals(domain))
         {
             classLoader = new DefaultMuleSharedDomainClassLoader(getClass().getClassLoader());
         }

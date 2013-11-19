@@ -29,7 +29,7 @@ import java.util.Properties;
  */
 public class AutoConfigurationBuilder extends AbstractResourceConfigurationBuilder implements DomainAwareConfigurationBuilder
 {
-    private Object domainContext;
+    private MuleContext domainContext;
 
     public AutoConfigurationBuilder(String resource) throws ConfigurationException
     {
@@ -113,7 +113,7 @@ public class AutoConfigurationBuilder extends AbstractResourceConfigurationBuild
     }
 
     @Override
-    public void setDomainContext(Object domainContext)
+    public void setDomainContext(MuleContext domainContext)
     {
         this.domainContext  = domainContext;
     }

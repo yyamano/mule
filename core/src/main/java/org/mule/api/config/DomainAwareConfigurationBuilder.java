@@ -6,13 +6,11 @@
  */
 package org.mule.api.config;
 
+import org.mule.api.MuleContext;
+
 public interface DomainAwareConfigurationBuilder extends ConfigurationBuilder
 {
 
-    /**
-     * TODO check how to avoid depending on Object
-     * @param domainContext
-     */
-    public void setDomainContext(Object domainContext);
+    void setDomainContext(MuleContext domainContext);
 
 }

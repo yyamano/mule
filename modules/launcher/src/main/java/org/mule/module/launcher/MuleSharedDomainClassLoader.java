@@ -6,6 +6,7 @@
  */
 package org.mule.module.launcher;
 
+import org.mule.module.launcher.artifact.ArtifactClassLoader;
 import org.mule.module.reboot.MuleContainerBootstrapUtils;
 import org.mule.util.FileUtils;
 import org.mule.util.SystemUtils;
@@ -21,7 +22,7 @@ import org.apache.commons.logging.LogFactory;
 /**
  *  Load $MULE_HOME/lib/shared/<domain> libraries.
  */
-public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader
+public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader implements ArtifactClassLoader
 {
 
     protected transient Log logger = LogFactory.getLog(getClass());
@@ -80,17 +81,18 @@ public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader
         }
     }
 
-    public String getDomain()
-    {
-        return domain;
-    }
-
     @Override
     public String toString()
     {
         return String.format("%s[%s]@%s", getClass().getName(),
                              domain,
                              Integer.toHexString(System.identityHashCode(this)));
+    }
+
+    @Override
+    public String getArtifactName()
+    {
+        return domain;
     }
 
     @Override
@@ -113,6 +115,12 @@ public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader
             }
         }
         return resource;
+    }
+
+    @Override
+    public ClassLoader getClassLoader()
+    {
+        return this;
     }
 
     private void validateAndGetDomainFolders() throws Exception

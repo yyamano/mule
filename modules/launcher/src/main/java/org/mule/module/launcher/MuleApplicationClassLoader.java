@@ -187,6 +187,18 @@ public class MuleApplicationClassLoader extends FineGrainedControlClassLoader im
                              Integer.toHexString(System.identityHashCode(this)));
     }
 
+    @Override
+    public String getArtifactName()
+    {
+        return getAppName();
+    }
+
+    @Override
+    public ClassLoader getClassLoader()
+    {
+        return this;
+    }
+
     /**
      * Optional hook, invoked synchronously right before the classloader is disposed of and closed.
      */
