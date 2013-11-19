@@ -97,7 +97,6 @@ public class DefaultMuleDomain implements Domain
             if (resource != null)
             {
                 this.configResourceFile = new File(resource.getFile());
-                muleContext = new DefaultMuleContextFactory().createMuleContext();
 
                 Thread.currentThread().setContextClassLoader(deploymentClassLoader);
                 ConfigurationBuilder cfgBuilder = createConfigurationBuilder();

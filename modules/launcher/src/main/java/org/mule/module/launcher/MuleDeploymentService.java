@@ -86,6 +86,7 @@ public class MuleDeploymentService implements DeploymentService
     private CompositeDeploymentListener domainDeploymentListener = new CompositeDeploymentListener();
     private ArtifactDeployer<Application> applicationDeployer;
     private ArtifactDeployer<Domain> domainDeployer;
+    private DomainFactory domainFactory;
 
     public MuleDeploymentService(PluginClassLoaderManager pluginClassLoaderManager)
     {
@@ -99,9 +100,6 @@ public class MuleDeploymentService implements DeploymentService
         DefaultApplicationFactory applicationFactory = new DefaultApplicationFactory(applicationClassLoaderFactory, domainFactory);
         applicationFactory.setDeploymentListener(deploymentListener);
 
-        DefaultApplicationFactory appFactory = new DefaultApplicationFactory(applicationClassLoaderFactory, domainFactory);
-        appFactory.setDeploymentListener(deploymentListener);
-
         DefaultMuleDeployer<Application> applicationMuleDeployer = new DefaultMuleDeployer<Application>();
         applicationMuleDeployer.setArtifactFactory(applicationFactory);
 
@@ -110,7 +108,7 @@ public class MuleDeploymentService implements DeploymentService
 
         this.applicationTimestampListener = new ApplicationTimestampListener(applications);
 
-        this.applicationDeployer = new ArtifactDeployer(deploymentListener, applicationMuleDeployer, appFactory, applications, deploymentInProgressLock);
+        this.applicationDeployer = new ArtifactDeployer(deploymentListener, applicationMuleDeployer, applicationFactory, applications, deploymentInProgressLock);
         this.domainDeployer = new ArtifactDeployer(domainDeploymentListener, domainMuleDeployer, domainFactory, domains, deploymentInProgressLock);
     }
 
@@ -514,6 +512,16 @@ public class MuleDeploymentService implements DeploymentService
             anchors[i++] = artifact.getArtifactName() + ARTIFACT_ANCHOR_SUFFIX;
         }
         return anchors;
+    }
+
+    public void undeploy(Domain domain)
+    {
+        domainDeployer.undeploy(domain);
+    }
+
+    public void setDomainFactory(DomainFactory domainFactory)
+    {
+        this.domainDeployer.setArtifactFactory(domainFactory);
     }
 
     /**

@@ -29,6 +29,7 @@ import org.mule.module.launcher.application.MuleApplicationClassLoaderFactory;
 import org.mule.module.launcher.application.TestApplicationFactory;
 import org.mule.module.launcher.domain.Domain;
 import org.mule.module.launcher.domain.MuleDomainClassLoaderFactory;
+import org.mule.module.launcher.domain.TestDomainFactory;
 import org.mule.tck.junit4.AbstractMuleContextTestCase;
 import org.mule.tck.junit4.rule.SystemProperty;
 import org.mule.tck.probe.PollingProber;
@@ -542,7 +543,6 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         assertAppFolderIsMaintained("incompleteApp");
     }
 
-
     @Test
     public void redeploysZipAppOnConfigChanges() throws Exception
     {
@@ -766,7 +766,7 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
 
         assertDeploymentSuccess(applicationDeploymentListener, "dummy-app");
 
-        assertTrue("Unable to remove anchor file", removeAnchorFile("dummy-app"));
+        assertTrue("Unable to remove anchor file", removeAppAnchorFile("dummy-app"));
 
         assertUndeploymentSuccess(applicationDeploymentListener, "dummy-app");
     }
@@ -784,7 +784,7 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
 
         assertDeploymentSuccess(applicationDeploymentListener, "empty-app");
 
-        assertTrue("Unable to remove anchor file", removeAnchorFile("empty-app"));
+        assertTrue("Unable to remove anchor file", removeAppAnchorFile("empty-app"));
 
         assertUndeploymentSuccess(applicationDeploymentListener, "empty-app");
 
@@ -803,7 +803,7 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
 
         assertDeploymentSuccess(applicationDeploymentListener, "empty-app");
 
-        assertTrue("Unable to remove anchor file", removeAnchorFile("empty-app"));
+        assertTrue("Unable to remove anchor file", removeAppAnchorFile("empty-app"));
 
         assertUndeploymentSuccess(applicationDeploymentListener, "empty-app");
 
@@ -940,7 +940,6 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         assertEquals("Failed app still appears as zombie after a successful redeploy", 0, deploymentService.getApplicationsZombieMap().size());
     }
 
-
     @Test
     public void redeploysInvalidZipAppAfterSuccessfulDeploymentOnStartup() throws IOException
     {
@@ -1066,7 +1065,6 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
 
     }
 
-
     @Test
     public void deploysBrokenDomainZipOnStartup() throws Exception
     {
@@ -1085,7 +1083,6 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         assertTrue("Invalid lastModified value for file URL.", zombie.getValue() != -1);
     }
 
-
     @Test
     public void deploysBrokenDomainZipAfterStartup() throws Exception
     {
@@ -1103,7 +1100,6 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         assertEquals("Wrong URL tagged as domain.", "brokenDomain.zip", new File(zombie.getKey().getFile()).getName());
         assertTrue("Invalid lastModified value for file URL.", zombie.getValue() != -1);
     }
-
 
     @Test
     public void redeploysDomainZipDeployedOnStartup() throws Exception
@@ -1149,7 +1145,6 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         assertDomainDir(NONE, new String[] {"dummy-domain"}, true);
     }
 
-
     @Test
     public void deploysExplodedDomainOnStartup() throws Exception
     {
@@ -1160,7 +1155,6 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         assertDeploymentSuccess(domainDeploymentListener, "dummy-domain");
         assertDomainDir(NONE, new String[] {"dummy-domain"}, true);
     }
-
 
     @Test
     public void deploysPackagedDomianOnStartupWhenExplodedAppIsAlsoPresent() throws Exception
@@ -1180,7 +1174,6 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         assertDeploymentSuccess(domainDeploymentListener, "dummy-domain");
     }
 
-
     @Test
     public void deploysExplodedDomainAfterStartup() throws Exception
     {
@@ -1191,8 +1184,6 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         assertDeploymentSuccess(domainDeploymentListener, "dummy-domain");
         assertDomainDir(NONE, new String[] {"dummy-domain"}, true);
     }
-
-
 
     @Test
     public void deploysInvalidExplodedDomainOnStartup() throws Exception
@@ -1213,7 +1204,6 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         assertEquals("Wrong URL tagged as zombie.", "domain with spaces", domainName);
         assertTrue("Invalid lastModified value for file URL.", zombie.getValue() != -1);
     }
-
 
     @Test
     public void deploysInvalidExplodedDomainAfterStartup() throws Exception
@@ -1253,7 +1243,6 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         assertDeploymentFailure(domainDeploymentListener, "domain with spaces");
     }
 
-
     @Test
     public void deploysBrokenExplodedDomainOnStartup() throws Exception
     {
@@ -1274,7 +1263,6 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         assertEquals("Wrong URL tagged as zombie.", "incompleteDomain", new File(zombie.getKey().getFile()).getParentFile().getName());
         assertTrue("Invalid lastModified value for file URL.", zombie.getValue() != -1);
     }
-
 
     @Test
     public void deploysBrokenExplodedDomainAfterStartup() throws Exception
@@ -1544,7 +1532,6 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         assertTrue("Invalid lastModified value for file URL.", zombie.getValue() != -1);
     }
 
-
     @Test
     public void testDeployDomainNameWithZipSuffix() throws Exception
     {
@@ -1561,7 +1548,6 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         // Checks that the empty-app.zip folder is not processed as a zip file
         assertNoDeploymentInvoked(domainDeploymentListener);
     }
-
 
     @Test
     public void tracksDomainConfigUpdateTime() throws Exception
@@ -1595,23 +1581,22 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         assertMuleContextConfigured(domainDeploymentListener, "http-shared-domain");
     }
 
-    /*
     @Test
-    public void undeploysStoppedApp() throws Exception
+    public void undeploysStoppedDomain() throws Exception
     {
         addPackedDomainFromResource("/dummy-domain.zip");
 
         deploymentService.start();
 
         assertDeploymentSuccess(domainDeploymentListener, "dummy-domain");
-        final Application app = findApp("dummy-domain", 1);
-        app.stop();
+        final Domain domain = findADomain("dummy-domain", 1);
+        domain.stop();
 
-        deploymentService.undeploy(app);
+        deploymentService.undeploy(domain);
     }
 
     @Test
-    public void undeploysApplicationRemovingAnchorFile() throws Exception
+    public void undeploysDomainRemovingAnchorFile() throws Exception
     {
         addPackedDomainFromResource("/dummy-domain.zip");
 
@@ -1619,25 +1604,25 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
 
         assertDeploymentSuccess(domainDeploymentListener, "dummy-domain");
 
-        assertTrue("Unable to remove anchor file", removeAnchorFile("dummy-domain"));
+        assertTrue("Unable to remove anchor file", removeDomainAnchorFile("dummy-domain"));
 
         assertUndeploymentSuccess(domainDeploymentListener, "dummy-domain");
     }
 
     @Test
-    public void undeploysAppCompletelyEvenOnStoppingException() throws Exception
+    public void undeploysDomainCompletelyEvenOnStoppingException() throws Exception
     {
         addPackedDomainFromResource("/empty-domain.zip");
 
-        TestApplicationFactory appFactory = new TestApplicationFactory(new MuleApplicationClassLoaderFactory(new MuleDomainClassLoaderFactory()));
-        appFactory.setFailOnStopApplication(true);
+        TestDomainFactory testDomainFactory = new TestDomainFactory(new MuleDomainClassLoaderFactory());
+        testDomainFactory.setFailOnStopApplication();
 
-        deploymentService.setAppFactory(appFactory);
+        deploymentService.setDomainFactory(testDomainFactory);
         deploymentService.start();
 
         assertDeploymentSuccess(domainDeploymentListener, "empty-domain");
 
-        assertTrue("Unable to remove anchor file", removeAnchorFile("empty-domain"));
+        assertTrue("Unable to remove anchor file", removeDomainAnchorFile("empty-domain"));
 
         assertUndeploymentSuccess(domainDeploymentListener, "empty-domain");
 
@@ -1645,18 +1630,18 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
     }
 
     @Test
-    public void undeploysAppCompletelyEvenOnDisposingException() throws Exception
+    public void undeploysDomainCompletelyEvenOnDisposingException() throws Exception
     {
         addPackedDomainFromResource("/empty-domain.zip");
 
-        TestApplicationFactory appFactory = new TestApplicationFactory(new MuleApplicationClassLoaderFactory(new MuleDomainClassLoaderFactory()));
-        appFactory.setFailOnDisposeApplication(true);
-        deploymentService.setAppFactory(appFactory);
+        TestDomainFactory testDomainFactory = new TestDomainFactory(new MuleDomainClassLoaderFactory());
+        testDomainFactory.setFailOnDisposeApplication();
+        deploymentService.setDomainFactory(testDomainFactory);
         deploymentService.start();
 
         assertDeploymentSuccess(domainDeploymentListener, "empty-domain");
 
-        assertTrue("Unable to remove anchor file", removeAnchorFile("empty-domain"));
+        assertTrue("Unable to remove anchor file", removeDomainAnchorFile("empty-domain"));
 
         assertUndeploymentSuccess(domainDeploymentListener, "empty-domain");
 
@@ -1664,7 +1649,7 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
     }
 
     @Test
-    public void deploysIncompleteZipAppOnStartup() throws Exception
+    public void deploysIncompleteZipDomainOnStartup() throws Exception
     {
         addPackedDomainFromResource("/incompleteDomain.zip");
 
@@ -1678,13 +1663,13 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         assertDeploymentSuccess(domainDeploymentListener, "dummy-domain");
 
         // Check that the failed application folder is still there
-        assertAppFolderIsMaintained("incompleteDomain");
-        final Map.Entry<URL, Long> zombie = deploymentService.getArtifactsZombieMap().entrySet().iterator().next();
+        assertDomainFolderIsMaintained("incompleteDomain");
+        final Map.Entry<URL, Long> zombie = deploymentService.getDomainsZombieMap().entrySet().iterator().next();
         assertEquals("Wrong URL tagged as zombie.", "incompleteDomain", new File(zombie.getKey().getFile()).getParentFile().getName());
     }
 
     @Test
-    public void deploysIncompleteZipAppAfterStartup() throws Exception
+    public void deploysIncompleteZipDomainAfterStartup() throws Exception
     {
         deploymentService.start();
 
@@ -1698,8 +1683,8 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         assertDeploymentSuccess(domainDeploymentListener, "dummy-domain");
 
         // Check that the failed application folder is still there
-        assertAppFolderIsMaintained("incompleteDomain");
-        final Map.Entry<URL, Long> zombie = deploymentService.getArtifactsZombieMap().entrySet().iterator().next();
+        assertDomainFolderIsMaintained("incompleteDomain");
+        final Map.Entry<URL, Long> zombie = deploymentService.getDomainsZombieMap().entrySet().iterator().next();
         assertEquals("Wrong URL tagged as zombie.", "incompleteDomain", new File(zombie.getKey().getFile()).getParentFile().getName());
     }
 
@@ -1732,7 +1717,7 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
     //}
 
     @Test
-    public void mantainsAppFolderOnExplodedAppDeploymentError() throws Exception
+    public void mantainsDomainFolderOnExplodedAppDeploymentError() throws Exception
     {
         deploymentService.start();
 
@@ -1746,13 +1731,13 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         assertDeploymentSuccess(domainDeploymentListener, "dummy-domain");
 
         // Check that the failed application folder is still there
-        assertAppFolderIsMaintained("incompleteDomain");
-        final Map.Entry<URL, Long> zombie = deploymentService.getArtifactsZombieMap().entrySet().iterator().next();
+        assertDomainFolderIsMaintained("incompleteDomain");
+        final Map.Entry<URL, Long> zombie = deploymentService.getDomainsZombieMap().entrySet().iterator().next();
         assertEquals("Wrong URL tagged as zombie.", "incompleteDomain", new File(zombie.getKey().getFile()).getParentFile().getName());
     }
 
     @Test
-    public void redeploysZipAppAfterDeploymentErrorOnStartup() throws Exception
+    public void redeploysZipDomainAfterDeploymentErrorOnStartup() throws Exception
     {
         addPackedDomainFromResource("/incompleteDomain.zip");
 
@@ -1769,11 +1754,11 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         addPackedDomainFromResource("/empty-domain.zip", "incompleteDomain.zip");
         assertDeploymentSuccess(domainDeploymentListener, "incompleteDomain");
 
-        assertEquals("Failed app still appears as zombie after a successful redeploy", 0, deploymentService.getArtifactsZombieMap().size());
+        assertEquals("Failed domain still appears as zombie after a successful redeploy", 0, deploymentService.getDomainsZombieMap().size());
     }
 
     @Test
-    public void redeploysZipAppAfterDeploymentErrorAfterStartup() throws Exception
+    public void redeploysZipDomainAfterDeploymentErrorAfterStartup() throws Exception
     {
         deploymentService.start();
 
@@ -1790,12 +1775,11 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         addPackedDomainFromResource("/empty-domain.zip", "incompleteDomain.zip");
         assertDeploymentSuccess(domainDeploymentListener, "incompleteDomain");
 
-        assertEquals("Failed app still appears as zombie after a successful redeploy", 0, deploymentService.getArtifactsZombieMap().size());
+        assertEquals("Failed domain still appears as zombie after a successful redeploy", 0, deploymentService.getDomainsZombieMap().size());
     }
 
-
     @Test
-    public void redeploysInvalidZipAppAfterSuccessfulDeploymentOnStartup() throws IOException
+    public void redeploysInvalidZipDomainAfterSuccessfulDeploymentOnStartup() throws IOException
     {
         addPackedDomainFromResource("/empty-domain.zip");
 
@@ -1807,12 +1791,12 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
 
         assertDeploymentFailure(domainDeploymentListener, "empty-domain");
 
-        final Map.Entry<URL, Long> zombie = deploymentService.getArtifactsZombieMap().entrySet().iterator().next();
+        final Map.Entry<URL, Long> zombie = deploymentService.getDomainsZombieMap().entrySet().iterator().next();
         assertEquals("Wrong URL tagged as zombie.", "empty-domain", new File(zombie.getKey().getFile()).getParentFile().getName());
     }
 
     @Test
-    public void redeploysInvalidZipAppAfterSuccessfulDeploymentAfterStartup() throws IOException
+    public void redeploysInvalidZipDomainAfterSuccessfulDeploymentAfterStartup() throws IOException
     {
         deploymentService.start();
 
@@ -1822,12 +1806,12 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         addPackedDomainFromResource("/incompleteDomain.zip", "empty-domain.zip");
         assertDeploymentFailure(domainDeploymentListener, "empty-domain");
 
-        final Map.Entry<URL, Long> zombie = deploymentService.getArtifactsZombieMap().entrySet().iterator().next();
+        final Map.Entry<URL, Long> zombie = deploymentService.getDomainsZombieMap().entrySet().iterator().next();
         assertEquals("Wrong URL tagged as zombie.", "empty-domain", new File(zombie.getKey().getFile()).getParentFile().getName());
     }
 
     @Test
-    public void redeploysInvalidZipAppAfterFailedDeploymentOnStartup() throws IOException
+    public void redeploysInvalidZipDomainAfterFailedDeploymentOnStartup() throws IOException
     {
         addPackedDomainFromResource("/incompleteDomain.zip");
 
@@ -1841,12 +1825,12 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
 
         assertDeploymentFailure(domainDeploymentListener, "incompleteDomain");
 
-        final Map.Entry<URL, Long> zombie = deploymentService.getArtifactsZombieMap().entrySet().iterator().next();
+        final Map.Entry<URL, Long> zombie = deploymentService.getDomainsZombieMap().entrySet().iterator().next();
         assertEquals("Wrong URL tagged as zombie.", "incompleteDomain", new File(zombie.getKey().getFile()).getParentFile().getName());
     }
 
     @Test
-    public void redeploysInvalidZipAppAfterFailedDeploymentAfterStartup() throws IOException
+    public void redeploysInvalidZipDomainAfterFailedDeploymentAfterStartup() throws IOException
     {
         deploymentService.start();
 
@@ -1858,12 +1842,12 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         addPackedDomainFromResource("/incompleteDomain.zip");
         assertDeploymentFailure(domainDeploymentListener, "incompleteDomain");
 
-        final Map.Entry<URL, Long> zombie = deploymentService.getArtifactsZombieMap().entrySet().iterator().next();
+        final Map.Entry<URL, Long> zombie = deploymentService.getDomainsZombieMap().entrySet().iterator().next();
         assertEquals("Wrong URL tagged as zombie.", "incompleteDomain", new File(zombie.getKey().getFile()).getParentFile().getName());
     }
 
     @Test
-    public void redeploysExplodedAppAfterDeploymentError() throws Exception
+    public void redeploysExplodedDomainAfterDeploymentError() throws Exception
     {
         deploymentService.start();
 
@@ -1880,8 +1864,8 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
         addExplodedDomainFromResource("/empty-domain.zip", "incompleteDomain");
 
         assertDeploymentSuccess(domainDeploymentListener, "incompleteDomain");
-        assertEquals("Failed app still appears as zombie after a successful redeploy", 0, deploymentService.getArtifactsZombieMap().size());
-    }*/
+        assertEquals("Failed domain still appears as zombie after a successful redeploy", 0, deploymentService.getDomainsZombieMap().size());
+    }
 
     public void doBrokenAppArchiveTest() throws Exception
     {
@@ -2351,11 +2335,30 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
      * @param appName name of application to undeploy
      * @return true if anchor file was deleted, false otherwise
      */
-    private boolean removeAnchorFile(String appName)
+    private boolean removeAppAnchorFile(String appName)
     {
         String anchorFileName = appName + MuleDeploymentService.ARTIFACT_ANCHOR_SUFFIX;
         File anchorFile = new File(appsDir, anchorFileName);
+        return anchorFile.delete();
+    }
 
+    /**
+     * Removes a given domain anchor file in order to start application undeployment
+     *
+     * @param domainName name of application to undeploy
+     * @return true if anchor file was deleted, false otherwise
+     */
+    private boolean removeDomainAnchorFile(String domainName)
+    {
+        String anchorFileName = domainName + MuleDeploymentService.ARTIFACT_ANCHOR_SUFFIX;
+        File anchorFile = new File(domainsDir, anchorFileName);
+        return anchorFile.delete();
+    }
+
+    private boolean removeAnchorFile(String artifactName, File artifactDir)
+    {
+        String anchorFileName = artifactName + MuleDeploymentService.ARTIFACT_ANCHOR_SUFFIX;
+        File anchorFile = new File(artifactDir, anchorFileName);
         return anchorFile.delete();
     }
 
@@ -2368,8 +2371,18 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
 
     private void assertAppFolderIsMaintained(String appName)
     {
+        assetArtifactFolderIsMaintained(appName, appsDir);
+    }
+
+    private void assertDomainFolderIsMaintained(String domainName)
+    {
+        assetArtifactFolderIsMaintained(domainName, domainsDir);
+    }
+
+    private void assetArtifactFolderIsMaintained(String artifactName, File artifactDir)
+    {
         Prober prober = new PollingProber(DEPLOYMENT_TIMEOUT, 100);
-        File appFolder = new File(appsDir, appName);
+        File appFolder = new File(artifactDir, artifactName);
         prober.check(new FileExists(appFolder));
     }
 }
