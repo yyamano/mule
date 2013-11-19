@@ -34,18 +34,6 @@ public class CompositeDeploymentListener implements DeploymentListener, Deployme
     }
 
     @Override
-    public void addDomainDeploymentListener(DeploymentListener listener)
-    {
-        deploymentListeners.add(listener);
-    }
-
-    @Override
-    public void removeDomainDeploymentListener(DeploymentListener listener)
-    {
-        deploymentListeners.remove(listener);
-    }
-
-    @Override
     public void onDeploymentStart(String artifactName)
     {
         for (DeploymentListener listener : deploymentListeners)

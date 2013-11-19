@@ -11,9 +11,6 @@ import org.mule.module.launcher.artifact.Artifact;
 import java.io.IOException;
 import java.net.URL;
 
-/**
- *
- */
 public interface MuleDeployer<T extends Artifact>
 {
 
@@ -23,9 +20,9 @@ public interface MuleDeployer<T extends Artifact>
 
     /**
      * Installs packaged Mule apps from $MULE_HOME/apps directory.
-     * @param packedMuleAppFileName filename of the packed Mule app (only name + ext)
+     * @param packedArtifactName filename of the packed Mule app (only name + ext)
      */
-    T installFromDir(String packedMuleAppFileName) throws IOException;
+    T installFromDir(String packedArtifactName) throws IOException;
 
 
     T installFrom(URL url) throws IOException;

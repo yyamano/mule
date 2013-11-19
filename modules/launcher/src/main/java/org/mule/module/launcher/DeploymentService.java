@@ -17,7 +17,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  *  Manages deploy of mule applications
  */
-public interface DeploymentService extends DeploymentListenerManager
+public interface DeploymentService extends DeploymentListenerManager, DomainDeploymentListenerManager
 {
 
     /**
@@ -34,8 +34,15 @@ public interface DeploymentService extends DeploymentListenerManager
      */
     List<Application> getApplications();
 
+    /**
+     * @param domainName name of the domain
+     * @return the domain with the name domainName, null if there is no domain with domainName
+     */
     Domain findDomain(String domainName);
 
+    /**
+     * @return list of domains deployed in mule.
+     */
     List<Domain> getDomains();
 
     void addStartupListener(StartupListener listener);

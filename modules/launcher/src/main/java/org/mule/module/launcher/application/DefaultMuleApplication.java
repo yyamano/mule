@@ -54,14 +54,15 @@ public class DefaultMuleApplication implements Application
     protected static final int DEFAULT_RELOAD_CHECK_INTERVAL_MS = 3000;
     protected transient final Log logger = LogFactory.getLog(getClass());
     protected transient final Log deployLogger = LogFactory.getLog(MuleDeploymentService.class);
-    private Domain domain;
+
+    protected final ApplicationDescriptor descriptor;
+    protected final ApplicationClassLoaderFactory applicationClassLoaderFactory;
 
     protected ScheduledExecutorService watchTimer;
-
     protected MuleContext muleContext;
     protected ClassLoader deploymentClassLoader;
-    protected ApplicationDescriptor descriptor;
-    protected ApplicationClassLoaderFactory applicationClassLoaderFactory;
+    private Domain domain;
+
 
     protected String[] absoluteResourcePaths;
 

@@ -61,11 +61,11 @@ public class DefaultApplicationFactory implements ApplicationFactory
         DefaultMuleApplication delegate;
         if (descriptor.getDomain() == null || "".equals(descriptor.getDomain().trim()))
         {
-            delegate = new DefaultMuleApplication(descriptor, applicationClassLoaderFactory);
+            delegate = new DefaultMuleApplication(descriptor, applicationClassLoaderFactory, domainFactory.createDefaultDomain());
         }
         else
         {
-            delegate = new DefaultMuleApplication(descriptor, applicationClassLoaderFactory, domainFactory.createAppDomain(descriptor.getDomain()));
+            delegate = new DefaultMuleApplication(descriptor, applicationClassLoaderFactory, domainFactory.createArtifact(descriptor.getDomain()));
         }
 
         if (deploymentListener != null)

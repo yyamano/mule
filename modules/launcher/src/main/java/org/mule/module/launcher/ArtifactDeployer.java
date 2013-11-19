@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
+ * The software in this package is published under the terms of the CPAL v1.0
+ * license, a copy of which has been included with this distribution in the
+ * LICENSE.txt file.
+ */
 package org.mule.module.launcher;
 
 import static org.mule.util.SplashScreen.miniSplash;
@@ -40,12 +46,12 @@ public class ArtifactDeployer<T extends Artifact>
     private Map<String, ZombieFile> artifactZombieMap = new HashMap<String, ZombieFile>();
     private File artifactDir;
     private ObservableList<T> artifacts;
-    private CompositeDeploymentListener deploymentListener;
+    private DeploymentListener deploymentListener;
     private ReentrantLock deploymentInProgressLcok;
     protected MuleDeployer<T> deployer;
     protected ArtifactFactory<T> artifactFactory;
 
-    public ArtifactDeployer(CompositeDeploymentListener deploymentListener, MuleDeployer deployer, ArtifactFactory artifactFactory, ObservableList<T> artifacts, ReentrantLock lock)
+    public ArtifactDeployer(DeploymentListener deploymentListener, MuleDeployer deployer, ArtifactFactory artifactFactory, ObservableList<T> artifacts, ReentrantLock lock)
     {
         this.deploymentListener = deploymentListener;
         this.deployer = deployer;

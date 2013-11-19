@@ -34,13 +34,14 @@ public class DefaultMuleDomain implements Domain
     protected transient final Log deployLogger = LogFactory.getLog(MuleDeploymentService.class);
 
     private final DomainClassLoaderFactory domainClassLoaderFactory;
+    private final String domain;
+    private final String domainConfigFileLocation = "mule-domain-config.xml";
     private MuleContext muleContext;
     private DeploymentListener deploymentListener;
-    private String domain;
     private Object context;
-    private boolean domainSuccessfullyDeployed;
     private ClassLoader deploymentClassLoader;
-    private String domainConfigFileLocation = "mule-domain-config.xml";
+    private boolean domainSuccessfullyDeployed;
+
     private File configResourceFile;
 
     public DefaultMuleDomain(DomainClassLoaderFactory domainClassLoaderFactory, String domain)

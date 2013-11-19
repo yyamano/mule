@@ -112,10 +112,10 @@ public class DefaultMuleDeployer<T extends Artifact> implements MuleDeployer
         }
     }
 
-    public T installFromDir(String packagedMuleArtifactName) throws IOException
+    public T installFromDir(String packedArtifactName) throws IOException
     {
         final File artifactsDir = artifactFactory.getArtifactDir();
-        File artifactFile = new File(artifactsDir, packagedMuleArtifactName);
+        File artifactFile = new File(artifactsDir, packedArtifactName);
 
         // basic security measure: outside artifacts dir use installFrom(url) and go through any
         // restrictions applied to it

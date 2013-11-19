@@ -72,21 +72,20 @@ public class MuleDeploymentService implements DeploymentService
 
     protected transient final Log logger = LogFactory.getLog(getClass());
     // fair lock
-    private ReentrantLock deploymentInProgressLock = new DebuggableReentrantLock(true);
+    private final ReentrantLock deploymentInProgressLock = new DebuggableReentrantLock(true);
 
-    private ObservableList<Application> applications = new ObservableList<Application>();
-    private ObservableList<Domain> domains = new ObservableList<Domain>();
+    private final ObservableList<Application> applications = new ObservableList<Application>();
+    private final ObservableList<Domain> domains = new ObservableList<Domain>();
     private final ApplicationTimestampListener applicationTimestampListener;
     private final File appsDir = MuleContainerBootstrapUtils.getMuleAppsDir();
     private final File domainsDir = MuleContainerBootstrapUtils.getMuleDomainsDir();
 
-    private List<StartupListener> startupListeners = new ArrayList<StartupListener>();
+    private final List<StartupListener> startupListeners = new ArrayList<StartupListener>();
 
-    private CompositeDeploymentListener deploymentListener = new CompositeDeploymentListener();
-    private CompositeDeploymentListener domainDeploymentListener = new CompositeDeploymentListener();
-    private ArtifactDeployer<Application> applicationDeployer;
-    private ArtifactDeployer<Domain> domainDeployer;
-    private DomainFactory domainFactory;
+    private final CompositeDeploymentListener applicationDeploymentListener = new CompositeDeploymentListener();
+    private final CompositeDeploymentListener domainDeploymentListener = new CompositeDeploymentListener();
+    private final ArtifactDeployer<Application> applicationDeployer;
+    private final ArtifactDeployer<Domain> domainDeployer;
 
     public MuleDeploymentService(PluginClassLoaderManager pluginClassLoaderManager)
     {
@@ -98,7 +97,7 @@ public class MuleDeploymentService implements DeploymentService
         DefaultDomainFactory domainFactory = new DefaultDomainFactory(domainClassLoaderFactory);
         domainFactory.setDeploymentListener(domainDeploymentListener);
         DefaultApplicationFactory applicationFactory = new DefaultApplicationFactory(applicationClassLoaderFactory, domainFactory);
-        applicationFactory.setDeploymentListener(deploymentListener);
+        applicationFactory.setDeploymentListener(applicationDeploymentListener);
 
         DefaultMuleDeployer<Application> applicationMuleDeployer = new DefaultMuleDeployer<Application>();
         applicationMuleDeployer.setArtifactFactory(applicationFactory);
@@ -108,7 +107,7 @@ public class MuleDeploymentService implements DeploymentService
 
         this.applicationTimestampListener = new ApplicationTimestampListener(applications);
 
-        this.applicationDeployer = new ArtifactDeployer(deploymentListener, applicationMuleDeployer, applicationFactory, applications, deploymentInProgressLock);
+        this.applicationDeployer = new ArtifactDeployer(applicationDeploymentListener, applicationMuleDeployer, applicationFactory, applications, deploymentInProgressLock);
         this.domainDeployer = new ArtifactDeployer(domainDeploymentListener, domainMuleDeployer, domainFactory, domains, deploymentInProgressLock);
     }
 
@@ -350,13 +349,18 @@ public class MuleDeploymentService implements DeploymentService
 
     public Domain findDomain(String domainName)
     {
-        return (Domain) CollectionUtils.find(domains, new BeanPropertyValueEqualsPredicate(ARTIFACT_NAME_PROPERTY, domainName));
+        return findArtifact(domainName, domains);
     }
 
     @Override
     public Application findApplication(String appName)
     {
-        return (Application) CollectionUtils.find(applications, new BeanPropertyValueEqualsPredicate(ARTIFACT_NAME_PROPERTY, appName));
+        return findArtifact(appName, applications);
+    }
+
+    private <T extends Artifact> T findArtifact(String artifactName, ObservableList<T> artifacts)
+    {
+        return (T) CollectionUtils.find(artifacts, new BeanPropertyValueEqualsPredicate(ARTIFACT_NAME_PROPERTY, artifactName));
     }
 
     @Override
@@ -447,13 +451,13 @@ public class MuleDeploymentService implements DeploymentService
     @Override
     public void addDeploymentListener(DeploymentListener listener)
     {
-        deploymentListener.addDeploymentListener(listener);
+        applicationDeploymentListener.addDeploymentListener(listener);
     }
 
     @Override
     public void removeDeploymentListener(DeploymentListener listener)
     {
-        deploymentListener.removeDeploymentListener(listener);
+        applicationDeploymentListener.removeDeploymentListener(listener);
     }
 
     @Override
@@ -649,58 +653,18 @@ public class MuleDeploymentService implements DeploymentService
 
         private void undeployRemovedDomains()
         {
-            // we care only about removed anchors
-            String[] currentAnchors = MuleDeploymentService.this.domainsDir.list(new SuffixFileFilter(ARTIFACT_ANCHOR_SUFFIX));
-            if (logger.isDebugEnabled())
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.append(String.format("Current anchors:%n"));
-                for (String currentAnchor : currentAnchors)
-                {
-                    sb.append(String.format("  %s%n", currentAnchor));
-                }
-                logger.debug(sb.toString());
-            }
-
-            String[] domainAnchors = findExpectedAnchorFiles(domains);
-            @SuppressWarnings("unchecked")
-            final Collection<String> deletedAnchors = CollectionUtils.subtract(Arrays.asList(domainAnchors), Arrays.asList(currentAnchors));
-            if (logger.isDebugEnabled())
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.append(String.format("Deleted anchors:%n"));
-                for (String deletedAnchor : deletedAnchors)
-                {
-                    sb.append(String.format("  %s%n", deletedAnchor));
-                }
-                logger.debug(sb.toString());
-            }
-
-            for (String deletedAnchor : deletedAnchors)
-            {
-                String domainName = StringUtils.removeEnd(deletedAnchor, ARTIFACT_ANCHOR_SUFFIX);
-                try
-                {
-                    if (findDomain(domainName) != null)
-                    {
-                        undeployDomain(domainName);
-                    }
-                    else if (logger.isDebugEnabled())
-                    {
-                        logger.debug(String.format("Domain [%s] has already been undeployed via API", domainName));
-                    }
-                }
-                catch (Throwable t)
-                {
-                    logger.error("Failed to undeploy domains: " + domainName, t);
-                }
-            }
+            undeployRemovedArtifacts(domainsDir, domains, domainDeployer);
         }
 
         private void undeployRemovedApps()
         {
+            undeployRemovedArtifacts(appsDir, applications, applicationDeployer);
+        }
+
+        private void undeployRemovedArtifacts(File artifactDir, ObservableList<? extends Artifact> artifacts, ArtifactDeployer<? extends Artifact> artifactDeployer)
+        {
             // we care only about removed anchors
-            String[] currentAnchors = appsDir.list(new SuffixFileFilter(ARTIFACT_ANCHOR_SUFFIX));
+            String[] currentAnchors = artifactDir.list(new SuffixFileFilter(ARTIFACT_ANCHOR_SUFFIX));
             if (logger.isDebugEnabled())
             {
                 StringBuilder sb = new StringBuilder();
@@ -712,9 +676,9 @@ public class MuleDeploymentService implements DeploymentService
                 logger.debug(sb.toString());
             }
 
-            String[] appAnchors = findExpectedAnchorFiles(applications);
+            String[] artifactAnchors = findExpectedAnchorFiles(artifacts);
             @SuppressWarnings("unchecked")
-            final Collection<String> deletedAnchors = CollectionUtils.subtract(Arrays.asList(appAnchors), Arrays.asList(currentAnchors));
+            final Collection<String> deletedAnchors = CollectionUtils.subtract(Arrays.asList(artifactAnchors), Arrays.asList(currentAnchors));
             if (logger.isDebugEnabled())
             {
                 StringBuilder sb = new StringBuilder();
@@ -728,21 +692,21 @@ public class MuleDeploymentService implements DeploymentService
 
             for (String deletedAnchor : deletedAnchors)
             {
-                String appName = StringUtils.removeEnd(deletedAnchor, ARTIFACT_ANCHOR_SUFFIX);
+                String artifactName = StringUtils.removeEnd(deletedAnchor, ARTIFACT_ANCHOR_SUFFIX);
                 try
                 {
-                    if (findApplication(appName) != null)
+                    if (findArtifact(artifactName, artifacts) != null)
                     {
-                        undeploy(appName);
+                        artifactDeployer.undeploy(artifactName);
                     }
                     else if (logger.isDebugEnabled())
                     {
-                        logger.debug(String.format("Application [%s] has already been undeployed via API", appName));
+                        logger.debug(String.format("Artifact [%s] has already been undeployed via API", artifactName));
                     }
                 }
                 catch (Throwable t)
                 {
-                    logger.error("Failed to undeploy application: " + appName, t);
+                    logger.error("Failed to undeploy artifact: " + artifactName, t);
                 }
             }
         }

@@ -26,7 +26,9 @@ public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader
 
     protected transient Log logger = LogFactory.getLog(getClass());
 
-    private String domain = "undefined";
+    private final String domain;
+    private File domainDir;
+    private File domainLibraryFolder;
 
     @SuppressWarnings("unchecked")
     public MuleSharedDomainClassLoader(String domain, ClassLoader parent)
@@ -34,15 +36,19 @@ public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader
         super(new URL[0], parent);
         try
         {
+            if (domain == null)
+            {
+                throw new IllegalArgumentException("Domain name cannot be null");
+            }
             this.domain = domain;
 
-            File domainLibraries = validateAndGetDomainLibraryFolder();
+            validateAndGetDomainFolders();
 
-            addURL(domainLibraries.getParentFile().toURI().toURL());
+            addURL(domainLibraryFolder.getParentFile().toURI().toURL());
 
-            if (domainLibraries.exists())
+            if (domainLibraryFolder.exists())
             {
-                Collection<File> jars = FileUtils.listFiles(domainLibraries, new String[] {"jar"}, false);
+                Collection<File> jars = FileUtils.listFiles(domainLibraryFolder, new String[] {"jar"}, false);
 
                 if (logger.isDebugEnabled())
                 {
@@ -93,7 +99,7 @@ public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader
         URL resource = super.findResource(name);
         if (resource == null)
         {
-            File file = new File(MuleContainerBootstrapUtils.getMuleHome(), "lib/shared/" + domain + File.separator + name);
+            File file = new File(domainDir + File.separator + name);
             if (file.exists())
             {
                 try
@@ -109,45 +115,34 @@ public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader
         return resource;
     }
 
-    private File validateAndGetDomainLibraryFolder() throws Exception
+    private void validateAndGetDomainFolders() throws Exception
     {
+        File oldDomainDir = new File(MuleContainerBootstrapUtils.getMuleHome(), "lib/shared/" + domain);
+        if (oldDomainDir.exists())
+        {
+            if (!oldDomainDir.canRead())
+            {
+                throw new IllegalArgumentException(
+                        String.format("Shared ClassLoader Domain '%s' is not accessible", domain));
+            }
+            domainLibraryFolder = oldDomainDir;
+            domainDir = oldDomainDir;
+            return;
+        }
+
         File newDomainDir = new File(MuleContainerBootstrapUtils.getMuleDomainsDir() + File.separator + domain);
-        Exception newDomainValidationException = null;
         if (!newDomainDir.exists())
         {
-            newDomainValidationException = new IllegalArgumentException(
+            throw new IllegalArgumentException(
                     String.format("Shared ClassLoader Domain '%s' doesn't exist", domain));
         }
 
         if (!newDomainDir.canRead())
         {
-            newDomainValidationException = new IllegalArgumentException(
+            throw new IllegalArgumentException(
                     String.format("Shared ClassLoader Domain '%s' is not accessible", domain));
         }
-
-        File oldDomainDir = new File(MuleContainerBootstrapUtils.getMuleHome(), "lib/shared/" + domain);
-        Exception oldDomainValidationException = null;
-        if (newDomainValidationException != null)
-        {
-            //fallback to old domain directory
-            if (!oldDomainDir.exists())
-            {
-                oldDomainValidationException = new IllegalArgumentException(
-                        String.format("Shared ClassLoader Domain '%s' doesn't exist", domain));
-            }
-
-            if (!oldDomainDir.canRead())
-            {
-                oldDomainValidationException = new IllegalArgumentException(
-                        String.format("Shared ClassLoader Domain '%s' is not accessible", domain));
-            }
-        }
-
-        if (newDomainValidationException != null && oldDomainValidationException != null)
-        {
-            throw newDomainValidationException;
-        }
-
-        return (newDomainValidationException == null ? new File(newDomainDir,"lib") : oldDomainDir);
+        domainDir = newDomainDir;
+        domainLibraryFolder = new File(newDomainDir, "lib");
     }
 }

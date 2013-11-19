@@ -17,12 +17,6 @@ public class TestDomainFactory extends DefaultDomainFactory
     }
 
     @Override
-    public Domain createAppDomain(String appName) throws IOException
-    {
-        return null;
-    }
-
-    @Override
     public Domain createArtifact(String artifactName) throws IOException
     {
         TestDomainWrapper testDomainWrapper = new TestDomainWrapper(super.createArtifact(artifactName));

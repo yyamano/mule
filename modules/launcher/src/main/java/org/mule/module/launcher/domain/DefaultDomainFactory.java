@@ -6,11 +6,7 @@
  */
 package org.mule.module.launcher.domain;
 
-import org.mule.api.MuleRuntimeException;
-import org.mule.context.ApplicationDomainContextBuilder;
-import org.mule.context.MuleApplicationDomain;
 import org.mule.module.launcher.DeploymentListener;
-import org.mule.module.launcher.MuleSharedDomainClassLoader;
 import org.mule.module.reboot.MuleContainerBootstrapUtils;
 
 import java.io.File;
@@ -18,11 +14,11 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- *
- */
 public class DefaultDomainFactory implements DomainFactory
 {
+
+    public static final String DEFAULT_DOMAIN_NAME = "default";
+
     private final DomainClassLoaderFactory domainClassLoaderFactory;
 
     private Map<String, Domain> domains = new HashMap<String, Domain>();
@@ -39,52 +35,25 @@ public class DefaultDomainFactory implements DomainFactory
     }
 
     @Override
-    public Domain createAppDomain(String domainName) throws IOException
+    public Domain createDefaultDomain() throws IOException
     {
-        //TODO validate null pointer
-        return domains.get(domainName);
+        return createArtifact(DEFAULT_DOMAIN_NAME);
     }
-    //
-    //@Override
-    //public List<Domain> createAllDomains()
-    //{
-    //    File domainFolder = MuleContainerBootstrapUtils.getMuleDomainsDir();
-    //    Map<String, ClassLoader> domainClassLoader = new HashMap<String, ClassLoader>();
-    //    FileFilter onlyDirectoriesFilter = new FileFilter()
-    //    {
-    //        @Override
-    //        public boolean accept(File file)
-    //        {
-    //            return file.isDirectory();
-    //        }
-    //    };
-    //    File[] domainFolders = domainFolder.listFiles(onlyDirectoriesFilter);
-    //    if (domainFolder != null && domainFolders.length > 0)
-    //    {
-    //        for (File domainDir : domainFolders)
-    //        {
-    //            domainClassLoader.put(domainDir.getName(),new MuleSharedDomainClassLoader(domainDir.getName(),getClass().getClassLoader()));
-    //        }
-    //
-    //        for (String domain : domainClassLoader.keySet())
-    //        {
-    //            DefaultMuleDomainFactory defaultMuleDomainFactory = new DefaultMuleDomainFactory();
-    //            MuleApplicationDomain muleDomain = defaultMuleDomainFactory.createMuleDomain(domain, domainClassLoader.get(domain));
-    //            domains.put(domain, (Domain) muleDomain);
-    //        }
-    //    }
-    //    return (List<Domain>) Collections.unmodifiableCollection(domains.values());
-    //}
 
     @Override
     public Domain createArtifact(String artifactName) throws IOException
     {
+        if (domains.containsKey(artifactName))
+        {
+            return domains.get(artifactName);
+        }
         if (artifactName.contains(" "))
         {
             throw new IllegalArgumentException("Mule application name may not contain spaces: " + artifactName);
         }
         DefaultMuleDomain defaultMuleDomain = new DefaultMuleDomain(domainClassLoaderFactory, artifactName);
         defaultMuleDomain.setDeploymentListener(deploymentListener);
+        domains.put(artifactName, new DomainWrapper(defaultMuleDomain, this));
         return defaultMuleDomain;
     }
 
@@ -93,4 +62,10 @@ public class DefaultDomainFactory implements DomainFactory
     {
         return MuleContainerBootstrapUtils.getMuleDomainsDir();
     }
+
+    public void dispose(Domain domain)
+    {
+        domains.remove(domain);
+    }
+
 }
