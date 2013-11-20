@@ -1,8 +1,15 @@
+/*
+ * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
+ * The software in this package is published under the terms of the CPAL v1.0
+ * license, a copy of which has been included with this distribution in the
+ * LICENSE.txt file.
+ */
 package org.mule.module.launcher.domain;
 
 import org.mule.api.MuleContext;
 import org.mule.module.launcher.DeploymentStartException;
 import org.mule.module.launcher.InstallException;
+import org.mule.module.launcher.artifact.ArtifactClassLoader;
 
 import java.io.File;
 
@@ -91,6 +98,12 @@ public class TestDomainWrapper implements Domain
     public File[] getConfigResourcesFile()
     {
         return delegate.getConfigResourcesFile();
+    }
+
+    @Override
+    public ArtifactClassLoader getArtifactClassLoader()
+    {
+        return delegate.getArtifactClassLoader();
     }
 
     public void setFailOnStop()

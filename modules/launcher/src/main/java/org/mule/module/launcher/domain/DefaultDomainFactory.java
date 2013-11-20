@@ -51,8 +51,9 @@ public class DefaultDomainFactory implements DomainFactory
         }
         DefaultMuleDomain defaultMuleDomain = new DefaultMuleDomain(domainClassLoaderFactory, artifactName);
         defaultMuleDomain.setDeploymentListener(deploymentListener);
-        domains.put(artifactName, new DomainWrapper(defaultMuleDomain, this));
-        return defaultMuleDomain;
+        DomainWrapper domainWrapper = new DomainWrapper(defaultMuleDomain, this);
+        domains.put(artifactName, domainWrapper);
+        return domainWrapper;
     }
 
     @Override

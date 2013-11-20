@@ -21,7 +21,6 @@ import org.mule.config.i18n.CoreMessages;
 import org.mule.config.i18n.MessageFactory;
 import org.mule.context.DefaultMuleContextFactory;
 import org.mule.module.launcher.AbstractFileWatcher;
-import org.mule.module.launcher.ApplicationMuleContextBuilder;
 import org.mule.module.launcher.ConfigChangeMonitorThreadFactory;
 import org.mule.module.launcher.DeploymentInitException;
 import org.mule.module.launcher.DeploymentListener;
@@ -29,6 +28,7 @@ import org.mule.module.launcher.DeploymentStartException;
 import org.mule.module.launcher.DeploymentStopException;
 import org.mule.module.launcher.InstallException;
 import org.mule.module.launcher.MuleDeploymentService;
+import org.mule.module.launcher.artifact.ArtifactClassLoader;
 import org.mule.module.launcher.artifact.MuleContextDeploymentListener;
 import org.mule.module.launcher.descriptor.ApplicationDescriptor;
 import org.mule.module.launcher.domain.Domain;
@@ -60,9 +60,8 @@ public class DefaultMuleApplication implements Application
 
     protected ScheduledExecutorService watchTimer;
     protected MuleContext muleContext;
-    protected ClassLoader deploymentClassLoader;
+    protected ArtifactClassLoader deploymentClassLoader;
     private Domain domain;
-
 
     protected String[] absoluteResourcePaths;
 
@@ -193,7 +192,8 @@ public class DefaultMuleApplication implements Application
                 {
                     muleContextFactory.addListener(new MuleContextDeploymentListener(getArtifactName(), deploymentListener));
                 }
-                this.muleContext = muleContextFactory.createMuleContext(builders, new ApplicationMuleContextBuilder(descriptor));
+                ApplicationMuleContextBuilder applicationContextBuilder = new ApplicationMuleContextBuilder(descriptor);
+                this.muleContext = muleContextFactory.createMuleContext(builders, applicationContextBuilder);
             }
         }
         catch (Exception e)
@@ -282,7 +282,7 @@ public class DefaultMuleApplication implements Application
     @Override
     public ClassLoader getDeploymentClassLoader()
     {
-        return this.deploymentClassLoader;
+        return this.deploymentClassLoader.getClassLoader();
     }
 
     @Override
@@ -389,6 +389,12 @@ public class DefaultMuleApplication implements Application
     public File[] getConfigResourcesFile()
     {
         return configResourcesFile;
+    }
+
+    @Override
+    public ArtifactClassLoader getArtifactClassLoader()
+    {
+        return deploymentClassLoader;
     }
 
     @Override

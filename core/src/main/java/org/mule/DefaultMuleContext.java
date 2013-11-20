@@ -143,6 +143,10 @@ public class DefaultMuleContext implements MuleContext
 
     private ProcessingTimeWatcher processingTimeWatcher;
 
+    /**
+     * @deprecated Use full constructor instead.
+     */
+    @Deprecated
     public DefaultMuleContext(MuleConfiguration config,
                               WorkManager workManager,
                               WorkListener workListener,
@@ -164,6 +168,31 @@ public class DefaultMuleContext implements MuleContext
         localMuleClient = new DefaultLocalMuleClient(this);
         exceptionListener = new DefaultSystemExceptionStrategy(this);
         configurationAnnotations = new HashMap<QName, Set<Object>>();
+    }
+
+    public DefaultMuleContext(MuleConfiguration config,
+                              WorkManager workManager,
+                              WorkListener workListener,
+                              MuleContextLifecycleManager lifecycleManager,
+                              ServerNotificationManager notificationManager,
+                              DefaultRegistryBroker registryBroker,
+                              MuleRegistry muleRegistry,
+                              ExpressionManager expressionManager,
+                              SystemExceptionHandler systemExceptionHandler,
+                              LocalMuleClient localMuleClient)
+    {
+        this.config = config;
+        this.workManager = workManager;
+        this.workListener = workListener;
+        this.lifecycleManager = lifecycleManager;
+        this.notificationManager = notificationManager;
+        this.notificationManager.setMuleContext(this);
+        this.expressionManager = expressionManager;
+        this.registryBroker = registryBroker;
+        this.muleRegistryHelper = muleRegistry;
+        this.localMuleClient = localMuleClient;
+        this.exceptionListener = systemExceptionHandler;
+        this.configurationAnnotations = new HashMap<QName, Set<Object>>();
     }
 
     protected DefaultRegistryBroker createRegistryBroker()

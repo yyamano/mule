@@ -6,6 +6,7 @@
  */
 package org.mule.module.launcher;
 
+import org.mule.api.MuleContext;
 import org.mule.module.launcher.artifact.ArtifactClassLoader;
 import org.mule.module.reboot.MuleContainerBootstrapUtils;
 import org.mule.util.FileUtils;
@@ -30,6 +31,7 @@ public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader implemen
     private final String domain;
     private File domainDir;
     private File domainLibraryFolder;
+    private MuleContext muleContext;
 
     @SuppressWarnings("unchecked")
     public MuleSharedDomainClassLoader(String domain, ClassLoader parent)
@@ -115,6 +117,17 @@ public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader implemen
             }
         }
         return resource;
+    }
+
+    @Override
+    public MuleContext getMuleContext()
+    {
+        return muleContext;
+    }
+
+    public void setMuleContext(MuleContext muleContext)
+    {
+        this.muleContext = muleContext;
     }
 
     @Override

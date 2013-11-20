@@ -1,60 +1,43 @@
+/*
+ * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
+ * The software in this package is published under the terms of the CPAL v1.0
+ * license, a copy of which has been included with this distribution in the
+ * LICENSE.txt file.
+ */
 package org.mule.module.launcher.domain;
 
 import org.mule.api.MuleContext;
 import org.mule.module.launcher.DeploymentStartException;
 import org.mule.module.launcher.InstallException;
+import org.mule.module.launcher.artifact.ArtifactWrapper;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Domain wrapper used to notify domain factory that a domain has been disposed.
  */
-public class DomainWrapper implements Domain
+public class DomainWrapper extends ArtifactWrapper<Domain> implements Domain
 {
 
     private final DefaultDomainFactory domainFactory;
-    private final Domain delegate;
 
-    protected DomainWrapper(final Domain delegate, final DefaultDomainFactory domainFactory)
+    protected DomainWrapper(final Domain delegate, final DefaultDomainFactory domainFactory) throws IOException
     {
-        this.delegate = delegate;
+        super(delegate);
         this.domainFactory = domainFactory;
     }
 
     @Override
     public boolean containsSharedResources()
     {
-        return delegate.containsSharedResources();
+        return getDelegate().containsSharedResources();
     }
 
     @Override
     public MuleContext getMuleContext()
     {
-        return delegate.getMuleContext();
-    }
-
-    @Override
-    public void install() throws InstallException
-    {
-        delegate.install();
-    }
-
-    @Override
-    public void init()
-    {
-        delegate.init();
-    }
-
-    @Override
-    public void start() throws DeploymentStartException
-    {
-        delegate.start();
-    }
-
-    @Override
-    public void stop()
-    {
-        delegate.stop();
+        return getDelegate().getMuleContext();
     }
 
     @Override
@@ -62,29 +45,12 @@ public class DomainWrapper implements Domain
     {
         try
         {
-            delegate.dispose();
+            getDelegate().dispose();
         }
         finally
         {
-            domainFactory.dispose(delegate);
+            domainFactory.dispose(getDelegate());
         }
     }
 
-    @Override
-    public void redeploy()
-    {
-        delegate.redeploy();
-    }
-
-    @Override
-    public String getArtifactName()
-    {
-        return delegate.getArtifactName();
-    }
-
-    @Override
-    public File[] getConfigResourcesFile()
-    {
-        return delegate.getConfigResourcesFile();
-    }
 }

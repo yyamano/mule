@@ -6,6 +6,7 @@
  */
 package org.mule.module.launcher;
 
+import org.mule.api.MuleContext;
 import org.mule.api.config.MuleProperties;
 import org.mule.module.launcher.application.ApplicationClassLoader;
 import org.mule.util.FileUtils;
@@ -56,6 +57,7 @@ public class MuleApplicationClassLoader extends FineGrainedControlClassLoader im
     private String appName;
 
     private String libraryPath;
+    private MuleContext muleContext;
 
     public MuleApplicationClassLoader(String appName, ClassLoader parentCl)
     {
@@ -180,6 +182,12 @@ public class MuleApplicationClassLoader extends FineGrainedControlClassLoader im
     }
 
     @Override
+    public void setMuleContext(MuleContext muleContext)
+    {
+        this.muleContext = muleContext;
+    }
+
+    @Override
     public String toString()
     {
         return String.format("%s[%s]@%s", getClass().getName(),
@@ -191,6 +199,12 @@ public class MuleApplicationClassLoader extends FineGrainedControlClassLoader im
     public String getArtifactName()
     {
         return getAppName();
+    }
+
+    @Override
+    public MuleContext getMuleContext()
+    {
+        return muleContext;
     }
 
     @Override

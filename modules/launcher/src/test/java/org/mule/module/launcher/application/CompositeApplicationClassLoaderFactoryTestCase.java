@@ -35,10 +35,10 @@ public class CompositeApplicationClassLoaderFactoryTestCase extends AbstractMule
     public void createsDefaultApplicationClassLoaderWhenNoPluginInstalled() throws Exception
     {
         ClassLoader expectedClassLoader = Thread.currentThread().getContextClassLoader();
-        when(applicationClassLoaderFactory.create(appDescriptor)).thenReturn(expectedClassLoader);
+        when(applicationClassLoaderFactory.create(appDescriptor).getClassLoader()).thenReturn(expectedClassLoader);
         when(pluginClassLoaderManager.getPluginClassLoaders()).thenReturn(Collections.EMPTY_LIST);
 
-        ClassLoader appClassLoader = pluginAwareClassLaoderFactory.create(appDescriptor);
+        ClassLoader appClassLoader = pluginAwareClassLaoderFactory.create(appDescriptor).getClassLoader();
 
         assertThat(appClassLoader, equalTo(expectedClassLoader));
     }
@@ -47,14 +47,14 @@ public class CompositeApplicationClassLoaderFactoryTestCase extends AbstractMule
     public void createsCompositeWhenPluginsInstalled() throws Exception
     {
         TestClassLoader appClassLoader = new TestClassLoader();
-        when(applicationClassLoaderFactory.create(appDescriptor)).thenReturn(appClassLoader);
+        when(applicationClassLoaderFactory.create(appDescriptor).getClassLoader()).thenReturn(appClassLoader);
 
         TestClassLoader pluginClassLoader = new TestClassLoader();
         List<ClassLoader> pluginClassLoaders = new LinkedList<ClassLoader>();
         pluginClassLoaders.add(pluginClassLoader);
         when(pluginClassLoaderManager.getPluginClassLoaders()).thenReturn(pluginClassLoaders);
 
-        ClassLoader createdClassLoader = pluginAwareClassLaoderFactory.create(appDescriptor);
+        ClassLoader createdClassLoader = pluginAwareClassLaoderFactory.create(appDescriptor).getClassLoader();
 
         createdClassLoader.getResource("foo");
         assertThat(appClassLoader.loadedResource, equalTo(true));

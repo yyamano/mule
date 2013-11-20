@@ -6,6 +6,8 @@
  */
 package org.mule.module.launcher.application;
 
+import org.mule.api.MuleContext;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +35,7 @@ public class CompositeApplicationClassLoader extends ClassLoader implements Appl
 
     private final List<ClassLoader> classLoaders;
     private final String appName;
+    private MuleContext muleContext;
 
     public CompositeApplicationClassLoader(String appName, List<ClassLoader> classLoaders)
     {
@@ -242,6 +245,18 @@ public class CompositeApplicationClassLoader extends ClassLoader implements Appl
         }
 
         return null;
+    }
+
+    @Override
+    public MuleContext getMuleContext()
+    {
+        return muleContext;
+    }
+
+    @Override
+    public void setMuleContext(MuleContext muleContext)
+    {
+        this.muleContext = muleContext;
     }
 
     @Override

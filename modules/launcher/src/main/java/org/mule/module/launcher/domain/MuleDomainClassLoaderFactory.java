@@ -8,15 +8,16 @@ package org.mule.module.launcher.domain;
 
 import org.mule.module.launcher.DefaultMuleSharedDomainClassLoader;
 import org.mule.module.launcher.MuleSharedDomainClassLoader;
+import org.mule.module.launcher.artifact.ArtifactClassLoader;
 import org.mule.util.StringUtils;
 
 public class MuleDomainClassLoaderFactory implements DomainClassLoaderFactory
 {
 
     @Override
-    public ClassLoader create(String domain)
+    public ArtifactClassLoader create(String domain)
     {
-        ClassLoader classLoader;
+        ArtifactClassLoader classLoader;
         if (StringUtils.isBlank(domain) || DomainFactory.DEFAULT_DOMAIN_NAME.equals(domain))
         {
             classLoader = new DefaultMuleSharedDomainClassLoader(getClass().getClassLoader());

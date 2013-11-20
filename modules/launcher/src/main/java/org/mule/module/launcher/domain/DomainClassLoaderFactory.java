@@ -6,9 +6,11 @@
  */
 package org.mule.module.launcher.domain;
 
+import org.mule.module.launcher.artifact.ArtifactClassLoader;
+
 public interface DomainClassLoaderFactory
 {
 
-    ClassLoader create(String domain);
+    ArtifactClassLoader create(String domain);
 
 }

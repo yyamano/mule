@@ -1,5 +1,12 @@
+/*
+ * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
+ * The software in this package is published under the terms of the CPAL v1.0
+ * license, a copy of which has been included with this distribution in the
+ * LICENSE.txt file.
+ */
 package org.mule.module.launcher.domain;
 
+import org.mule.api.MuleContext;
 import org.mule.api.config.MuleConfiguration;
 import org.mule.api.context.notification.ClusterNodeNotificationListener;
 import org.mule.api.context.notification.ConnectionNotificationListener;
@@ -9,7 +16,6 @@ import org.mule.api.context.notification.ManagementNotificationListener;
 import org.mule.api.context.notification.MuleContextNotificationListener;
 import org.mule.api.context.notification.SecurityNotificationListener;
 import org.mule.config.DefaultMuleConfiguration;
-import org.mule.context.DefaultMuleContextBuilder;
 import org.mule.context.notification.ClusterNodeNotification;
 import org.mule.context.notification.ConnectionNotification;
 import org.mule.context.notification.CustomNotification;
@@ -18,14 +24,23 @@ import org.mule.context.notification.ManagementNotification;
 import org.mule.context.notification.MuleContextNotification;
 import org.mule.context.notification.SecurityNotification;
 import org.mule.context.notification.ServerNotificationManager;
+import org.mule.module.launcher.MuleSharedDomainClassLoader;
+import org.mule.module.launcher.application.MuleContextDelegateWrapper;
+import org.mule.module.launcher.artifact.ArtifactMuleContextBuilder;
 
-public class DomainMuleContextBuilder extends DefaultMuleContextBuilder
+public class DomainMuleContextBuilder extends ArtifactMuleContextBuilder
 {
     private final String domainId;
 
     public DomainMuleContextBuilder(String domainId)
     {
         this.domainId = domainId;
+    }
+
+    @Override
+    protected void configureClassLoaderMuleContext(MuleContext muleContext)
+    {
+        ((MuleSharedDomainClassLoader)Thread.currentThread().getContextClassLoader()).setMuleContext(muleContext);
     }
 
     @Override

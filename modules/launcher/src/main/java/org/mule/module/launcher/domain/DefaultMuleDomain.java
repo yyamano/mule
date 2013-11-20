@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
+ * The software in this package is published under the terms of the CPAL v1.0
+ * license, a copy of which has been included with this distribution in the
+ * LICENSE.txt file.
+ */
 package org.mule.module.launcher.domain;
 
 import static org.mule.util.SplashScreen.miniSplash;
@@ -15,7 +21,10 @@ import org.mule.module.launcher.DeploymentListener;
 import org.mule.module.launcher.DeploymentStartException;
 import org.mule.module.launcher.DeploymentStopException;
 import org.mule.module.launcher.MuleDeploymentService;
+import org.mule.module.launcher.MuleSharedDomainClassLoader;
+import org.mule.module.launcher.application.MuleContextDelegateWrapper;
 import org.mule.module.launcher.application.NullDeploymentListener;
+import org.mule.module.launcher.artifact.ArtifactClassLoader;
 import org.mule.module.launcher.artifact.MuleContextDeploymentListener;
 import org.mule.util.ClassUtils;
 import org.mule.util.ExceptionUtils;
@@ -38,7 +47,7 @@ public class DefaultMuleDomain implements Domain
     private final String domainConfigFileLocation = "mule-domain-config.xml";
     private MuleContext muleContext;
     private DeploymentListener deploymentListener;
-    private ClassLoader deploymentClassLoader;
+    private ArtifactClassLoader deploymentClassLoader;
 
     private File configResourceFile;
 
@@ -87,12 +96,12 @@ public class DefaultMuleDomain implements Domain
         ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
         try
         {
-            URL resource = deploymentClassLoader.getResource(this.domainConfigFileLocation);
+            URL resource = deploymentClassLoader.getClassLoader().getResource(this.domainConfigFileLocation);
             if (resource != null)
             {
                 this.configResourceFile = new File(resource.getFile());
 
-                Thread.currentThread().setContextClassLoader(deploymentClassLoader);
+                Thread.currentThread().setContextClassLoader(deploymentClassLoader.getClassLoader());
                 ConfigurationBuilder cfgBuilder = createConfigurationBuilder();
                 if (!cfgBuilder.isConfigured())
                 {
@@ -108,7 +117,9 @@ public class DefaultMuleDomain implements Domain
                     {
                         muleContextFactory.addListener(new MuleContextDeploymentListener(getArtifactName(), deploymentListener));
                     }
-                    this.muleContext = muleContextFactory.createMuleContext(builders, new DomainMuleContextBuilder(domain));
+                    DomainMuleContextBuilder domainMuleContextBuilder = new DomainMuleContextBuilder(domain);
+                    muleContextFactory.createMuleContext(builders, domainMuleContextBuilder);
+                    this.muleContext = domainMuleContextBuilder.getMuleRealContext();
                 }
             }
         }
@@ -141,7 +152,7 @@ public class DefaultMuleDomain implements Domain
         try
         {
             return (ConfigurationBuilder) ClassUtils.instanciateClass("org.mule.config.spring.SpringXmlDomainConfigurationBuilder",
-                                                                      new Object[] {getConfigResourcesFile()[0].getName()}, deploymentClassLoader);
+                                                                      new Object[] {getConfigResourcesFile()[0].getName()}, deploymentClassLoader.getClassLoader());
         }
         catch (Exception e)
         {
@@ -231,6 +242,12 @@ public class DefaultMuleDomain implements Domain
     public File[] getConfigResourcesFile()
     {
         return new File[]{configResourceFile};
+    }
+
+    @Override
+    public ArtifactClassLoader getArtifactClassLoader()
+    {
+        return deploymentClassLoader;
     }
 
     public void initialise()
