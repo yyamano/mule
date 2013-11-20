@@ -264,12 +264,6 @@ public class DefaultMuleContext implements MuleContext
     {
         getLifecycleManager().checkPhase(Startable.PHASE_NAME);
 
-
-        //TODO PLG review if this check is really necessary
-        //if (getSecurityManager() == null)
-        //{
-        //    throw new MuleRuntimeException(CoreMessages.objectIsNull("securityManager"));
-        //}
         if (getQueueManager() == null)
         {
             throw new MuleRuntimeException(CoreMessages.objectIsNull("queueManager"));
@@ -496,7 +490,7 @@ public class DefaultMuleContext implements MuleContext
      */
     public SecurityManager getSecurityManager()
     {
-        SecurityManager securityManager = (SecurityManager) registryBroker.lookupObject(MuleProperties.OBJECT_SECURITY_MANAGER);
+        SecurityManager securityManager = registryBroker.lookupObject(MuleProperties.OBJECT_SECURITY_MANAGER);
         if (securityManager == null)
         {
             Collection temp = registryBroker.lookupObjects(SecurityManager.class);
@@ -504,6 +498,10 @@ public class DefaultMuleContext implements MuleContext
             {
                 securityManager = ((SecurityManager) temp.iterator().next());
             }
+        }
+        if (securityManager == null)
+        {
+            throw new MuleRuntimeException(CoreMessages.objectIsNull("securityManager"));
         }
         return securityManager;
     }

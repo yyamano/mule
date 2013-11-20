@@ -54,11 +54,11 @@ public class ArtifactWrapper<T extends Artifact> implements Artifact
         final ClassLoader originalCl = Thread.currentThread().getContextClassLoader();
         try
         {
-            ClassLoader appCl = getArtifactClassLoader().getClassLoader();
+            ClassLoader artifactCl = getArtifactClassLoader().getClassLoader();
             // if not initialized yet, it can be null
-            if (appCl != null)
+            if (artifactCl != null)
             {
-                Thread.currentThread().setContextClassLoader(appCl);
+                Thread.currentThread().setContextClassLoader(artifactCl);
             }
             delegate.init();
         }

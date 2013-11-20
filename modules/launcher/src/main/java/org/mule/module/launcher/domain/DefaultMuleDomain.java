@@ -93,7 +93,6 @@ public class DefaultMuleDomain implements Domain
             logger.info(miniSplash(String.format("Initializing domain '%s'", getArtifactName())));
         }
 
-        ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
         try
         {
             URL resource = deploymentClassLoader.getClassLoader().getResource(this.domainConfigFileLocation);
@@ -101,7 +100,6 @@ public class DefaultMuleDomain implements Domain
             {
                 this.configResourceFile = new File(resource.getFile());
 
-                Thread.currentThread().setContextClassLoader(deploymentClassLoader.getClassLoader());
                 ConfigurationBuilder cfgBuilder = createConfigurationBuilder();
                 if (!cfgBuilder.isConfigured())
                 {
@@ -128,10 +126,6 @@ public class DefaultMuleDomain implements Domain
             // log it here so it ends up in app log, sys log will only log a message without stacktrace
             logger.error(null, ExceptionUtils.getRootCause(e));
             throw new DeploymentInitException(CoreMessages.createStaticMessage(ExceptionUtils.getRootCauseMessage(e)), e);
-        }
-        finally
-        {
-            Thread.currentThread().setContextClassLoader(originalClassLoader);
         }
     }
 
@@ -165,35 +159,29 @@ public class DefaultMuleDomain implements Domain
     {
         try
         {
-            if (logger.isInfoEnabled())
-            {
-                logger.info(miniSplash(String.format("Starting domain '%s'", getArtifactName())));
-            }
-
             if (this.muleContext != null)
             {
                 try
                 {
                     this.muleContext.start();
-
-                    // null CCL ensures we log at 'system' level
-                    // TODO create a more usable wrapper for any logger to be logged at sys level
-                    final ClassLoader oldCl = Thread.currentThread().getContextClassLoader();
-                    try
-                    {
-                        Thread.currentThread().setContextClassLoader(null);
-                        deployLogger.info(miniSplash(String.format("Started domain '%s'", getArtifactName())));
-                    }
-                    finally
-                    {
-                        Thread.currentThread().setContextClassLoader(oldCl);
-                    }
                 }
                 catch (MuleException e)
                 {
                     logger.error(null, ExceptionUtils.getRootCause(e));
                     throw new DeploymentStartException(CoreMessages.createStaticMessage(ExceptionUtils.getRootCauseMessage(e)), e);
                 }
+            }
+            // null CCL ensures we log at 'system' level
+            // TODO create a more usable wrapper for any logger to be logged at sys level
+            final ClassLoader oldCl = Thread.currentThread().getContextClassLoader();
+            try
+            {
+                Thread.currentThread().setContextClassLoader(null);
+                deployLogger.info(miniSplash(String.format("Started domain '%s'", getArtifactName())));
+            }
+            finally
+            {
+                Thread.currentThread().setContextClassLoader(oldCl);
             }
         }
         catch (Exception e)
@@ -207,6 +195,10 @@ public class DefaultMuleDomain implements Domain
     {
         try
         {
+            if (logger.isInfoEnabled())
+            {
+                logger.info(miniSplash(String.format("Stopping domain '%s'", getArtifactName())));
+            }
             if (this.muleContext != null)
             {
                 this.muleContext.stop();
@@ -221,6 +213,10 @@ public class DefaultMuleDomain implements Domain
     @Override
     public void dispose()
     {
+        if (logger.isInfoEnabled())
+        {
+            logger.info(miniSplash(String.format("Disposing domain '%s'", getArtifactName())));
+        }
         if (this.muleContext != null)
         {
             this.muleContext.dispose();
