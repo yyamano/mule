@@ -19,9 +19,6 @@ import org.mule.context.notification.MuleContextNotification;
 import org.mule.context.notification.SecurityNotification;
 import org.mule.context.notification.ServerNotificationManager;
 
-/**
- *
- */
 public class DomainMuleContextBuilder extends DefaultMuleContextBuilder
 {
     private final String domainId;

@@ -11,7 +11,9 @@ import org.mule.api.config.ConfigurationBuilder;
 import org.mule.api.context.MuleContextBuilder;
 import org.mule.api.context.MuleContextFactory;
 import org.mule.config.DefaultMuleConfiguration;
+import org.mule.config.builders.DefaultsConfigurationBuilder;
 import org.mule.config.spring.SpringXmlConfigurationBuilder;
+import org.mule.config.spring.SpringXmlDomainConfigurationBuilder;
 import org.mule.context.DefaultMuleContextBuilder;
 import org.mule.context.DefaultMuleContextFactory;
 import org.mule.tck.junit4.AbstractMuleContextTestCase;
@@ -20,7 +22,9 @@ import org.mule.tck.probe.Probe;
 import org.mule.util.ClassUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Before;
@@ -28,8 +32,9 @@ import org.junit.Before;
 public abstract class DomainFunctionalTestCase extends org.mule.tck.junit4.AbstractMuleTestCase
 {
 
-    private List<MuleContext> muleContexts = new ArrayList<MuleContext>();
+    private Map<String,MuleContext> muleContexts = new HashMap<String, MuleContext>();
     private List<MuleContext> disposedContexts = new ArrayList<MuleContext>();
+    private MuleContext domainContext;
 
     protected abstract String getDomainConfig();
 
@@ -50,40 +55,39 @@ public abstract class DomainFunctionalTestCase extends org.mule.tck.junit4.Abstr
         }
     }
 
-    protected ConfigurationBuilder getBuilder(String configResource) throws Exception
+    protected ConfigurationBuilder getDomainBuilder(String configResource) throws Exception
     {
-        SpringXmlConfigurationBuilder springXmlConfigurationBuilder = new SpringXmlConfigurationBuilder(configResource);
-        //springXmlConfigurationBuilder.setDomainContext(domain.getMuleContext());
-        return springXmlConfigurationBuilder;
+        return new SpringXmlDomainConfigurationBuilder(configResource);
     }
 
     @Before
     public void setUpMuleContexts() throws Exception
     {
-        createDomain();
-        String[] configResources = getConfigResources();
-
-        for (String configResource : configResources)
+        createDomainContext();
+        ApplicationConfig[] applicationConfigs = getConfigResources();
+        for (ApplicationConfig applicationConfig : applicationConfigs)
         {
-            MuleContext muleContext = createMuleContext(configResource);
+            MuleContext muleContext = createAppMuleContext(applicationConfig.applicationResources);
             muleContext.start();
-            muleContexts.add(muleContext);
+            muleContexts.put(applicationConfig.applicationName, muleContext);
         }
     }
 
-    private void createDomain()
+    private void createDomainContext() throws Exception
     {
-        //DefaultMuleDomainFactory defaultMuleDomainFactory = new DefaultMuleDomainFactory();
-        //MuleDomainContextBuilder applicationDomainContextBuilder = new MuleDomainContextBuilder();
-        //defaultMuleDomainFactory.setApplicationDomainContextBuilder(applicationDomainContextBuilder);
-        //applicationDomainContextBuilder.setDomainConfigFileLocation(getDomainConfig());
-        //domain = defaultMuleDomainFactory.createMuleDomain("domain", getClass().getClassLoader());
+        List<ConfigurationBuilder> builders = new ArrayList<ConfigurationBuilder>(3);
+        ConfigurationBuilder cfgBuilder = getDomainBuilder(getDomainConfig());
+        builders.add(new DefaultsConfigurationBuilder());
+        builders.add(cfgBuilder);
+        DefaultMuleContextFactory muleContextFactory = new DefaultMuleContextFactory();
+        domainContext = muleContextFactory.createMuleContext(builders, new DefaultMuleContextBuilder());
+        domainContext.start();
     }
 
     @After
     public void disposeMuleContexts()
     {
-        for (MuleContext muleContext : muleContexts)
+        for (MuleContext muleContext : muleContexts.values())
         {
             try
             {
@@ -97,7 +101,7 @@ public abstract class DomainFunctionalTestCase extends org.mule.tck.junit4.Abstr
         muleContexts.clear();
     }
 
-    protected MuleContext createMuleContext(String configResource) throws Exception
+    protected MuleContext createAppMuleContext(String[] configResource) throws Exception
     {
         // Should we set up the manager for every method?
         MuleContext context;
@@ -110,16 +114,18 @@ public abstract class DomainFunctionalTestCase extends org.mule.tck.junit4.Abstr
             builders.add((ConfigurationBuilder) ClassUtils.instanciateClass(AbstractMuleContextTestCase.CLASSNAME_ANNOTATIONS_CONFIG_BUILDER,
                                                                             ClassUtils.NO_ARGS, getClass()));
         }
-        builders.add(getBuilder(configResource));
+        builders.add(getAppBuilder(configResource));
         DefaultMuleContextBuilder contextBuilder = new DefaultMuleContextBuilder();
         configureMuleContext(contextBuilder);
         context = muleContextFactory.createMuleContext(builders, contextBuilder);
-        //context.getRegistry().unregisterAgent(JmxAgent.NAME);
-        if (!isGracefulShutdown())
-        {
-            ((DefaultMuleConfiguration) context.getConfiguration()).setShutdownTimeout(0);
-        }
         return context;
+    }
+
+    protected ConfigurationBuilder getAppBuilder(String[] configResource) throws Exception
+    {
+        SpringXmlConfigurationBuilder springXmlConfigurationBuilder = new SpringXmlConfigurationBuilder(configResource);
+        springXmlConfigurationBuilder.setDomainContext(domainContext);
+        return springXmlConfigurationBuilder;
     }
 
     /**
@@ -131,51 +137,23 @@ public abstract class DomainFunctionalTestCase extends org.mule.tck.junit4.Abstr
         contextBuilder.setWorkListener(new TestingWorkListener());
     }
 
-    protected void waitUntilThereIsPrimaryPollingNode()
+    public abstract ApplicationConfig[] getConfigResources();
+
+    public MuleContext getMuleContextForApp(String applicationName)
     {
-        PollingProber pollingProber = new PollingProber(5000, 500);
-        pollingProber.check(new Probe()
+        return muleContexts.get(applicationName);
+    }
+
+    public class ApplicationConfig
+    {
+        String applicationName;
+        String[] applicationResources;
+
+        public ApplicationConfig(String applicationName, String[] applicationResources)
         {
-            @Override
-            public boolean isSatisfied()
-            {
-                for (MuleContext muleContext : muleContexts)
-                {
-                    if (muleContext.isStarted() && muleContext.isPrimaryPollingInstance())
-                    {
-                        return true;
-                    }
-                }
-                return false;
-            }
-
-            @Override
-            public String describeFailure()
-            {
-                return "no node became primary";
-            }
-        });
-    }
-
-    /**
-     * Determines if the test case should perform graceful shutdown or not.
-     * Default is false so that tests run more quickly.
-     */
-    protected boolean isGracefulShutdown()
-    {
-        return false;
-    }
-
-    public int getNumberOfNodes()
-    {
-        return 2;
-    }
-
-    public abstract String[] getConfigResources();
-
-    public MuleContext getMuleContext(int i)
-    {
-        return muleContexts.get(i);
+            this.applicationName = applicationName;
+            this.applicationResources = applicationResources;
+        }
     }
 
 }

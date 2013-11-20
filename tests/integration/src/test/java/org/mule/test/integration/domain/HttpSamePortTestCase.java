@@ -28,6 +28,8 @@ import org.junit.Test;
 public class HttpSamePortTestCase extends DomainFunctionalTestCase
 {
 
+    public static final String HELLO_WORLD_SERVICE_APP = "helloWorldServiceApp";
+    public static final String HELLO_MULE_SERVICE_APP = "helloMuleServiceApp";
     @Rule
     public DynamicPort dynamicPort = new DynamicPort("port1");
 
@@ -38,19 +40,19 @@ public class HttpSamePortTestCase extends DomainFunctionalTestCase
     }
 
     @Override
-    public String[] getConfigResources()
+    public ApplicationConfig[] getConfigResources()
     {
-        return new String[] {
-                "domain/http-hello-world-service-app.xml", "domain/http-hello-mule-service-app.xml"
+        return new ApplicationConfig[] { new ApplicationConfig(HELLO_WORLD_SERVICE_APP, new String[]{"domain/http-hello-world-service-app.xml"}),
+                new ApplicationConfig(HELLO_MULE_SERVICE_APP, new String[]{"domain/http-hello-mule-service-app.xml"})
         };
     }
 
     @Test
     public void bothServicesBindCorrectly() throws Exception
     {
-        MuleMessage helloWorldServiceResponse = getMuleContext(0).getClient().send(String.format("http://localhost:%d/service/helloWorld", dynamicPort.getNumber()), "test-data", null);
+        MuleMessage helloWorldServiceResponse = getMuleContextForApp(HELLO_WORLD_SERVICE_APP).getClient().send(String.format("http://localhost:%d/service/helloWorld", dynamicPort.getNumber()), "test-data", null);
         assertThat(helloWorldServiceResponse.getPayloadAsString(), is("hello world"));
-        MuleMessage helloMuleServiceResponse = getMuleContext(0).getClient().send(String.format("http://localhost:%d/service/helloMule", dynamicPort.getNumber()), "test-data", null);
+        MuleMessage helloMuleServiceResponse = getMuleContextForApp(HELLO_MULE_SERVICE_APP).getClient().send(String.format("http://localhost:%d/service/helloMule", dynamicPort.getNumber()), "test-data", null);
         assertThat(helloMuleServiceResponse.getPayloadAsString(), is("hello mule"));
     }
 
