@@ -65,7 +65,7 @@ public class ArtifactAwareRepositorySelector implements RepositorySelector
             try
             {
                 ConfigWatchDog configWatchDog = null;
-                if (ccl instanceof ApplicationClassLoader)
+                if (ccl instanceof ArtifactClassLoader)
                 {
                     String logFileNamePatter;
                     if (ccl instanceof ApplicationClassLoader)
