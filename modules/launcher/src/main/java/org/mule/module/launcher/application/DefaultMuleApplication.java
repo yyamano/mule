@@ -282,6 +282,10 @@ public class DefaultMuleApplication implements Application
     @Override
     public ClassLoader getDeploymentClassLoader()
     {
+        if (this.deploymentClassLoader == null)
+        {
+            return null;
+        }
         return this.deploymentClassLoader.getClassLoader();
     }
 
