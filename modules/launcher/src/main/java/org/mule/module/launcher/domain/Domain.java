@@ -9,11 +9,23 @@ package org.mule.module.launcher.domain;
 import org.mule.api.MuleContext;
 import org.mule.module.launcher.artifact.Artifact;
 
+/**
+ * A domain is a deployable Artifact that contains shared resources for {@link org.mule.module.launcher.application.Application}
+ *
+ * A domain can just consist of a set of jar libraries to share between the domain applications or it can also contain shared
+ * resources such as connectors or other mule components.
+ */
 public interface Domain extends Artifact
 {
 
+    /**
+     * @return true if this domain has shared mule components, false if it doesn't
+     */
     boolean containsSharedResources();
 
+    /**
+     * @return the MuleContext created with the domain resources. It can return null if it doesn't contains shared resources
+     */
     MuleContext getMuleContext();
 
 }

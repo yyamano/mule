@@ -8,7 +8,7 @@ package org.mule.config.spring;
 
 import org.mule.api.MuleContext;
 import org.mule.api.config.ConfigurationException;
-import org.mule.api.config.DomainAwareConfigurationBuilder;
+import org.mule.api.config.DomainMuleContextAwareConfigurationBuilder;
 import org.mule.api.lifecycle.LifecycleManager;
 import org.mule.api.lifecycle.Startable;
 import org.mule.api.registry.Registry;
@@ -23,7 +23,7 @@ import org.springframework.context.ConfigurableApplicationContext;
  * Spring XML Configuration file used with Mule name-spaces. Multiple configuration
  * files can be loaded from this builder (specified as a comma-separated list).
  */
-public class SpringXmlConfigurationBuilder extends AbstractResourceConfigurationBuilder implements DomainAwareConfigurationBuilder
+public class SpringXmlConfigurationBuilder extends AbstractResourceConfigurationBuilder implements DomainMuleContextAwareConfigurationBuilder
 {
     public static final String MULE_DEFAULTS_CONFIG = "default-mule-config.xml";
     public static final String MULE_SPRING_CONFIG = "mule-spring-config.xml";
@@ -100,7 +100,7 @@ public class SpringXmlConfigurationBuilder extends AbstractResourceConfiguration
     protected ApplicationContext createApplicationContext(MuleContext muleContext,
                                                           ConfigResource[] configResources) throws Exception
     {
-        return new MuleApplicationContext(muleContext, configResources);
+        return new MuleArtifactContext(muleContext, configResources);
     }
 
     protected void createSpringRegistry(MuleContext muleContext, ApplicationContext applicationContext)

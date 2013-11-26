@@ -1945,8 +1945,6 @@ public abstract class AbstractConnector implements Connector, WorkListener
 
     protected ScheduledExecutorService createScheduler()
     {
-        // Use connector's classloader so that other temporary classloaders
-        // aren't used when things are started lazily or from elsewhere.
         ThreadFactory threadFactory = new NamedThreadFactory(this.getName() + ".scheduler");
         ScheduledThreadPoolExecutor newExecutor = new ScheduledThreadPoolExecutor(4, threadFactory);
         newExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);

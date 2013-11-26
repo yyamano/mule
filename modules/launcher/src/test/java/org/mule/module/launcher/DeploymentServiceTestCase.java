@@ -126,7 +126,8 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
 
         // just assert no privileged entries were put in the registry
         final Application app = findApp("dummy-app", 1);
-        final MuleRegistry registry = app.getMuleContext().getRegistry();
+
+        final MuleRegistry registry = getMuleRegistry(app);
 
         // mule-app.properties from the zip archive must have loaded properly
         assertEquals("mule-app.properties should have been loaded.", "someValue", registry.get("myCustomProp"));
@@ -144,7 +145,7 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
 
         // just assert no privileged entries were put in the registry
         final Application app = findApp("dummy-app", 1);
-        final MuleRegistry registry = app.getMuleContext().getRegistry();
+        final MuleRegistry registry = getMuleRegistry(app);
 
         // mule-app.properties from the zip archive must have loaded properly
         assertEquals("mule-app.properties should have been loaded.", "someValue", registry.get("myCustomProp"));
@@ -1157,7 +1158,7 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
     }
 
     @Test
-    public void deploysPackagedDomianOnStartupWhenExplodedAppIsAlsoPresent() throws Exception
+    public void deploysPackagedDomainOnStartupWhenExplodedAppIsAlsoPresent() throws Exception
     {
         addExplodedDomainFromResource("/dummy-domain.zip");
         addPackedDomainFromResource("/dummy-domain.zip");
@@ -2057,6 +2058,20 @@ public class DeploymentServiceTestCase extends AbstractMuleContextTestCase
                 return "Failed to undeploy application: " + appName;
             }
         });
+    }
+
+    private MuleRegistry getMuleRegistry(Application app)
+    {
+        final ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
+        try
+        {
+            Thread.currentThread().setContextClassLoader(app.getDeploymentClassLoader());
+            return app.getMuleContext().getRegistry();
+        }
+        finally
+        {
+            Thread.currentThread().setContextClassLoader(currentClassLoader);
+        }
     }
 
     private void assertDeploymentFailure(final DeploymentListener listener, final String artifactName)

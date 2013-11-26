@@ -25,9 +25,11 @@ import org.mule.context.notification.MuleContextNotification;
 import org.mule.context.notification.SecurityNotification;
 import org.mule.context.notification.ServerNotificationManager;
 import org.mule.module.launcher.MuleSharedDomainClassLoader;
-import org.mule.module.launcher.application.MuleContextDelegateWrapper;
 import org.mule.module.launcher.artifact.ArtifactMuleContextBuilder;
 
+/**
+ * Builder for domain MuleContext instance.
+ */
 public class DomainMuleContextBuilder extends ArtifactMuleContextBuilder
 {
     private final String domainId;

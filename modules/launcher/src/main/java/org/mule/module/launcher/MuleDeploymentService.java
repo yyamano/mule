@@ -68,7 +68,7 @@ public class MuleDeploymentService implements DeploymentService
 
     public static final String CHANGE_CHECK_INTERVAL_PROPERTY = "mule.launcher.changeCheckInterval";
 
-    protected ScheduledExecutorService appDirMonitorTimer;
+    protected ScheduledExecutorService artifactDirMonitorTimer;
 
     protected transient final Log logger = LogFactory.getLog(getClass());
     // fair lock
@@ -259,9 +259,9 @@ public class MuleDeploymentService implements DeploymentService
     protected void scheduleChangeMonitor(File appsDir, File domainsDir)
     {
         final int reloadIntervalMs = getChangesCheckIntervalMs();
-        appDirMonitorTimer = Executors.newSingleThreadScheduledExecutor(new ArtifactDeployerMonitorThreadFactory());
+        artifactDirMonitorTimer = Executors.newSingleThreadScheduledExecutor(new ArtifactDeployerMonitorThreadFactory());
 
-        appDirMonitorTimer.scheduleWithFixedDelay(new ArtifactDirWatcher(appsDir, domainsDir),
+        artifactDirMonitorTimer.scheduleWithFixedDelay(new ArtifactDirWatcher(appsDir, domainsDir),
                                                   0,
                                                   reloadIntervalMs,
                                                   TimeUnit.MILLISECONDS);
@@ -333,12 +333,12 @@ public class MuleDeploymentService implements DeploymentService
 
     private void stopAppDirMonitorTimer()
     {
-        if (appDirMonitorTimer != null)
+        if (artifactDirMonitorTimer != null)
         {
-            appDirMonitorTimer.shutdown();
+            artifactDirMonitorTimer.shutdown();
             try
             {
-                appDirMonitorTimer.awaitTermination(getChangesCheckIntervalMs(), TimeUnit.MILLISECONDS);
+                artifactDirMonitorTimer.awaitTermination(getChangesCheckIntervalMs(), TimeUnit.MILLISECONDS);
             }
             catch (InterruptedException e)
             {
@@ -718,7 +718,7 @@ public class MuleDeploymentService implements DeploymentService
         {
             if (application.getDescriptor().isRedeploymentEnabled())
             {
-                if (applicationTimestampListener.isApplicationResourceUpdate(application))
+                if (applicationTimestampListener.isApplicationResourceUpdated(application))
                 {
                     applicationDeployer.redeploy(application);
                 }
@@ -750,7 +750,7 @@ public class MuleDeploymentService implements DeploymentService
             }
         }
 
-        public boolean isApplicationResourceUpdate(Application application)
+        public boolean isApplicationResourceUpdated(Application application)
         {
             ApplicationResourcesTimestamps applicationResourcesTimestamps = applicationConfigResourcesTimestap.get(application.getArtifactName());
             return !applicationResourcesTimestamps.resourcesHaveSameTimestamp(application);

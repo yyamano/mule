@@ -28,7 +28,7 @@ public class AbstractDeploymentListener implements DeploymentListener
     }
 
     @Override
-    public void onDeploymentSuccess(String appName)
+    public void onDeploymentSuccess(String artifactName)
     {
         //No-op default
     }

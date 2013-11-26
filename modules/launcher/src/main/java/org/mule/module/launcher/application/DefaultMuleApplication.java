@@ -12,7 +12,7 @@ import org.mule.api.MuleContext;
 import org.mule.api.MuleException;
 import org.mule.api.MuleRuntimeException;
 import org.mule.api.config.ConfigurationBuilder;
-import org.mule.api.config.DomainAwareConfigurationBuilder;
+import org.mule.api.config.DomainMuleContextAwareConfigurationBuilder;
 import org.mule.api.config.MuleProperties;
 import org.mule.api.lifecycle.Stoppable;
 import org.mule.config.builders.AutoConfigurationBuilder;
@@ -216,9 +216,9 @@ public class DefaultMuleApplication implements Application
         {
             ConfigurationBuilder configurationBuilder = (ConfigurationBuilder) ClassUtils.instanciateClass(configBuilderClassName,
                                                                                                            new Object[] {absoluteResourcePaths}, getDeploymentClassLoader());
-            if (configurationBuilder instanceof DomainAwareConfigurationBuilder)
+            if (configurationBuilder instanceof DomainMuleContextAwareConfigurationBuilder)
             {
-                ((DomainAwareConfigurationBuilder)configurationBuilder).setDomainContext(domain.getMuleContext());
+                ((DomainMuleContextAwareConfigurationBuilder)configurationBuilder).setDomainContext(domain.getMuleContext());
             }
             else
             {

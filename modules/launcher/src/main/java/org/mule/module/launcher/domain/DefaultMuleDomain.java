@@ -21,8 +21,6 @@ import org.mule.module.launcher.DeploymentListener;
 import org.mule.module.launcher.DeploymentStartException;
 import org.mule.module.launcher.DeploymentStopException;
 import org.mule.module.launcher.MuleDeploymentService;
-import org.mule.module.launcher.MuleSharedDomainClassLoader;
-import org.mule.module.launcher.application.MuleContextDelegateWrapper;
 import org.mule.module.launcher.application.NullDeploymentListener;
 import org.mule.module.launcher.artifact.ArtifactClassLoader;
 import org.mule.module.launcher.artifact.MuleContextDeploymentListener;
@@ -30,9 +28,11 @@ import org.mule.util.ClassUtils;
 import org.mule.util.ExceptionUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -100,6 +100,8 @@ public class DefaultMuleDomain implements Domain
             {
                 this.configResourceFile = new File(resource.getFile());
 
+                validateConfigurationFileDoNotUsesCoreNamespace();
+
                 ConfigurationBuilder cfgBuilder = createConfigurationBuilder();
                 if (!cfgBuilder.isConfigured())
                 {
@@ -126,6 +128,30 @@ public class DefaultMuleDomain implements Domain
             // log it here so it ends up in app log, sys log will only log a message without stacktrace
             logger.error(null, ExceptionUtils.getRootCause(e));
             throw new DeploymentInitException(CoreMessages.createStaticMessage(ExceptionUtils.getRootCauseMessage(e)), e);
+        }
+    }
+
+    private void validateConfigurationFileDoNotUsesCoreNamespace() throws FileNotFoundException
+    {
+        Scanner scanner = null;
+        try
+        {
+            scanner = new Scanner(configResourceFile);
+            while (scanner.hasNextLine())
+            {
+                final String lineFromFile = scanner.nextLine();
+                if (lineFromFile.contains("<mule "))
+                {
+                    throw new MuleRuntimeException(CoreMessages.createStaticMessage("Domain configuration file can not be created using core namespace. Use mule-domain namespace instead."));
+                }
+            }
+        }
+        finally
+        {
+            if (scanner != null)
+            {
+                scanner.close();
+            }
         }
     }
 

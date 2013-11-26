@@ -21,7 +21,7 @@ public class PollingReceiverWorkerSchedule implements Runnable
         worker = work;
         receiver = work.getReceiver();
         workManager = receiver.getWorkManager();
-        //use the class loader
+        //use the class loader from the thread it created the work.
         classLoader = Thread.currentThread().getContextClassLoader();
     }
 

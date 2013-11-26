@@ -32,7 +32,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
- *
+ * Deployer of an artifact within mule container.
+ *  - Keeps track of deployed artifacts
+ *  - Avoid already deployed artifacts to be redeployed
+ *  - Deploys, undeploys, redeploys packaged and exploded artifacts
  */
 public class ArtifactDeployer<T extends Artifact>
 {

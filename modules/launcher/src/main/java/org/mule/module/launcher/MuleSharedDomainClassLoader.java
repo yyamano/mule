@@ -77,6 +77,10 @@ public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader implemen
                 }
             }
         }
+        catch (RuntimeException e)
+        {
+            throw e;
+        }
         catch (Throwable t)
         {
             throw new RuntimeException(t);
@@ -155,15 +159,16 @@ public class MuleSharedDomainClassLoader extends GoodCitizenClassLoader implemen
         if (!newDomainDir.exists())
         {
             throw new IllegalArgumentException(
-                    String.format("Shared ClassLoader Domain '%s' doesn't exist", domain));
+                    String.format("Domain '%s' is not accessible", domain));
         }
 
         if (!newDomainDir.canRead())
         {
             throw new IllegalArgumentException(
-                    String.format("Shared ClassLoader Domain '%s' is not accessible", domain));
+                    String.format("Domain '%s' is not accessible", domain));
         }
         domainDir = newDomainDir;
         domainLibraryFolder = new File(newDomainDir, "lib");
+        logger.info(String.format("Using domain dir %s for domain %s",domainDir.getAbsolutePath(), domain));
     }
 }

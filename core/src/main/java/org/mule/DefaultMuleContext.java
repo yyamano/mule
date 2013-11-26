@@ -6,6 +6,8 @@
  */
 package org.mule;
 
+import static org.mule.api.config.MuleProperties.OBJECT_POLLING_CONTROLLER;
+
 import org.mule.api.MuleContext;
 import org.mule.api.MuleException;
 import org.mule.api.MuleRuntimeException;
@@ -133,7 +135,7 @@ public class DefaultMuleContext implements MuleContext
 
     private PollingController pollingController = new DefaultPollingController();
 
-    private Map<QName, Set<Object>> configurationAnnotations;
+    private Map<QName, Set<Object>> configurationAnnotations = new HashMap<QName, Set<Object>>();
 
     private SingleResourceTransactionFactoryManager singleResourceTransactionFactoryManager = new SingleResourceTransactionFactoryManager();
 
@@ -144,7 +146,7 @@ public class DefaultMuleContext implements MuleContext
     private ProcessingTimeWatcher processingTimeWatcher;
 
     /**
-     * @deprecated Use full constructor instead.
+     * @deprecated Use empty constructor instead and use setter for dependencies.
      */
     @Deprecated
     public DefaultMuleContext(MuleConfiguration config,
@@ -167,32 +169,10 @@ public class DefaultMuleContext implements MuleContext
         muleRegistryHelper = createRegistryHelper(registryBroker);
         localMuleClient = new DefaultLocalMuleClient(this);
         exceptionListener = new DefaultSystemExceptionStrategy(this);
-        configurationAnnotations = new HashMap<QName, Set<Object>>();
     }
 
-    public DefaultMuleContext(MuleConfiguration config,
-                              WorkManager workManager,
-                              WorkListener workListener,
-                              MuleContextLifecycleManager lifecycleManager,
-                              ServerNotificationManager notificationManager,
-                              DefaultRegistryBroker registryBroker,
-                              MuleRegistry muleRegistry,
-                              ExpressionManager expressionManager,
-                              SystemExceptionHandler systemExceptionHandler,
-                              LocalMuleClient localMuleClient)
+    public DefaultMuleContext()
     {
-        this.config = config;
-        this.workManager = workManager;
-        this.workListener = workListener;
-        this.lifecycleManager = lifecycleManager;
-        this.notificationManager = notificationManager;
-        this.notificationManager.setMuleContext(this);
-        this.expressionManager = expressionManager;
-        this.registryBroker = registryBroker;
-        this.muleRegistryHelper = muleRegistry;
-        this.localMuleClient = localMuleClient;
-        this.exceptionListener = systemExceptionHandler;
-        this.configurationAnnotations = new HashMap<QName, Set<Object>>();
     }
 
     protected DefaultRegistryBroker createRegistryBroker()
@@ -874,5 +854,50 @@ public class DefaultMuleContext implements MuleContext
         }
 
         return this.processingTimeWatcher;
+    }
+
+    public void setMuleConfiguration(MuleConfiguration muleConfiguration)
+    {
+        this.config = muleConfiguration;
+    }
+
+    public void setWorkManager(WorkManager workManager)
+    {
+        this.workManager = workManager;
+    }
+
+    public void setworkListener(WorkListener workListener)
+    {
+        this.workListener = workListener;
+    }
+
+    public void setNotificationManager(ServerNotificationManager notificationManager)
+    {
+        this.notificationManager = notificationManager;
+    }
+
+    public void setLifecycleManager(MuleContextLifecycleManager lifecyleManager)
+    {
+        this.lifecycleManager = lifecyleManager;
+    }
+
+    public void setExpressionManager(DefaultExpressionManager expressionManager)
+    {
+        this.expressionManager = expressionManager;
+    }
+
+    public void setRegistryBroker(DefaultRegistryBroker registryBroker)
+    {
+        this.registryBroker = registryBroker;
+    }
+
+    public void setMuleRegistry(MuleRegistryHelper muleRegistry)
+    {
+        this.muleRegistryHelper = muleRegistry;
+    }
+
+    public void setLocalMuleClient(DefaultLocalMuleClient localMuleContext)
+    {
+        this.localMuleClient = localMuleContext;
     }
 }

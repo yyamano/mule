@@ -12,10 +12,21 @@ import java.net.URL;
 
 public interface ArtifactClassLoader
 {
+
+    /**
+     * @return the artifact unique identifier
+     */
     String getArtifactName();
 
-    URL findResource(String s);
+    /**
+     * @param resource name of the resource to find.
+     * @return the resource URL, null if it doesn't exists.
+     */
+    URL findResource(String resource);
 
+    /**
+     * @return the mule context created for this artifact
+     */
     MuleContext getMuleContext();
 
     /**

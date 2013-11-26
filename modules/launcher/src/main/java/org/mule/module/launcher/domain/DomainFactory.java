@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.Collection;
 
 /**
- *
+ * Factory for {@link Domain} artifact creation
  */
 public interface DomainFactory extends ArtifactFactory<Domain>
 {

@@ -6,7 +6,6 @@
  */
 package org.mule.transport;
 
-import org.mule.DefaultMuleMessage;
 import org.mule.api.MuleException;
 import org.mule.api.MuleMessage;
 import org.mule.api.config.MuleConfiguration;

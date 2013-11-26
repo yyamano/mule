@@ -10,7 +10,7 @@ import org.mule.api.MuleContext;
 import org.mule.api.MuleRuntimeException;
 import org.mule.api.config.ConfigurationBuilder;
 import org.mule.api.config.ConfigurationException;
-import org.mule.api.config.DomainAwareConfigurationBuilder;
+import org.mule.api.config.DomainMuleContextAwareConfigurationBuilder;
 import org.mule.config.ConfigResource;
 import org.mule.config.i18n.CoreMessages;
 import org.mule.util.ClassUtils;
@@ -27,7 +27,7 @@ import java.util.Properties;
  * auto-detecting the ConfigurationBuilder to use for each resource. This is resolved by either checking the
  * classpath for config modules e.g. spring-config or by using the file extention or a combination.
  */
-public class AutoConfigurationBuilder extends AbstractResourceConfigurationBuilder implements DomainAwareConfigurationBuilder
+public class AutoConfigurationBuilder extends AbstractResourceConfigurationBuilder implements DomainMuleContextAwareConfigurationBuilder
 {
     private MuleContext domainContext;
 
@@ -90,13 +90,12 @@ public class AutoConfigurationBuilder extends AbstractResourceConfigurationBuild
                 ConfigResource[] constructorArg = new ConfigResource[configs.size()];
                 System.arraycopy(configs.toArray(), 0, constructorArg, 0, configs.size());
                 ConfigurationBuilder cb = (ConfigurationBuilder) ClassUtils.instanciateClass(className, new Object[] {constructorArg});
-                if (domainContext != null && cb instanceof DomainAwareConfigurationBuilder)
+                if (domainContext != null && cb instanceof DomainMuleContextAwareConfigurationBuilder)
                 {
-                    ((DomainAwareConfigurationBuilder)cb).setDomainContext(domainContext);
+                    ((DomainMuleContextAwareConfigurationBuilder)cb).setDomainContext(domainContext);
                 }
                 else if (domainContext != null)
                 {
-                    //TODO avoid duplicated code with DefaultMuleApplication
                     throw new MuleRuntimeException(CoreMessages.createStaticMessage(String.format("ConfigurationBuilder %s does not support domain context",cb.getClass().getCanonicalName())));
                 }
                 cb.configure(muleContext);

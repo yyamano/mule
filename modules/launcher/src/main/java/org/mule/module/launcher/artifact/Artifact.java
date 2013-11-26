@@ -12,26 +12,61 @@ import org.mule.module.launcher.InstallException;
 
 import java.io.File;
 
+/**
+ * An Artifact is an abstract representation of a deployable unit within the mule container.
+ */
 public interface Artifact
 {
 
+    /**
+     * Install the artifact. Most commonly this includes the creation of the class loader and validation of resources.
+     *
+     */
     void install() throws InstallException;
 
+    /**
+     * Initialise the artifact resources
+     */
     void init();
 
+    /**
+     * Starts the artifact execution
+     */
     void start() throws DeploymentStartException;
 
+    /**
+     * Stops the artifact execution
+     */
     void stop();
 
+    /**
+     * Dispose the artifact. Most commonly this includes the release of the resources held by the artifact
+     */
     void dispose();
 
+    /**
+     * Dispose the artifact and installs it again.
+     */
     void redeploy();
 
+    /**
+     * @return the artifact identifier
+     */
     String getArtifactName();
 
+    /**
+     * @return an array with the configuration files of the artifact. Never returns null.
+     *      If there's no configuration file then returns an empty array.
+     */
     File[] getConfigResourcesFile();
 
+    /**
+     * @return class loader risponsible for loading resources for this artifact.
+     */
     ArtifactClassLoader getArtifactClassLoader();
 
+    /**
+     * @return MuleContext created from the artifact configurations files.
+     */
     MuleContext getMuleContext();
 }
