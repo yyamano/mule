@@ -4,6 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
+
 package org.mule.util.pool;
 
 import org.mule.api.MuleContext;
@@ -22,8 +23,8 @@ import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericObjectPool;
 
 /**
- * <code>CommonsPoolProxyPool</code> is an implementation of {@link ObjectPool}
- * that internally uses the commons-pool {@link GenericObjectPool} and uses a
+ * <code>CommonsPoolProxyPool</code> is an implementation of {@link ObjectPool} that
+ * internally uses the commons-pool {@link GenericObjectPool} and uses a
  * {@link ObjectFactory} for creating new pooled instances.
  */
 public class CommonsPoolObjectPool implements ObjectPool
@@ -53,7 +54,9 @@ public class CommonsPoolObjectPool implements ObjectPool
     /**
      * Creates a new pool and an Object factory with the ServiceDescriptor
      */
-    public CommonsPoolObjectPool(ObjectFactory objectFactory, PoolingProfile poolingProfile, MuleContext muleContext)
+    public CommonsPoolObjectPool(ObjectFactory objectFactory,
+                                 PoolingProfile poolingProfile,
+                                 MuleContext muleContext)
     {
         this.objectFactory = objectFactory;
         this.poolingProfile = poolingProfile;
@@ -72,6 +75,8 @@ public class CommonsPoolObjectPool implements ObjectPool
             config.whenExhaustedAction = (byte) poolingProfile.getExhaustedAction();
             config.minEvictableIdleTimeMillis = poolingProfile.getMinEvictionMillis();
             config.timeBetweenEvictionRunsMillis = poolingProfile.getEvictionCheckIntervalMillis();
+            config.testOnBorrow = poolingProfile.isTestOnBorrow();
+            config.testOnReturn = poolingProfile.isTestOnReturn();
         }
 
         pool = new GenericObjectPool(getPooledObjectFactory(), config);
@@ -153,6 +158,23 @@ public class CommonsPoolObjectPool implements ObjectPool
             try
             {
                 pool.returnObject(object);
+            }
+            catch (Exception ex)
+            {
+                // declared Exception is never thrown from pool; this is a known bug
+                // in the pool API
+            }
+        }
+    }
+
+    @Override
+    public void destroyObject(Object object)
+    {
+        if (pool != null)
+        {
+            try
+            {
+                pool.invalidateObject(object);
             }
             catch (Exception ex)
             {

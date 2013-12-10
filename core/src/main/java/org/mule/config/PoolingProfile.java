@@ -102,6 +102,16 @@ public class PoolingProfile
      * When non-positive, no object evictor is executed.
      */
     public static final int DEFAULT_EVICTION_INTERVAL_MILLIS = -1;
+    
+    /**
+     * Specifies if an object should be validated each time its returned to the pool
+     */
+    public static final boolean DEFAULT_TEST_ON_RETURN = false;
+    
+    /**
+     * Specifies if an object should be validated each time its about to be borrowed
+     */
+    public static final boolean DEFAULT_TEST_ON_BORROW = false;
 
     // map pool exhaustion strings to their respective values
     @SuppressWarnings("unchecked")
@@ -147,6 +157,11 @@ public class PoolingProfile
     private int minEvictionMillis = DEFAULT_MIN_EVICTION_MILLIS;
 
     private int evictionCheckIntervalMillis = DEFAULT_EVICTION_INTERVAL_MILLIS;
+    
+    private boolean testOnReturn = DEFAULT_TEST_ON_RETURN;
+    
+    private boolean testOnBorrow = DEFAULT_TEST_ON_BORROW;
+                    
 
     public PoolingProfile()
     {
@@ -258,4 +273,25 @@ public class PoolingProfile
     {
         this.evictionCheckIntervalMillis = evictionCheckIntervalMillis;
     }
+
+    public boolean isTestOnReturn()
+    {
+        return testOnReturn;
+    }
+
+    public void setTestOnReturn(boolean testOnReturn)
+    {
+        this.testOnReturn = testOnReturn;
+    }
+
+    public boolean isTestOnBorrow()
+    {
+        return testOnBorrow;
+    }
+
+    public void setTestOnBorrow(boolean testOnBorrow)
+    {
+        this.testOnBorrow = testOnBorrow;
+    }
+    
 }

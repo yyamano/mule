@@ -19,6 +19,8 @@ public interface ObjectPool extends Initialisable, Disposable
     Object borrowObject() throws Exception;
 
     void returnObject(Object object);
+    
+    void destroyObject(Object object);
 
     int getNumActive();
 
