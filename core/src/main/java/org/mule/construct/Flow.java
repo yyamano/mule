@@ -17,6 +17,7 @@ import org.mule.api.MuleException;
 import org.mule.api.endpoint.InboundEndpoint;
 import org.mule.api.execution.ExecutionCallback;
 import org.mule.api.execution.ExecutionTemplate;
+import org.mule.api.processor.DynamicPipeline;
 import org.mule.api.processor.MessageProcessor;
 import org.mule.api.processor.MessageProcessorChainBuilder;
 import org.mule.api.processor.NamedStageNameSource;
@@ -31,8 +32,13 @@ import org.mule.construct.processor.FlowConstructStatisticsMessageProcessor;
 import org.mule.execution.ErrorHandlingExecutionTemplate;
 import org.mule.interceptor.ProcessingTimeInterceptor;
 import org.mule.management.stats.FlowConstructStatistics;
+import org.mule.processor.chain.DefaultMessageProcessorChainBuilder;
 import org.mule.processor.strategy.AsynchronousProcessingStrategy;
 import org.mule.routing.requestreply.AsyncReplyToPropertyRequestReplyReplier;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * This implementation of {@link AbstractPipeline} adds the following functionality:
@@ -46,16 +52,20 @@ import org.mule.routing.requestreply.AsyncReplyToPropertyRequestReplyReplier;
  * transactions message processing in another thread asynchronously.</li>
  * </ul>
  */
-public class Flow extends AbstractPipeline implements MessageProcessor, StageNameSourceProvider
+public class Flow extends AbstractPipeline implements MessageProcessor, StageNameSourceProvider, DynamicPipeline
 {
     private int stageCount = 0;
     private final StageNameSource sequentialStageNameSource;
+    private List<MessageProcessor> preDynamicMessageProcessors = new ArrayList<MessageProcessor>();
+    private List<MessageProcessor> postDynamicMessageProcessors = new ArrayList<MessageProcessor>();
+    private ReentrantReadWriteLock readWriteLock;
 
     public Flow(String name, MuleContext muleContext)
     {
         super(name, muleContext);
         processingStrategy = new DefaultFlowProcessingStrategy();
         this.sequentialStageNameSource = new SequentialStageNameSource(name);
+        this.readWriteLock = new ReentrantReadWriteLock();
     }
 
     @Override
@@ -75,7 +85,12 @@ public class Flow extends AbstractPipeline implements MessageProcessor, StageNam
                 @Override
                 public MuleEvent process() throws Exception
                 {
+                    ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
+                    readLock.lock();
+
                     MuleEvent result = pipeline.process(newEvent);
+
+                    readLock.unlock();
                     if (result != null && !VoidMuleEvent.getInstance().equals(result))
                     {
                         result.getMessage().release();
@@ -83,6 +98,7 @@ public class Flow extends AbstractPipeline implements MessageProcessor, StageNam
                     return result;
                 }
             });
+
             if (result != null && !VoidMuleEvent.getInstance().equals(result))
             {
                 result = new DefaultMuleEvent(result, event.getFlowConstruct(), replyToHandler, replyToDestination);
@@ -184,4 +200,79 @@ public class Flow extends AbstractPipeline implements MessageProcessor, StageNam
         return new NamedStageNameSource(this.name, asyncName);
     }
 
+    @Override
+    public void addPreMessageProcessor(MessageProcessor preMessageProcessor) throws MuleException
+    {
+        addMessageProcessor(preDynamicMessageProcessors, preMessageProcessor);
+    }
+
+    @Override
+    public void addPostMessageProcessor(MessageProcessor postMessageProcessor) throws MuleException
+    {
+        addMessageProcessor(postDynamicMessageProcessors, postMessageProcessor);
+    }
+
+    @Override
+    public void removePreMessageProcessor(MessageProcessor preMessageProcessor) throws MuleException
+    {
+        removeMessageProcessor(preDynamicMessageProcessors, preMessageProcessor);
+    }
+
+    @Override
+    public void removePostMessageProcessor(MessageProcessor postMessageProcessor) throws MuleException
+    {
+        removeMessageProcessor(postDynamicMessageProcessors, postMessageProcessor);
+    }
+
+    private void addMessageProcessor(List<MessageProcessor> messageProcessors, MessageProcessor messageProcessor) throws MuleException
+    {
+        if(messageProcessor != null)
+        {
+            initialiseIfInitialisable(messageProcessor);
+            injectFlowConstructMuleContext(messageProcessor);
+            messageProcessors.add(messageProcessor);
+        }
+    }
+
+    private void removeMessageProcessor(List<MessageProcessor> messageProcessors, MessageProcessor messageProcessor) throws MuleException
+    {
+        if(messageProcessor != null)
+        {
+            stopIfStoppable(messageProcessor);
+            disposeIfDisposable(messageProcessor);
+            messageProcessors.remove(messageProcessor);
+        }
+    }
+
+    @Override
+    public void build() throws MuleException
+    {
+        ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
+        writeLock.lock();
+        try
+        {
+            if(pipeline != null)
+            {
+                super.initialisePipeline();
+            }
+        }
+        finally
+        {
+            writeLock.unlock();
+        }
+    }
+
+
+    @Override
+    protected MessageProcessor createPipeline() throws MuleException
+    {
+        DefaultMessageProcessorChainBuilder builder = new DefaultMessageProcessorChainBuilder(this);
+        builder.setName("'" + getName() + "' processor chain");
+        builder.chain(preDynamicMessageProcessors);
+        configurePreProcessors(builder);
+        configureMessageProcessors(builder);
+        configurePostProcessors(builder);
+        builder.chain(postDynamicMessageProcessors);
+        return builder.build();
+    }
 }

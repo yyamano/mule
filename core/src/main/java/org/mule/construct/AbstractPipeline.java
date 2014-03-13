@@ -193,9 +193,20 @@ public abstract class AbstractPipeline extends AbstractFlowConstruct implements 
     protected void doInitialise() throws MuleException
     {
         super.doInitialise();
+        initialisePipeline();
+        initialiseSource();
+    }
 
+    protected void initialisePipeline() throws MuleException
+    {
         pipeline = createPipeline();
 
+        injectFlowConstructMuleContext(pipeline);
+        initialiseIfInitialisable(pipeline);
+    }
+
+    protected void initialiseSource() throws MuleException
+    {
         if (messageSource != null)
         {
             // Wrap chain to decouple lifecycle
@@ -210,9 +221,7 @@ public abstract class AbstractPipeline extends AbstractFlowConstruct implements 
         }
 
         injectFlowConstructMuleContext(messageSource);
-        injectFlowConstructMuleContext(pipeline);
         initialiseIfInitialisable(messageSource);
-        initialiseIfInitialisable(pipeline);
     }
 
     protected void configureMessageProcessors(MessageProcessorChainBuilder builder) throws MuleException

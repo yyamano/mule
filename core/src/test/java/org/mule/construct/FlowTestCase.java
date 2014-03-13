@@ -142,4 +142,33 @@ public class FlowTestCase extends AbstractFlowConstuctTestCase
             assertEquals(EXPECTED, this.flow.getAsyncStageNameSource(stageName).getName());
         }
     }
+
+    @Test
+    public void testDynamicPipeline() throws Exception
+    {
+        flow.initialise();
+        flow.start();
+
+        MessageProcessor appendPost2 = new StringAppendTransformer("4");
+        MessageProcessor appendPre = new StringAppendTransformer("1");
+
+        flow.addPreMessageProcessor(appendPre);
+        flow.addPreMessageProcessor(new StringAppendTransformer("2"));
+        flow.addPostMessageProcessor(new StringAppendTransformer("3"));
+        flow.addPostMessageProcessor(appendPost2);
+        flow.build();
+
+        MuleEvent response = directInboundMessageSource.process(MuleTestUtils.getTestEvent("hello",
+                                                       MessageExchangePattern.REQUEST_RESPONSE, muleContext));
+        assertEquals("hello12abc34def", response.getMessageAsString());
+
+        flow.removePreMessageProcessor(appendPre);
+        flow.removePostMessageProcessor(appendPost2);
+        flow.build();
+
+        response = directInboundMessageSource.process(MuleTestUtils.getTestEvent("hello",
+                                                       MessageExchangePattern.REQUEST_RESPONSE, muleContext));
+        assertEquals("hello2abc3def", response.getMessageAsString());
+
+    }
 }
