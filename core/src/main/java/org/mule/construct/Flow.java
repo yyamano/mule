@@ -32,6 +32,7 @@ import org.mule.construct.processor.FlowConstructStatisticsMessageProcessor;
 import org.mule.execution.ErrorHandlingExecutionTemplate;
 import org.mule.interceptor.ProcessingTimeInterceptor;
 import org.mule.management.stats.FlowConstructStatistics;
+import org.mule.processor.AbstractInterceptingMessageProcessor;
 import org.mule.processor.chain.DefaultMessageProcessorChainBuilder;
 import org.mule.processor.strategy.AsynchronousProcessingStrategy;
 import org.mule.routing.requestreply.AsyncReplyToPropertyRequestReplyReplier;
@@ -87,10 +88,17 @@ public class Flow extends AbstractPipeline implements MessageProcessor, StageNam
                 {
                     ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
                     readLock.lock();
+                    MuleEvent result;
 
-                    MuleEvent result = pipeline.process(newEvent);
+                    try
+                    {
+                        result = pipeline.process(newEvent);
+                    }
+                    finally
+                    {
+                        readLock.unlock();
+                    }
 
-                    readLock.unlock();
                     if (result != null && !VoidMuleEvent.getInstance().equals(result))
                     {
                         result.getMessage().release();
@@ -274,5 +282,28 @@ public class Flow extends AbstractPipeline implements MessageProcessor, StageNam
         configurePostProcessors(builder);
         builder.chain(postDynamicMessageProcessors);
         return builder.build();
+    }
+
+    @Override
+    protected AbstractInterceptingMessageProcessor getSourceListener()
+    {
+        return new AbstractInterceptingMessageProcessor()
+        {
+            @Override
+            public MuleEvent process(MuleEvent event) throws MuleException
+            {
+                ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
+                readLock.lock();
+
+                try
+                {
+                    return pipeline.process(event);
+                }
+                finally
+                {
+                    readLock.unlock();
+                }
+            }
+        };
     }
 }

@@ -210,18 +210,23 @@ public abstract class AbstractPipeline extends AbstractFlowConstruct implements 
         if (messageSource != null)
         {
             // Wrap chain to decouple lifecycle
-            messageSource.setListener(new AbstractInterceptingMessageProcessor()
-            {
-                @Override
-                public MuleEvent process(MuleEvent event) throws MuleException
-                {
-                    return pipeline.process(event);
-                }
-            });
+            messageSource.setListener(getSourceListener());
         }
 
         injectFlowConstructMuleContext(messageSource);
         initialiseIfInitialisable(messageSource);
+    }
+
+    protected AbstractInterceptingMessageProcessor getSourceListener()
+    {
+        return new AbstractInterceptingMessageProcessor()
+        {
+            @Override
+            public MuleEvent process(MuleEvent event) throws MuleException
+            {
+                return pipeline.process(event);
+            }
+        };
     }
 
     protected void configureMessageProcessors(MessageProcessorChainBuilder builder) throws MuleException
