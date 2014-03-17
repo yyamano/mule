@@ -84,7 +84,7 @@ public class FlowTestCase extends AbstractFlowConstuctTestCase
         assertNotSame(Thread.currentThread(), sensingMessageProcessor.event.getMessage().getOutboundProperty(
             "thread"));
     }
-    
+
     @Test
     public void testProcessRequestResponseEndpoint() throws Exception
     {
@@ -149,26 +149,22 @@ public class FlowTestCase extends AbstractFlowConstuctTestCase
         flow.initialise();
         flow.start();
 
-        MessageProcessor appendPost2 = new StringAppendTransformer("4");
+        MessageProcessor appendPost2 = new ResponseMessageProcessorAdapter(new StringAppendTransformer("4"));
         MessageProcessor appendPre = new StringAppendTransformer("1");
 
-        flow.addPreMessageProcessor(appendPre);
-        flow.addPreMessageProcessor(new StringAppendTransformer("2"));
-        flow.addPostMessageProcessor(new StringAppendTransformer("3"));
-        flow.addPostMessageProcessor(appendPost2);
-        flow.build();
+        flow.updateChain(appendPre, new StringAppendTransformer("2"), appendPost2,
+                         new ResponseMessageProcessorAdapter(new StringAppendTransformer("3")));
 
         MuleEvent response = directInboundMessageSource.process(MuleTestUtils.getTestEvent("hello",
                                                        MessageExchangePattern.REQUEST_RESPONSE, muleContext));
-        assertEquals("hello12abc34def", response.getMessageAsString());
+        assertEquals("hello12abcdef34", response.getMessageAsString());
 
-        flow.removePreMessageProcessor(appendPre);
-        flow.removePostMessageProcessor(appendPost2);
-        flow.build();
+        flow.updateChain(new StringAppendTransformer("2"),
+                         new ResponseMessageProcessorAdapter(new StringAppendTransformer("3")));
 
         response = directInboundMessageSource.process(MuleTestUtils.getTestEvent("hello",
                                                        MessageExchangePattern.REQUEST_RESPONSE, muleContext));
-        assertEquals("hello2abc3def", response.getMessageAsString());
+        assertEquals("hello2abcdef3", response.getMessageAsString());
 
     }
 }

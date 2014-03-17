@@ -19,6 +19,7 @@ import org.mule.api.execution.ExecutionCallback;
 import org.mule.api.execution.ExecutionTemplate;
 import org.mule.api.processor.DynamicPipeline;
 import org.mule.api.processor.MessageProcessor;
+import org.mule.api.processor.MessageProcessorChain;
 import org.mule.api.processor.MessageProcessorChainBuilder;
 import org.mule.api.processor.NamedStageNameSource;
 import org.mule.api.processor.ProcessingStrategy;
@@ -34,12 +35,9 @@ import org.mule.interceptor.ProcessingTimeInterceptor;
 import org.mule.management.stats.FlowConstructStatistics;
 import org.mule.processor.AbstractInterceptingMessageProcessor;
 import org.mule.processor.chain.DefaultMessageProcessorChainBuilder;
+import org.mule.processor.chain.SimpleMessageProcessorChain;
 import org.mule.processor.strategy.AsynchronousProcessingStrategy;
 import org.mule.routing.requestreply.AsyncReplyToPropertyRequestReplyReplier;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * This implementation of {@link AbstractPipeline} adds the following functionality:
@@ -57,16 +55,13 @@ public class Flow extends AbstractPipeline implements MessageProcessor, StageNam
 {
     private int stageCount = 0;
     private final StageNameSource sequentialStageNameSource;
-    private List<MessageProcessor> preDynamicMessageProcessors = new ArrayList<MessageProcessor>();
-    private List<MessageProcessor> postDynamicMessageProcessors = new ArrayList<MessageProcessor>();
-    private ReentrantReadWriteLock readWriteLock;
+    private DynamicPipelineMessageProcessor dynamicPipelineMessageProcessor;
 
     public Flow(String name, MuleContext muleContext)
     {
         super(name, muleContext);
         processingStrategy = new DefaultFlowProcessingStrategy();
         this.sequentialStageNameSource = new SequentialStageNameSource(name);
-        this.readWriteLock = new ReentrantReadWriteLock();
     }
 
     @Override
@@ -86,18 +81,7 @@ public class Flow extends AbstractPipeline implements MessageProcessor, StageNam
                 @Override
                 public MuleEvent process() throws Exception
                 {
-                    ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
-                    readLock.lock();
-                    MuleEvent result;
-
-                    try
-                    {
-                        result = pipeline.process(newEvent);
-                    }
-                    finally
-                    {
-                        readLock.unlock();
-                    }
+                    MuleEvent result = pipeline.process(newEvent);
 
                     if (result != null && !VoidMuleEvent.getInstance().equals(result))
                     {
@@ -136,6 +120,10 @@ public class Flow extends AbstractPipeline implements MessageProcessor, StageNam
         builder.chain(new ProcessIfPipelineStartedMessageProcessor());
         builder.chain(new ProcessingTimeInterceptor());
         builder.chain(new FlowConstructStatisticsMessageProcessor());
+
+        //TODO needs to be last pre-processor, could be the first after the processing strategy MP
+        dynamicPipelineMessageProcessor = new DynamicPipelineMessageProcessor();
+        builder.chain(dynamicPipelineMessageProcessor);
     }
 
     @Override
@@ -209,101 +197,58 @@ public class Flow extends AbstractPipeline implements MessageProcessor, StageNam
     }
 
     @Override
-    public void addPreMessageProcessor(MessageProcessor preMessageProcessor) throws MuleException
+    public void updateChain(MessageProcessor... messageProcessors) throws MuleException
     {
-        addMessageProcessor(preDynamicMessageProcessors, preMessageProcessor);
+        dynamicPipelineMessageProcessor.updateChain(messageProcessors);
     }
 
-    @Override
-    public void addPostMessageProcessor(MessageProcessor postMessageProcessor) throws MuleException
+    private class DynamicPipelineMessageProcessor extends AbstractInterceptingMessageProcessor implements DynamicPipeline
     {
-        addMessageProcessor(postDynamicMessageProcessors, postMessageProcessor);
-    }
 
-    @Override
-    public void removePreMessageProcessor(MessageProcessor preMessageProcessor) throws MuleException
-    {
-        removeMessageProcessor(preDynamicMessageProcessors, preMessageProcessor);
-    }
+        private MessageProcessor[] dynamicMessageProcessors;
+        private MessageProcessor staticChain;
+        private SimpleMessageProcessorChain dynamicChainLifecycle;
 
-    @Override
-    public void removePostMessageProcessor(MessageProcessor postMessageProcessor) throws MuleException
-    {
-        removeMessageProcessor(postDynamicMessageProcessors, postMessageProcessor);
-    }
-
-    private void addMessageProcessor(List<MessageProcessor> messageProcessors, MessageProcessor messageProcessor) throws MuleException
-    {
-        if(messageProcessor != null)
+        @Override
+        public MuleEvent process(MuleEvent event) throws MuleException
         {
-            initialiseIfInitialisable(messageProcessor);
-            injectFlowConstructMuleContext(messageProcessor);
-            messageProcessors.add(messageProcessor);
+            return processNext(event);
         }
-    }
 
-    private void removeMessageProcessor(List<MessageProcessor> messageProcessors, MessageProcessor messageProcessor) throws MuleException
-    {
-        if(messageProcessor != null)
+        @Override
+        public void setListener(MessageProcessor next)
         {
-            stopIfStoppable(messageProcessor);
-            disposeIfDisposable(messageProcessor);
-            messageProcessors.remove(messageProcessor);
-        }
-    }
-
-    @Override
-    public void build() throws MuleException
-    {
-        ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
-        writeLock.lock();
-        try
-        {
-            if(pipeline != null)
+            if (staticChain == null)
             {
-                super.initialisePipeline();
+                staticChain = next;
             }
+            super.setListener(next);
         }
-        finally
+
+        @Override
+        public void updateChain(MessageProcessor... messageProcessors) throws MuleException
         {
-            writeLock.unlock();
-        }
-    }
-
-
-    @Override
-    protected MessageProcessor createPipeline() throws MuleException
-    {
-        DefaultMessageProcessorChainBuilder builder = new DefaultMessageProcessorChainBuilder(this);
-        builder.setName("'" + getName() + "' processor chain");
-        builder.chain(preDynamicMessageProcessors);
-        configurePreProcessors(builder);
-        configureMessageProcessors(builder);
-        configurePostProcessors(builder);
-        builder.chain(postDynamicMessageProcessors);
-        return builder.build();
-    }
-
-    @Override
-    protected AbstractInterceptingMessageProcessor getSourceListener()
-    {
-        return new AbstractInterceptingMessageProcessor()
-        {
-            @Override
-            public MuleEvent process(MuleEvent event) throws MuleException
+            //dispose old dynamic chain
+            if (dynamicChainLifecycle != null)
             {
-                ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
-                readLock.lock();
-
-                try
-                {
-                    return pipeline.process(event);
-                }
-                finally
-                {
-                    readLock.unlock();
-                }
+                dynamicChainLifecycle.stop();
+                dynamicChainLifecycle.dispose();
             }
-        };
+
+            //build new chain
+            dynamicMessageProcessors = messageProcessors;
+            DefaultMessageProcessorChainBuilder builder = new DefaultMessageProcessorChainBuilder(Flow.this);
+            builder.chain(dynamicMessageProcessors);
+            builder.chain(staticChain);
+            MessageProcessorChain newChain = builder.build();
+
+            //init newly added MPs only
+            dynamicChainLifecycle = new SimpleMessageProcessorChain(dynamicMessageProcessors);
+            injectFlowConstructMuleContext(dynamicChainLifecycle);
+            initialiseIfInitialisable(dynamicChainLifecycle);
+
+            //hook chain as last step to avoid synchronization
+            super.setListener(newChain);
+        }
     }
 }

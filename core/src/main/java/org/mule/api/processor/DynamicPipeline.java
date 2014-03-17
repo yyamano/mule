@@ -9,15 +9,20 @@ package org.mule.api.processor;
 
 import org.mule.api.MuleException;
 
+/**
+ * Adds to a pipeline the ability to dynamically inject a sequence
+ * of message processors after initialization.
+ *
+ * The injected message processors are executed before the ones defined in
+ * the flow in the specified order.
+ *
+ * To execute a message processor after the ones in the flow it needs to
+ * be wrapped with a {@link org.mule.processor.ResponseMessageProcessorAdapter}.
+ * The wrapped message processors are executed in reverse order.
+ *
+ */
 public interface DynamicPipeline
 {
-    void addPreMessageProcessor(final MessageProcessor preMessageProcessor) throws MuleException;
 
-    void removePreMessageProcessor(final MessageProcessor preMessageProcessor) throws MuleException;
-
-    void addPostMessageProcessor(final MessageProcessor postMessageProcessor) throws MuleException;
-
-    void removePostMessageProcessor(final MessageProcessor postMessageProcessor) throws MuleException;
-
-    void build() throws MuleException;
+    void updateChain(MessageProcessor... messageProcessors) throws MuleException;
 }
