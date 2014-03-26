@@ -17,4 +17,12 @@
         </component>
     </flow>
 
+    <flow name="exceptionFlow">
+        <vm:inbound-endpoint path="exception" exchange-pattern="request-response"/>
+        <append-string-transformer message="(fail)" />
+        <catch-exception-strategy>
+            <append-string-transformer message="(handled)" />
+        </catch-exception-strategy>
+    </flow>
+
 </mule>

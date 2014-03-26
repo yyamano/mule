@@ -19,7 +19,6 @@ import org.mule.api.execution.ExecutionCallback;
 import org.mule.api.execution.ExecutionTemplate;
 import org.mule.api.processor.DynamicPipeline;
 import org.mule.api.processor.MessageProcessor;
-import org.mule.api.processor.MessageProcessorChain;
 import org.mule.api.processor.MessageProcessorChainBuilder;
 import org.mule.api.processor.NamedStageNameSource;
 import org.mule.api.processor.ProcessingStrategy;
@@ -33,9 +32,6 @@ import org.mule.construct.processor.FlowConstructStatisticsMessageProcessor;
 import org.mule.execution.ErrorHandlingExecutionTemplate;
 import org.mule.interceptor.ProcessingTimeInterceptor;
 import org.mule.management.stats.FlowConstructStatistics;
-import org.mule.processor.AbstractInterceptingMessageProcessor;
-import org.mule.processor.chain.DefaultMessageProcessorChainBuilder;
-import org.mule.processor.chain.SimpleMessageProcessorChain;
 import org.mule.processor.strategy.AsynchronousProcessingStrategy;
 import org.mule.routing.requestreply.AsyncReplyToPropertyRequestReplyReplier;
 
@@ -121,8 +117,7 @@ public class Flow extends AbstractPipeline implements MessageProcessor, StageNam
         builder.chain(new ProcessingTimeInterceptor());
         builder.chain(new FlowConstructStatisticsMessageProcessor());
 
-        //TODO needs to be last pre-processor, could be the first after the processing strategy MP
-        dynamicPipelineMessageProcessor = new DynamicPipelineMessageProcessor();
+        dynamicPipelineMessageProcessor = new DynamicPipelineMessageProcessor(this);
         builder.chain(dynamicPipelineMessageProcessor);
     }
 
@@ -197,58 +192,21 @@ public class Flow extends AbstractPipeline implements MessageProcessor, StageNam
     }
 
     @Override
-    public void updateChain(MessageProcessor... messageProcessors) throws MuleException
+    public void addPreMessageProcessor(MessageProcessor messageProcessor) throws MuleException
     {
-        dynamicPipelineMessageProcessor.updateChain(messageProcessors);
+        dynamicPipelineMessageProcessor.addPreMessageProcessor(messageProcessor);
     }
 
-    private class DynamicPipelineMessageProcessor extends AbstractInterceptingMessageProcessor implements DynamicPipeline
+    @Override
+    public void addPostMessageProcessor(MessageProcessor messageProcessor) throws MuleException
     {
-
-        private MessageProcessor[] dynamicMessageProcessors;
-        private MessageProcessor staticChain;
-        private SimpleMessageProcessorChain dynamicChainLifecycle;
-
-        @Override
-        public MuleEvent process(MuleEvent event) throws MuleException
-        {
-            return processNext(event);
-        }
-
-        @Override
-        public void setListener(MessageProcessor next)
-        {
-            if (staticChain == null)
-            {
-                staticChain = next;
-            }
-            super.setListener(next);
-        }
-
-        @Override
-        public void updateChain(MessageProcessor... messageProcessors) throws MuleException
-        {
-            //dispose old dynamic chain
-            if (dynamicChainLifecycle != null)
-            {
-                dynamicChainLifecycle.stop();
-                dynamicChainLifecycle.dispose();
-            }
-
-            //build new chain
-            dynamicMessageProcessors = messageProcessors;
-            DefaultMessageProcessorChainBuilder builder = new DefaultMessageProcessorChainBuilder(Flow.this);
-            builder.chain(dynamicMessageProcessors);
-            builder.chain(staticChain);
-            MessageProcessorChain newChain = builder.build();
-
-            //init newly added MPs only
-            dynamicChainLifecycle = new SimpleMessageProcessorChain(dynamicMessageProcessors);
-            injectFlowConstructMuleContext(dynamicChainLifecycle);
-            initialiseIfInitialisable(dynamicChainLifecycle);
-
-            //hook chain as last step to avoid synchronization
-            super.setListener(newChain);
-        }
+        dynamicPipelineMessageProcessor.addPostMessageProcessor(messageProcessor);
     }
+
+    @Override
+    public void updatePipeline() throws MuleException
+    {
+        dynamicPipelineMessageProcessor.updatePipeline();
+    }
+
 }

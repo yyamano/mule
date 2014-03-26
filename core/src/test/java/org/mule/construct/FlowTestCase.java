@@ -149,18 +149,22 @@ public class FlowTestCase extends AbstractFlowConstuctTestCase
         flow.initialise();
         flow.start();
 
-        MessageProcessor appendPost2 = new ResponseMessageProcessorAdapter(new StringAppendTransformer("4"));
         MessageProcessor appendPre = new StringAppendTransformer("1");
+        MessageProcessor appendPost2 = new StringAppendTransformer("4");
 
-        flow.updateChain(appendPre, new StringAppendTransformer("2"), appendPost2,
-                         new ResponseMessageProcessorAdapter(new StringAppendTransformer("3")));
+        flow.addPreMessageProcessor(appendPre);
+        flow.addPreMessageProcessor(new StringAppendTransformer("2"));
+        flow.addPostMessageProcessor(new StringAppendTransformer("3"));
+        flow.addPostMessageProcessor(appendPost2);
+        flow.updatePipeline();
 
         MuleEvent response = directInboundMessageSource.process(MuleTestUtils.getTestEvent("hello",
                                                        MessageExchangePattern.REQUEST_RESPONSE, muleContext));
         assertEquals("hello12abcdef34", response.getMessageAsString());
 
-        flow.updateChain(new StringAppendTransformer("2"),
-                         new ResponseMessageProcessorAdapter(new StringAppendTransformer("3")));
+        flow.addPreMessageProcessor(new StringAppendTransformer("2"));
+        flow.addPostMessageProcessor(new StringAppendTransformer("3"));
+        flow.updatePipeline();
 
         response = directInboundMessageSource.process(MuleTestUtils.getTestEvent("hello",
                                                        MessageExchangePattern.REQUEST_RESPONSE, muleContext));

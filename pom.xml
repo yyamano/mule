@@ -60,7 +60,6 @@
         <module>tools</module>
         <module>transports</module>
         <module>tests</module>
-        <module>policies</module>
     </modules>
 
     <properties>
