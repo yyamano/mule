@@ -193,40 +193,26 @@ public abstract class AbstractPipeline extends AbstractFlowConstruct implements 
     protected void doInitialise() throws MuleException
     {
         super.doInitialise();
-        initialisePipeline();
-        initialiseSource();
-    }
 
-    protected void initialisePipeline() throws MuleException
-    {
         pipeline = createPipeline();
 
-        injectFlowConstructMuleContext(pipeline);
-        initialiseIfInitialisable(pipeline);
-    }
-
-    protected void initialiseSource() throws MuleException
-    {
         if (messageSource != null)
         {
             // Wrap chain to decouple lifecycle
-            messageSource.setListener(getSourceListener());
+            messageSource.setListener(new AbstractInterceptingMessageProcessor()
+            {
+                @Override
+                public MuleEvent process(MuleEvent event) throws MuleException
+                {
+                    return pipeline.process(event);
+                }
+            });
         }
 
         injectFlowConstructMuleContext(messageSource);
+        injectFlowConstructMuleContext(pipeline);
         initialiseIfInitialisable(messageSource);
-    }
-
-    protected AbstractInterceptingMessageProcessor getSourceListener()
-    {
-        return new AbstractInterceptingMessageProcessor()
-        {
-            @Override
-            public MuleEvent process(MuleEvent event) throws MuleException
-            {
-                return pipeline.process(event);
-            }
-        };
+        initialiseIfInitialisable(pipeline);
     }
 
     protected void configureMessageProcessors(MessageProcessorChainBuilder builder) throws MuleException
