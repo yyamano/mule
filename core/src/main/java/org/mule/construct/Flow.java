@@ -35,6 +35,8 @@ import org.mule.management.stats.FlowConstructStatistics;
 import org.mule.processor.strategy.AsynchronousProcessingStrategy;
 import org.mule.routing.requestreply.AsyncReplyToPropertyRequestReplyReplier;
 
+import java.util.List;
+
 /**
  * This implementation of {@link AbstractPipeline} adds the following functionality:
  * <ul>
@@ -192,15 +194,27 @@ public class Flow extends AbstractPipeline implements MessageProcessor, StageNam
     }
 
     @Override
-    public void addPreMessageProcessor(MessageProcessor messageProcessor) throws MuleException
+    public void updatePipeline(List<MessageProcessor> preMessageProcessors, List<MessageProcessor> postMessageProcessors) throws MuleException
     {
-        dynamicPipelineMessageProcessor.addPreMessageProcessor(messageProcessor);
+        dynamicPipelineMessageProcessor.updatePipeline(preMessageProcessors, postMessageProcessors);
     }
 
     @Override
-    public void addPostMessageProcessor(MessageProcessor messageProcessor) throws MuleException
+    public void resetPipeline() throws MuleException
     {
-        dynamicPipelineMessageProcessor.addPostMessageProcessor(messageProcessor);
+        dynamicPipelineMessageProcessor.resetPipeline();
+    }
+
+    @Override
+    public DynamicPipeline injectBefore(MessageProcessor... messageProcessors)
+    {
+        return dynamicPipelineMessageProcessor.injectBefore(messageProcessors);
+    }
+
+    @Override
+    public DynamicPipeline injectAfter(MessageProcessor... messageProcessors)
+    {
+        return dynamicPipelineMessageProcessor.injectAfter(messageProcessors);
     }
 
     @Override
@@ -208,5 +222,4 @@ public class Flow extends AbstractPipeline implements MessageProcessor, StageNam
     {
         dynamicPipelineMessageProcessor.updatePipeline();
     }
-
 }

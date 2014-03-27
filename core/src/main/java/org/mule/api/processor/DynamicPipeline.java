@@ -9,6 +9,8 @@ package org.mule.api.processor;
 
 import org.mule.api.MuleException;
 
+import java.util.List;
+
 /**
  * Adds to a pipeline the ability to dynamically inject a sequence
  * of message processors after initialization.
@@ -21,25 +23,46 @@ public interface DynamicPipeline
 {
 
     /**
-     * Adds a message processor to be run before the flow static pipeline.
+     * Updates the pipeline injecting the lists of preMessageProcessors and postMessageProcessors.
      *
-     * @param messageProcessor
+     * @param preMessageProcessors message processors to be executed before the ones specified in the flow
+     * @param postMessageProcessors message processors to be executed after the ones specified in the flow
      * @throws MuleException
      */
-    void addPreMessageProcessor(MessageProcessor messageProcessor) throws MuleException;
+    void updatePipeline(List<MessageProcessor> preMessageProcessors, List<MessageProcessor> postMessageProcessors) throws MuleException;
 
     /**
-     * Adds a message processor to be run after the flow static pipeline.
+     * Removes all injected message processors.
      *
-     * @param messageProcessor
      * @throws MuleException
      */
-    void addPostMessageProcessor(MessageProcessor messageProcessor) throws MuleException;
+    void resetPipeline() throws MuleException;
 
     /**
-     * Updates the pipeline with the added message processors.
-     * Updating the pipeline more than once requires adding all necessary
-     * message processors again.
+     * Helper builder for injecting message processors to be executed
+     * before the ones specified in the flow.
+     * After adding all required message processors #updatePipeline()
+     * must be called.
+     *
+     * @param messageProcessors message processors to be executed before the ones specified in the flow
+     * @return the pipeline injector builder instance
+     */
+    DynamicPipeline injectBefore(MessageProcessor... messageProcessors);
+
+    /**
+     * Helper builder for injecting message processors to be executed
+     * after the ones specified in the flow.
+     * After adding all required message processors #updatePipeline()
+     * must be called.
+     *
+     * @param messageProcessors message processors to be executed after the ones specified in the flow
+     * @return the pipeline injector builder instance
+     */
+    DynamicPipeline injectAfter(MessageProcessor... messageProcessors);
+
+    /**
+     * Injects the message processors added with #injectBefore() and #injectAfter()
+     * If none were added the effect is the same as calling #resetPipeline()
      *
      * @throws MuleException
      */

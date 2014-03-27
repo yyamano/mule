@@ -11,6 +11,7 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mule.MessageExchangePattern.REQUEST_RESPONSE;
 
 import org.mule.MessageExchangePattern;
 import org.mule.api.MuleEvent;
@@ -75,14 +76,14 @@ public class FlowTestCase extends AbstractFlowConstuctTestCase
         flow.initialise();
         flow.start();
         MuleEvent response = directInboundMessageSource.process(MuleTestUtils.getTestEvent("hello",
-            MessageExchangePattern.ONE_WAY, muleContext));
+                                                                                           MessageExchangePattern.ONE_WAY, muleContext));
         Thread.sleep(50);
 
         assertNull(response);
 
         assertEquals("helloabc", sensingMessageProcessor.event.getMessageAsString());
         assertNotSame(Thread.currentThread(), sensingMessageProcessor.event.getMessage().getOutboundProperty(
-            "thread"));
+                "thread"));
     }
 
     @Test
@@ -91,7 +92,7 @@ public class FlowTestCase extends AbstractFlowConstuctTestCase
         flow.initialise();
         flow.start();
         MuleEvent response = directInboundMessageSource.process(MuleTestUtils.getTestEvent("hello",
-            MessageExchangePattern.REQUEST_RESPONSE, muleContext));
+                                                                                           REQUEST_RESPONSE, muleContext));
 
         assertEquals("helloabcdef", response.getMessageAsString());
         assertEquals(Thread.currentThread(), response.getMessage().getOutboundProperty("thread"));
@@ -100,7 +101,7 @@ public class FlowTestCase extends AbstractFlowConstuctTestCase
         // instance
         assertEquals("helloabcdef", sensingMessageProcessor.event.getMessageAsString());
         assertEquals(Thread.currentThread(), sensingMessageProcessor.event.getMessage().getOutboundProperty(
-            "thread"));
+                "thread"));
 
     }
 
@@ -152,23 +153,18 @@ public class FlowTestCase extends AbstractFlowConstuctTestCase
         MessageProcessor appendPre = new StringAppendTransformer("1");
         MessageProcessor appendPost2 = new StringAppendTransformer("4");
 
-        flow.addPreMessageProcessor(appendPre);
-        flow.addPreMessageProcessor(new StringAppendTransformer("2"));
-        flow.addPostMessageProcessor(new StringAppendTransformer("3"));
-        flow.addPostMessageProcessor(appendPost2);
-        flow.updatePipeline();
-
-        MuleEvent response = directInboundMessageSource.process(MuleTestUtils.getTestEvent("hello",
-                                                       MessageExchangePattern.REQUEST_RESPONSE, muleContext));
+        flow.injectBefore(appendPre, new StringAppendTransformer("2"))
+                .injectAfter(new StringAppendTransformer("3"), appendPost2)
+                .updatePipeline();
+        MuleEvent response = directInboundMessageSource.process(MuleTestUtils.getTestEvent("hello", REQUEST_RESPONSE, muleContext));
         assertEquals("hello12abcdef34", response.getMessageAsString());
 
-        flow.addPreMessageProcessor(new StringAppendTransformer("2"));
-        flow.addPostMessageProcessor(new StringAppendTransformer("3"));
-        flow.updatePipeline();
-
-        response = directInboundMessageSource.process(MuleTestUtils.getTestEvent("hello",
-                                                       MessageExchangePattern.REQUEST_RESPONSE, muleContext));
+        flow.injectBefore(new StringAppendTransformer("2")).injectAfter(new StringAppendTransformer("3")).updatePipeline();
+        response = directInboundMessageSource.process(MuleTestUtils.getTestEvent("hello", REQUEST_RESPONSE, muleContext));
         assertEquals("hello2abcdef3", response.getMessageAsString());
 
+        flow.resetPipeline();
+        response = directInboundMessageSource.process(MuleTestUtils.getTestEvent("hello", REQUEST_RESPONSE, muleContext));
+        assertEquals("helloabcdef", response.getMessageAsString());
     }
 }

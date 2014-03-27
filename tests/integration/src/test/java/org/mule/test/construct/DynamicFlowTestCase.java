@@ -19,6 +19,9 @@ import org.mule.construct.Flow;
 import org.mule.tck.junit4.FunctionalTestCase;
 import org.mule.transformer.simple.StringAppendTransformer;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Test;
 
 public class DynamicFlowTestCase extends FunctionalTestCase
@@ -38,14 +41,11 @@ public class DynamicFlowTestCase extends FunctionalTestCase
         assertEquals("source->(static)", result.getPayloadAsString());
 
         Flow flow = getFlow("dynamicFlow");
-        flow.addPreMessageProcessor(new StringAppendTransformer("(pre)"));
-        flow.updatePipeline();
+        flow.injectBefore(new StringAppendTransformer("(pre)")).updatePipeline();
         result = client.send("vm://dynamic", "source->", null);
         assertEquals("source->(pre)(static)", result.getPayloadAsString());
 
-        flow.addPreMessageProcessor(new StringAppendTransformer("(pre1)"));
-        flow.addPreMessageProcessor(new StringAppendTransformer("(pre2)"));
-        flow.updatePipeline();
+        flow.injectBefore(new StringAppendTransformer("(pre1)"), new StringAppendTransformer("(pre2)")).updatePipeline();
         result = client.send("vm://dynamic", "source->", null);
         assertEquals("source->(pre1)(pre2)(static)", result.getPayloadAsString());
     }
@@ -56,16 +56,15 @@ public class DynamicFlowTestCase extends FunctionalTestCase
         MuleClient client = muleContext.getClient();
 
         Flow flow = getFlow("dynamicFlow");
-        flow.addPreMessageProcessor(new StringAppendTransformer("(pre)"));
-        flow.addPostMessageProcessor(new StringAppendTransformer("(post)"));
-        flow.updatePipeline();
+        flow.injectBefore(new StringAppendTransformer("(pre)"))
+                .injectAfter(new StringAppendTransformer("(post)"))
+                .updatePipeline();
         MuleMessage result = client.send("vm://dynamic", "source->", null);
         assertEquals("source->(pre)(static)(post)", result.getPayloadAsString());
 
-        flow.addPreMessageProcessor(new StringAppendTransformer("(pre)"));
-        flow.addPostMessageProcessor(new StringAppendTransformer("(post1)"));
-        flow.addPostMessageProcessor(new StringAppendTransformer("(post2)"));
-        flow.updatePipeline();
+        flow.injectBefore(new StringAppendTransformer("(pre)"))
+                .injectAfter(new StringAppendTransformer("(post1)"), new StringAppendTransformer("(post2)"))
+                .updatePipeline();
         result = client.send("vm://dynamic", "source->", null);
         assertEquals("source->(pre)(static)(post1)(post2)", result.getPayloadAsString());
     }
@@ -92,10 +91,12 @@ public class DynamicFlowTestCase extends FunctionalTestCase
     public void exceptionOnInjectedMessageProcessor() throws Exception
     {
         MuleClient client = muleContext.getClient();
+        List<MessageProcessor> preList = new ArrayList<MessageProcessor>();
+        List<MessageProcessor> postList = new ArrayList<MessageProcessor>();
 
         Flow flow = getFlow("exceptionFlow");
-        flow.addPreMessageProcessor(new StringAppendTransformer("(pre)"));
-        flow.addPreMessageProcessor(new MessageProcessor()
+        preList.add(new StringAppendTransformer("(pre)"));
+        preList.add(new MessageProcessor()
         {
             @Override
             public MuleEvent process(MuleEvent event) throws MuleException
@@ -103,10 +104,11 @@ public class DynamicFlowTestCase extends FunctionalTestCase
                 throw new RuntimeException("force exception!");
             }
         });
-        flow.addPostMessageProcessor(new StringAppendTransformer("(post)"));
-        flow.updatePipeline();
+        postList.add(new StringAppendTransformer("(post)"));
+        flow.updatePipeline(preList, postList);
         MuleMessage result = client.send("vm://exception", "source->", null);
-        assertEquals("source->(pre)(handled)", result.getPayloadAsString());    }
+        assertEquals("source->(pre)(handled)", result.getPayloadAsString());
+    }
 
     public static class Component implements Callable
     {
@@ -117,8 +119,7 @@ public class DynamicFlowTestCase extends FunctionalTestCase
         public Object onCall(MuleEventContext eventContext) throws Exception
         {
             Flow flow = (Flow) eventContext.getMuleContext().getRegistry().lookupFlowConstruct("dynamicComponentFlow");
-            flow.addPreMessageProcessor(new StringAppendTransformer("chain update #" + ++count));
-            flow.updatePipeline();
+            flow.injectBefore(new StringAppendTransformer("chain update #" + ++count)).updatePipeline();
             return eventContext.getMessage();
         }
     }

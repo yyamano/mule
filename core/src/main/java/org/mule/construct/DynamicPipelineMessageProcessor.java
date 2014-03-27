@@ -20,13 +20,11 @@ import org.mule.processor.chain.DefaultMessageProcessorChainBuilder;
 import org.mule.processor.chain.SimpleMessageProcessorChain;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-class DynamicPipelineMessageProcessor extends AbstractInterceptingMessageProcessor implements DynamicPipeline
+public class DynamicPipelineMessageProcessor extends AbstractInterceptingMessageProcessor implements DynamicPipeline
 {
-
-    private List<MessageProcessor> preMessageProcessors = new ArrayList<MessageProcessor>();
-    private List<MessageProcessor> postMessageProcessors = new ArrayList<MessageProcessor>();
 
     private AbstractMessageProcessorChain preChain;
     private AbstractMessageProcessorChain postChain;
@@ -64,19 +62,7 @@ class DynamicPipelineMessageProcessor extends AbstractInterceptingMessageProcess
     }
 
     @Override
-    public void addPreMessageProcessor(MessageProcessor messageProcessor) throws MuleException
-    {
-        preMessageProcessors.add(messageProcessor);
-    }
-
-    @Override
-    public void addPostMessageProcessor(MessageProcessor messageProcessor) throws MuleException
-    {
-        postMessageProcessors.add(messageProcessor);
-    }
-
-    @Override
-    public void updatePipeline() throws MuleException
+    public void updatePipeline(List<MessageProcessor> preMessageProcessors, List<MessageProcessor> postMessageProcessors) throws MuleException
     {
         //build new dynamic chains
         DefaultMessageProcessorChainBuilder builder = new DefaultMessageProcessorChainBuilder(flow);
@@ -88,6 +74,8 @@ class DynamicPipelineMessageProcessor extends AbstractInterceptingMessageProcess
 
         Lifecycle preChainOld = preChain;
         Lifecycle postChainOld = postChain;
+        preChain = new SimpleMessageProcessorChain(preMessageProcessors);
+        postChain = new SimpleMessageProcessorChain(postMessageProcessors);
         initDynamicChains();
 
         //hook chain as last step to avoid synchronization
@@ -97,10 +85,33 @@ class DynamicPipelineMessageProcessor extends AbstractInterceptingMessageProcess
         disposeDynamicChains(preChainOld, postChainOld);
     }
 
+    @Override
+    public void resetPipeline() throws MuleException
+    {
+        List<MessageProcessor> emptyList = new ArrayList<MessageProcessor>();
+        updatePipeline(emptyList, emptyList);
+    }
+
+    @Override
+    public DynamicPipeline injectBefore(MessageProcessor... messageProcessors)
+    {
+        return new Builder(this).injectBefore(messageProcessors);
+    }
+
+    @Override
+    public DynamicPipeline injectAfter(MessageProcessor... messageProcessors)
+    {
+        return new Builder(this).injectAfter(messageProcessors);
+    }
+
+    @Override
+    public void updatePipeline() throws MuleException
+    {
+        resetPipeline();
+    }
+
     private void initDynamicChains() throws InitialisationException
     {
-        preChain = new SimpleMessageProcessorChain(preMessageProcessors);
-        postChain = new SimpleMessageProcessorChain(postMessageProcessors);
         for (Lifecycle chain : new Lifecycle[] {preChain, postChain})
         {
             if (chain != null)
@@ -121,8 +132,49 @@ class DynamicPipelineMessageProcessor extends AbstractInterceptingMessageProcess
                 chain.dispose();
             }
         }
-        preMessageProcessors.clear();
-        postMessageProcessors.clear();
     }
 
+    private static class Builder implements DynamicPipeline
+    {
+        private DynamicPipelineMessageProcessor dynamicPipelineMessageProcessor;
+        private List<MessageProcessor> preList = new ArrayList<MessageProcessor>();
+        private List<MessageProcessor> postList = new ArrayList<MessageProcessor>();
+
+        private Builder(DynamicPipelineMessageProcessor dynamicPipelineMessageProcessor)
+        {
+            this.dynamicPipelineMessageProcessor = dynamicPipelineMessageProcessor;
+        }
+
+        @Override
+        public void updatePipeline(List<MessageProcessor> preMessageProcessors, List<MessageProcessor> postMessageProcessors) throws MuleException
+        {
+            dynamicPipelineMessageProcessor.updatePipeline(preMessageProcessors, postMessageProcessors);
+        }
+
+        @Override
+        public void resetPipeline() throws MuleException
+        {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public DynamicPipeline injectBefore(MessageProcessor... messageProcessors)
+        {
+            Collections.addAll(preList, messageProcessors);
+            return this;
+        }
+
+        @Override
+        public DynamicPipeline injectAfter(MessageProcessor... messageProcessors)
+        {
+            Collections.addAll(postList, messageProcessors);
+            return this;
+        }
+
+        @Override
+        public void updatePipeline() throws MuleException
+        {
+            dynamicPipelineMessageProcessor.updatePipeline(preList, postList);
+        }
+    }
 }
