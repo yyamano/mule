@@ -110,7 +110,7 @@ public class DynamicPipelineMessageProcessor extends AbstractInterceptingMessage
         resetPipeline();
     }
 
-    private void initDynamicChains() throws InitialisationException
+    private void initDynamicChains() throws MuleException
     {
         for (Lifecycle chain : new Lifecycle[] {preChain, postChain})
         {
@@ -118,6 +118,7 @@ public class DynamicPipelineMessageProcessor extends AbstractInterceptingMessage
             {
                 flow.injectFlowConstructMuleContext(chain);
                 flow.initialiseIfInitialisable(chain);
+                flow.startIfStartable(chain);
             }
         }
     }

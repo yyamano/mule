@@ -7,13 +7,20 @@
 package org.mule.test.construct;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
+import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleEventContext;
 import org.mule.api.MuleException;
 import org.mule.api.MuleMessage;
 import org.mule.api.client.MuleClient;
+import org.mule.api.construct.FlowConstruct;
+import org.mule.api.construct.FlowConstructAware;
+import org.mule.api.context.MuleContextAware;
 import org.mule.api.lifecycle.Callable;
+import org.mule.api.lifecycle.InitialisationException;
+import org.mule.api.lifecycle.Lifecycle;
 import org.mule.api.processor.MessageProcessor;
 import org.mule.construct.Flow;
 import org.mule.tck.junit4.FunctionalTestCase;
@@ -22,10 +29,13 @@ import org.mule.transformer.simple.StringAppendTransformer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.Before;
 import org.junit.Test;
 
 public class DynamicFlowTestCase extends FunctionalTestCase
 {
+
+    private MuleClient client;
 
     @Override
     protected String getConfigFile()
@@ -33,10 +43,15 @@ public class DynamicFlowTestCase extends FunctionalTestCase
         return "org/mule/test/construct/dynamic-flow.xml";
     }
 
+    @Before
+    public void before()
+    {
+        client = muleContext.getClient();
+    }
+
     @Test
     public void addPreMessageProccesor() throws Exception
     {
-        MuleClient client = muleContext.getClient();
         MuleMessage result = client.send("vm://dynamic", "source->", null);
         assertEquals("source->(static)", result.getPayloadAsString());
 
@@ -53,8 +68,6 @@ public class DynamicFlowTestCase extends FunctionalTestCase
     @Test
     public void addPrePostMessageProccesor() throws Exception
     {
-        MuleClient client = muleContext.getClient();
-
         Flow flow = getFlow("dynamicFlow");
         flow.injectBefore(new StringAppendTransformer("(pre)"))
                 .injectAfter(new StringAppendTransformer("(post)"))
@@ -72,8 +85,6 @@ public class DynamicFlowTestCase extends FunctionalTestCase
     @Test
     public void dynamicComponent() throws Exception
     {
-        MuleClient client = muleContext.getClient();
-
         //invocation #1
         MuleMessage result = client.send("vm://dynamicComponent", "source->", null);
         assertEquals("source->(static)", result.getPayloadAsString());
@@ -90,7 +101,6 @@ public class DynamicFlowTestCase extends FunctionalTestCase
     @Test
     public void exceptionOnInjectedMessageProcessor() throws Exception
     {
-        MuleClient client = muleContext.getClient();
         List<MessageProcessor> preList = new ArrayList<MessageProcessor>();
         List<MessageProcessor> postList = new ArrayList<MessageProcessor>();
 
@@ -110,11 +120,51 @@ public class DynamicFlowTestCase extends FunctionalTestCase
         assertEquals("source->(pre)(handled)", result.getPayloadAsString());
     }
 
+    @Test
+    public void applyLifecycle() throws Exception
+    {
+        StringBuilder expected = new StringBuilder();
+
+        Flow flow = getFlow("dynamicFlow");
+        LifecycleMessageProcessor lifecycleMessageProcessor = new LifecycleMessageProcessor();
+        flow.injectBefore(lifecycleMessageProcessor).updatePipeline();
+        MuleMessage result = client.send("vm://dynamic", "source->", null);
+        assertEquals("source->(pre)(static)", result.getPayloadAsString());
+        assertEquals(expected.append("ISP").toString(), lifecycleMessageProcessor.getSteps());
+
+        result = client.send("vm://dynamic", "source->", null);
+        assertEquals("source->(pre)(static)", result.getPayloadAsString());
+        assertEquals(expected.append("P").toString(), lifecycleMessageProcessor.getSteps());
+
+        flow.resetPipeline();
+        assertEquals(expected.append("TD").toString(), lifecycleMessageProcessor.getSteps());
+
+        result = client.send("vm://dynamic", "source->", null);
+        assertEquals("source->(static)", result.getPayloadAsString());
+        assertEquals(expected.toString(), lifecycleMessageProcessor.getSteps());
+    }
+
+    @Test
+    public void applyAwareInterfaces() throws Exception
+    {
+        Flow flow = getFlow("dynamicFlow");
+        UberAwareMessageProcessor awareMessageProcessor = new UberAwareMessageProcessor();
+        flow.injectBefore(awareMessageProcessor).updatePipeline();
+        MuleMessage result = client.send("vm://dynamic", "source->", null);
+        assertEquals("source->(pre)(static)", result.getPayloadAsString());
+        assertNotNull(awareMessageProcessor.getFlowConstruct());
+        assertNotNull(awareMessageProcessor.getMuleContext());
+    }
+
+    private static Flow getFlow(String flowName) throws MuleException
+    {
+        return (Flow) muleContext.getRegistry().lookupFlowConstruct(flowName);
+    }
+
     public static class Component implements Callable
     {
 
         private int count;
-
         @Override
         public Object onCall(MuleEventContext eventContext) throws Exception
         {
@@ -122,10 +172,88 @@ public class DynamicFlowTestCase extends FunctionalTestCase
             flow.injectBefore(new StringAppendTransformer("chain update #" + ++count)).updatePipeline();
             return eventContext.getMessage();
         }
+
     }
 
-    private static Flow getFlow(String flowName) throws MuleException
+    private static class LifecycleMessageProcessor implements MessageProcessor, Lifecycle
     {
-        return (Flow) muleContext.getRegistry().lookupFlowConstruct(flowName);
+
+        private StringBuffer steps = new StringBuffer();
+
+        @Override
+        public void dispose()
+        {
+            steps.append("D");
+        }
+
+        @Override
+        public void initialise() throws InitialisationException
+        {
+            steps.append("I");
+        }
+
+        @Override
+        public MuleEvent process(MuleEvent event) throws MuleException
+        {
+            steps.append("P");
+            event.getMessage().setPayload(event.getMessage().getPayload() + "(pre)");
+            return event;
+        }
+
+        @Override
+        public void start() throws MuleException
+        {
+            steps.append("S");
+
+        }
+
+        @Override
+        public void stop() throws MuleException
+        {
+            steps.append("T");
+        }
+
+        public String getSteps()
+        {
+            return steps.toString();
+        }
     }
+
+    private static class UberAwareMessageProcessor implements MessageProcessor, MuleContextAware, FlowConstructAware
+    {
+
+        private FlowConstruct flowConstruct;
+        private MuleContext muleContext;
+
+        @Override
+        public MuleEvent process(MuleEvent event) throws MuleException
+        {
+            event.getMessage().setPayload(event.getMessage().getPayload() + "(pre)");
+            return event;
+        }
+
+        @Override
+        public void setFlowConstruct(FlowConstruct flowConstruct)
+        {
+
+            this.flowConstruct = flowConstruct;
+        }
+
+        @Override
+        public void setMuleContext(MuleContext muleContext)
+        {
+            this.muleContext = muleContext;
+        }
+
+        public FlowConstruct getFlowConstruct()
+        {
+            return flowConstruct;
+        }
+
+        public MuleContext getMuleContext()
+        {
+            return muleContext;
+        }
+    }
+
 }
