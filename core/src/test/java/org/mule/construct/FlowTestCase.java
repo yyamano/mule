@@ -155,11 +155,11 @@ public class FlowTestCase extends AbstractFlowConstuctTestCase
 
         flow.injectBefore(appendPre, new StringAppendTransformer("2"))
                 .injectAfter(new StringAppendTransformer("3"), appendPost2)
-                .updatePipeline();
+                .resetAndUpdatePipeline();
         MuleEvent response = directInboundMessageSource.process(MuleTestUtils.getTestEvent("hello", REQUEST_RESPONSE, muleContext));
         assertEquals("hello12abcdef34", response.getMessageAsString());
 
-        flow.injectBefore(new StringAppendTransformer("2")).injectAfter(new StringAppendTransformer("3")).updatePipeline();
+        flow.injectBefore(new StringAppendTransformer("2")).injectAfter(new StringAppendTransformer("3")).resetAndUpdatePipeline();
         response = directInboundMessageSource.process(MuleTestUtils.getTestEvent("hello", REQUEST_RESPONSE, muleContext));
         assertEquals("hello2abcdef3", response.getMessageAsString());
 

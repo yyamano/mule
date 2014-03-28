@@ -24,15 +24,16 @@ public interface DynamicPipeline
 
     /**
      * Updates the pipeline injecting the lists of preMessageProcessors and postMessageProcessors.
+     * In case there was a previous dynamic chain, the message processors are disposed.
      *
      * @param preMessageProcessors message processors to be executed before the ones specified in the flow
      * @param postMessageProcessors message processors to be executed after the ones specified in the flow
      * @throws MuleException
      */
-    void updatePipeline(List<MessageProcessor> preMessageProcessors, List<MessageProcessor> postMessageProcessors) throws MuleException;
+    void resetAndUpdatePipeline(List<MessageProcessor> preMessageProcessors, List<MessageProcessor> postMessageProcessors) throws MuleException;
 
     /**
-     * Removes all injected message processors.
+     * Removes and disposes all injected message processors.
      *
      * @throws MuleException
      */
@@ -41,7 +42,7 @@ public interface DynamicPipeline
     /**
      * Helper builder for injecting message processors to be executed
      * before the ones specified in the flow.
-     * After adding all required message processors #updatePipeline()
+     * After adding all required message processors {@link #resetAndUpdatePipeline()}
      * must be called.
      *
      * @param messageProcessors message processors to be executed before the ones specified in the flow
@@ -52,7 +53,7 @@ public interface DynamicPipeline
     /**
      * Helper builder for injecting message processors to be executed
      * after the ones specified in the flow.
-     * After adding all required message processors #updatePipeline()
+     * After adding all required message processors {@link #resetAndUpdatePipeline()}
      * must be called.
      *
      * @param messageProcessors message processors to be executed after the ones specified in the flow
@@ -61,11 +62,11 @@ public interface DynamicPipeline
     DynamicPipeline injectAfter(MessageProcessor... messageProcessors);
 
     /**
-     * Injects the message processors added with #injectBefore() and #injectAfter()
-     * If none were added the effect is the same as calling #resetPipeline()
+     * Injects the message processors added with {@link #injectBefore(MessageProcessor...)} and {@link #injectAfter(MessageProcessor...)}
+     * If none were added the effect is the same as calling {@link #resetPipeline()}
      *
      * @throws MuleException
      */
-    void updatePipeline() throws MuleException;
+    void resetAndUpdatePipeline() throws MuleException;
 
 }

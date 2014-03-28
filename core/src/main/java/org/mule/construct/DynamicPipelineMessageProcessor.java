@@ -8,7 +8,6 @@ package org.mule.construct;
 
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
-import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.lifecycle.Lifecycle;
 import org.mule.api.processor.DynamicPipeline;
 import org.mule.api.processor.InterceptingMessageProcessor;
@@ -62,7 +61,7 @@ public class DynamicPipelineMessageProcessor extends AbstractInterceptingMessage
     }
 
     @Override
-    public void updatePipeline(List<MessageProcessor> preMessageProcessors, List<MessageProcessor> postMessageProcessors) throws MuleException
+    public void resetAndUpdatePipeline(List<MessageProcessor> preMessageProcessors, List<MessageProcessor> postMessageProcessors) throws MuleException
     {
         //build new dynamic chains
         DefaultMessageProcessorChainBuilder builder = new DefaultMessageProcessorChainBuilder(flow);
@@ -89,7 +88,7 @@ public class DynamicPipelineMessageProcessor extends AbstractInterceptingMessage
     public void resetPipeline() throws MuleException
     {
         List<MessageProcessor> emptyList = new ArrayList<MessageProcessor>();
-        updatePipeline(emptyList, emptyList);
+        resetAndUpdatePipeline(emptyList, emptyList);
     }
 
     @Override
@@ -105,7 +104,7 @@ public class DynamicPipelineMessageProcessor extends AbstractInterceptingMessage
     }
 
     @Override
-    public void updatePipeline() throws MuleException
+    public void resetAndUpdatePipeline() throws MuleException
     {
         resetPipeline();
     }
@@ -147,9 +146,9 @@ public class DynamicPipelineMessageProcessor extends AbstractInterceptingMessage
         }
 
         @Override
-        public void updatePipeline(List<MessageProcessor> preMessageProcessors, List<MessageProcessor> postMessageProcessors) throws MuleException
+        public void resetAndUpdatePipeline(List<MessageProcessor> preMessageProcessors, List<MessageProcessor> postMessageProcessors) throws MuleException
         {
-            dynamicPipelineMessageProcessor.updatePipeline(preMessageProcessors, postMessageProcessors);
+            dynamicPipelineMessageProcessor.resetAndUpdatePipeline(preMessageProcessors, postMessageProcessors);
         }
 
         @Override
@@ -173,9 +172,9 @@ public class DynamicPipelineMessageProcessor extends AbstractInterceptingMessage
         }
 
         @Override
-        public void updatePipeline() throws MuleException
+        public void resetAndUpdatePipeline() throws MuleException
         {
-            dynamicPipelineMessageProcessor.updatePipeline(preList, postList);
+            dynamicPipelineMessageProcessor.resetAndUpdatePipeline(preList, postList);
         }
     }
 }
