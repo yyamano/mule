@@ -76,14 +76,14 @@ public class FlowTestCase extends AbstractFlowConstuctTestCase
         flow.initialise();
         flow.start();
         MuleEvent response = directInboundMessageSource.process(MuleTestUtils.getTestEvent("hello",
-                                                                                           MessageExchangePattern.ONE_WAY, muleContext));
+            MessageExchangePattern.ONE_WAY, muleContext));
         Thread.sleep(50);
 
         assertNull(response);
 
         assertEquals("helloabc", sensingMessageProcessor.event.getMessageAsString());
         assertNotSame(Thread.currentThread(), sensingMessageProcessor.event.getMessage().getOutboundProperty(
-                "thread"));
+            "thread"));
     }
 
     @Test
@@ -92,7 +92,7 @@ public class FlowTestCase extends AbstractFlowConstuctTestCase
         flow.initialise();
         flow.start();
         MuleEvent response = directInboundMessageSource.process(MuleTestUtils.getTestEvent("hello",
-                                                                                           REQUEST_RESPONSE, muleContext));
+            REQUEST_RESPONSE, muleContext));
 
         assertEquals("helloabcdef", response.getMessageAsString());
         assertEquals(Thread.currentThread(), response.getMessage().getOutboundProperty("thread"));
@@ -101,7 +101,7 @@ public class FlowTestCase extends AbstractFlowConstuctTestCase
         // instance
         assertEquals("helloabcdef", sensingMessageProcessor.event.getMessageAsString());
         assertEquals(Thread.currentThread(), sensingMessageProcessor.event.getMessage().getOutboundProperty(
-                "thread"));
+            "thread"));
 
     }
 
