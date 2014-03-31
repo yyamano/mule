@@ -26,23 +26,25 @@ public interface DynamicPipeline
      * Updates the pipeline injecting the lists of preMessageProcessors and postMessageProcessors.
      * In case there was a previous dynamic chain, the message processors are disposed.
      *
+     * @param id dynamic pipeline ID
      * @param preMessageProcessors message processors to be executed before the ones specified in the flow
      * @param postMessageProcessors message processors to be executed after the ones specified in the flow
      * @throws MuleException
      */
-    void resetAndUpdatePipeline(List<MessageProcessor> preMessageProcessors, List<MessageProcessor> postMessageProcessors) throws MuleException;
+    String resetAndUpdatePipeline(String id, List<MessageProcessor> preMessageProcessors, List<MessageProcessor> postMessageProcessors) throws MuleException;
 
     /**
      * Removes and disposes all injected message processors.
      *
      * @throws MuleException
+     * @param id dynamic pipeline ID
      */
-    void resetPipeline() throws MuleException;
+    String resetPipeline(String id) throws MuleException;
 
     /**
      * Helper builder for injecting message processors to be executed
      * before the ones specified in the flow.
-     * After adding all required message processors {@link #resetAndUpdatePipeline()}
+     * After adding all required message processors {@link #resetAndUpdatePipeline(String)}
      * must be called.
      *
      * @param messageProcessors message processors to be executed before the ones specified in the flow
@@ -53,7 +55,7 @@ public interface DynamicPipeline
     /**
      * Helper builder for injecting message processors to be executed
      * after the ones specified in the flow.
-     * After adding all required message processors {@link #resetAndUpdatePipeline()}
+     * After adding all required message processors {@link #resetAndUpdatePipeline(String)}
      * must be called.
      *
      * @param messageProcessors message processors to be executed after the ones specified in the flow
@@ -63,10 +65,11 @@ public interface DynamicPipeline
 
     /**
      * Injects the message processors added with {@link #injectBefore(MessageProcessor...)} and {@link #injectAfter(MessageProcessor...)}
-     * If none were added the effect is the same as calling {@link #resetPipeline()}
+     * If none were added the effect is the same as calling {@link #resetPipeline(String)}
      *
      * @throws MuleException
+     * @param id dynamic pipeline ID
      */
-    void resetAndUpdatePipeline() throws MuleException;
+    String resetAndUpdatePipeline(String id) throws MuleException;
 
 }

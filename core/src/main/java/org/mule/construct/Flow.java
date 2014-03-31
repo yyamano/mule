@@ -194,15 +194,15 @@ public class Flow extends AbstractPipeline implements MessageProcessor, StageNam
     }
 
     @Override
-    public void resetAndUpdatePipeline(List<MessageProcessor> preMessageProcessors, List<MessageProcessor> postMessageProcessors) throws MuleException
+    public String resetAndUpdatePipeline(String id, List<MessageProcessor> preMessageProcessors, List<MessageProcessor> postMessageProcessors) throws MuleException
     {
-        dynamicPipelineMessageProcessor.resetAndUpdatePipeline(preMessageProcessors, postMessageProcessors);
+        return dynamicPipelineMessageProcessor.resetAndUpdatePipeline(id, preMessageProcessors, postMessageProcessors);
     }
 
     @Override
-    public void resetPipeline() throws MuleException
+    public String resetPipeline(String id) throws MuleException
     {
-        dynamicPipelineMessageProcessor.resetPipeline();
+        return dynamicPipelineMessageProcessor.resetPipeline(id);
     }
 
     @Override
@@ -218,8 +218,8 @@ public class Flow extends AbstractPipeline implements MessageProcessor, StageNam
     }
 
     @Override
-    public void resetAndUpdatePipeline() throws MuleException
+    public String resetAndUpdatePipeline(String id) throws MuleException
     {
-        dynamicPipelineMessageProcessor.resetAndUpdatePipeline();
+        return dynamicPipelineMessageProcessor.resetAndUpdatePipeline(id);
     }
 }

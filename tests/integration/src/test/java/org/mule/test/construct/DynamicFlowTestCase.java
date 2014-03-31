@@ -21,6 +21,7 @@ import org.mule.api.context.MuleContextAware;
 import org.mule.api.lifecycle.Callable;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.lifecycle.Lifecycle;
+import org.mule.api.processor.DynamicPipelineException;
 import org.mule.api.processor.MessageProcessor;
 import org.mule.construct.Flow;
 import org.mule.tck.junit4.FunctionalTestCase;
@@ -56,11 +57,11 @@ public class DynamicFlowTestCase extends FunctionalTestCase
         assertEquals("source->(static)", result.getPayloadAsString());
 
         Flow flow = getFlow("dynamicFlow");
-        flow.injectBefore(new StringAppendTransformer("(pre)")).resetAndUpdatePipeline();
+        String pipelineId = flow.injectBefore(new StringAppendTransformer("(pre)")).resetAndUpdatePipeline(null);
         result = client.send("vm://dynamic", "source->", null);
         assertEquals("source->(pre)(static)", result.getPayloadAsString());
 
-        flow.injectBefore(new StringAppendTransformer("(pre1)"), new StringAppendTransformer("(pre2)")).resetAndUpdatePipeline();
+        flow.injectBefore(new StringAppendTransformer("(pre1)"), new StringAppendTransformer("(pre2)")).resetAndUpdatePipeline(pipelineId);
         result = client.send("vm://dynamic", "source->", null);
         assertEquals("source->(pre1)(pre2)(static)", result.getPayloadAsString());
     }
@@ -69,15 +70,15 @@ public class DynamicFlowTestCase extends FunctionalTestCase
     public void addPrePostMessageProccesor() throws Exception
     {
         Flow flow = getFlow("dynamicFlow");
-        flow.injectBefore(new StringAppendTransformer("(pre)"))
+        String pipelineId = flow.injectBefore(new StringAppendTransformer("(pre)"))
                 .injectAfter(new StringAppendTransformer("(post)"))
-                .resetAndUpdatePipeline();
+                .resetAndUpdatePipeline(null);
         MuleMessage result = client.send("vm://dynamic", "source->", null);
         assertEquals("source->(pre)(static)(post)", result.getPayloadAsString());
 
         flow.injectBefore(new StringAppendTransformer("(pre)"))
                 .injectAfter(new StringAppendTransformer("(post1)"), new StringAppendTransformer("(post2)"))
-                .resetAndUpdatePipeline();
+                .resetAndUpdatePipeline(pipelineId);
         result = client.send("vm://dynamic", "source->", null);
         assertEquals("source->(pre)(static)(post1)(post2)", result.getPayloadAsString());
     }
@@ -115,7 +116,7 @@ public class DynamicFlowTestCase extends FunctionalTestCase
             }
         });
         postList.add(new StringAppendTransformer("(post)"));
-        flow.resetAndUpdatePipeline(preList, postList);
+        flow.resetAndUpdatePipeline(null, preList, postList);
         MuleMessage result = client.send("vm://exception", "source->", null);
         assertEquals("source->(pre)(handled)", result.getPayloadAsString());
     }
@@ -127,7 +128,7 @@ public class DynamicFlowTestCase extends FunctionalTestCase
 
         Flow flow = getFlow("dynamicFlow");
         LifecycleMessageProcessor lifecycleMessageProcessor = new LifecycleMessageProcessor();
-        flow.injectBefore(lifecycleMessageProcessor).resetAndUpdatePipeline();
+        String pipelineId = flow.injectBefore(lifecycleMessageProcessor).resetAndUpdatePipeline(null);
         MuleMessage result = client.send("vm://dynamic", "source->", null);
         assertEquals("source->(pre)(static)", result.getPayloadAsString());
         assertEquals(expected.append("ISP").toString(), lifecycleMessageProcessor.getSteps());
@@ -136,7 +137,7 @@ public class DynamicFlowTestCase extends FunctionalTestCase
         assertEquals("source->(pre)(static)", result.getPayloadAsString());
         assertEquals(expected.append("P").toString(), lifecycleMessageProcessor.getSteps());
 
-        flow.resetPipeline();
+        flow.resetPipeline(pipelineId);
         assertEquals(expected.append("TD").toString(), lifecycleMessageProcessor.getSteps());
 
         result = client.send("vm://dynamic", "source->", null);
@@ -149,11 +150,31 @@ public class DynamicFlowTestCase extends FunctionalTestCase
     {
         Flow flow = getFlow("dynamicFlow");
         UberAwareMessageProcessor awareMessageProcessor = new UberAwareMessageProcessor();
-        flow.injectBefore(awareMessageProcessor).resetAndUpdatePipeline();
+        flow.injectBefore(awareMessageProcessor).resetAndUpdatePipeline(null);
         MuleMessage result = client.send("vm://dynamic", "source->", null);
         assertEquals("source->(pre)(static)", result.getPayloadAsString());
         assertNotNull(awareMessageProcessor.getFlowConstruct());
         assertNotNull(awareMessageProcessor.getMuleContext());
+    }
+
+    @Test (expected = DynamicPipelineException.class)
+    public void invalidInitialPipelineId() throws Exception
+    {
+        getFlow("dynamicFlow").resetAndUpdatePipeline("invalid");
+    }
+
+    @Test (expected = DynamicPipelineException.class)
+    public void invalidNullPipelineId() throws Exception
+    {
+        getFlow("dynamicFlow").resetAndUpdatePipeline(null);
+        getFlow("dynamicFlow").resetPipeline(null);
+    }
+
+    @Test (expected = DynamicPipelineException.class)
+    public void invalidPipelineId() throws Exception
+    {
+        String id = getFlow("dynamicFlow").resetAndUpdatePipeline(null);
+        getFlow("dynamicFlow").resetPipeline(id + "x");
     }
 
     private static Flow getFlow(String flowName) throws MuleException
@@ -163,13 +184,14 @@ public class DynamicFlowTestCase extends FunctionalTestCase
 
     public static class Component implements Callable
     {
-
+        private String pipelineId;
         private int count;
+
         @Override
         public Object onCall(MuleEventContext eventContext) throws Exception
         {
             Flow flow = (Flow) eventContext.getMuleContext().getRegistry().lookupFlowConstruct("dynamicComponentFlow");
-            flow.injectBefore(new StringAppendTransformer("chain update #" + ++count)).resetAndUpdatePipeline();
+            pipelineId = flow.injectBefore(new StringAppendTransformer("chain update #" + ++count)).resetAndUpdatePipeline(pipelineId);
             return eventContext.getMessage();
         }
 
