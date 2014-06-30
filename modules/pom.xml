@@ -18,39 +18,39 @@
     </properties>
 
     <modules>
-        <module>atom</module>
+        <!--<module>atom</module>-->
         <module>annotations</module>
-        <module>all-modules</module>
-        <module>builders</module>
-        <module>boot</module>
-        <module>bpm</module>
-        <module>cxf</module>
-        <module>db</module>
-        <module>devkit-support</module>
-        <module>drools</module>
-        <module>launcher</module>
-        <module>client</module>
-        <module>guice</module>
-        <module>jaas</module>
-        <module>jboss-transactions</module>
-        <module>jbpm</module>
-        <module>jersey</module>
-        <module>json</module>
-        <module>logging</module>
-        <module>management</module>
-        <module>ognl</module>
-        <module>pgp</module>
-        <module>reboot</module>
-        <module>rss</module>
-        <module>schedulers</module>
-        <module>scripting</module>
-        <module>spring-extras</module>
+        <!--<module>all-modules</module>-->
+        <!--<module>builders</module>-->
+        <!--<module>boot</module>-->
+        <!--<module>bpm</module>-->
+        <!--<module>cxf</module>-->
+        <!--<module>db</module>-->
+        <!--<module>devkit-support</module>-->
+        <!--<module>drools</module>-->
+        <!--<module>launcher</module>-->
+        <!--<module>client</module>-->
+        <!--<module>guice</module>-->
+        <!--<module>jaas</module>-->
+        <!--<module>jboss-transactions</module>-->
+        <!--<module>jbpm</module>-->
+        <!--<module>jersey</module>-->
+        <!--<module>json</module>-->
+        <!--<module>logging</module>-->
+        <!--<module>management</module>-->
+        <!--<module>ognl</module>-->
+        <!--<module>pgp</module>-->
+        <!--<module>reboot</module>-->
+        <!--<module>rss</module>-->
+        <!--<module>schedulers</module>-->
+        <!--<module>scripting</module>-->
+        <!--<module>spring-extras</module>-->
         <module>spring-config</module>
-        <module>spring-security</module>
-        <module>sxc</module>
-        <module>tomcat</module>
-        <module>ws</module>
-        <module>xml</module>
+        <!--<module>spring-security</module>-->
+        <!--<module>sxc</module>-->
+        <!--<module>tomcat</module>-->
+        <!--<module>ws</module>-->
+        <!--<module>xml</module>-->
     </modules>
 
     <build>

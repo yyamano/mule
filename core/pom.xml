@@ -9,7 +9,7 @@
         <version>4.0-SNAPSHOT</version>
     </parent>
     <artifactId>mule-core</artifactId>
-    <packaging>jar</packaging>
+    <packaging>bundle</packaging>
     <name>Mule Core</name>
     <description>Mule server and core classes</description>
 
@@ -26,6 +26,60 @@
                 <configuration>
                     <skip>true</skip>
                     <skipDeploy>true</skipDeploy>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>2.4.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Export-Package>
+                            org.mule.api.*,
+                            org.mule,
+                            org.mule.management.stats,
+                            org.mule.config.pool,
+                            org.mule.config.i18n,
+                            org.mule.util,
+                            org.mule.retry,
+                            org.mule.context.notification,
+                            org.mule.lifecycle.phases,
+                            org.mule.lifecycle,
+                            org.mule.util.queue,
+                            org.mule.util.lock,
+                            org.mule.endpoint,
+                            org.mule.processor,
+                            org.mule.service,
+                            org.mule.transaction.constraints,
+                            org.mule.work,
+                            org.mule.exception,
+                            org.mule.routing.filters,
+                            org.mule.registry,
+                            org.mule.util.store,
+                            org.mule.expression,
+                            org.mule.client,
+                            org.mule.transport,
+                            org.mule.util.journal.queue,
+                            org.mule.util.xa,
+                            org.mule.processor.chain,
+                            org.mule.transport.service,
+                            org.mule.transaction,
+                            org.mule.routing,
+                            org.mule.config,
+                            org.mule.source,
+                            org.mule.service.processor,
+                            org.mule.util.concurrent,
+                            org.mule.execution,
+                            org.mule.util.journal,
+                            org.mule.execution,
+                            org.mule.routing.correlation,
+                            org.mule.routing.outbound,
+                            org.mule.routing.requestreply,
+                            <!-- required by annotations module -->
+                            org.mule.expression.transformers
+                        </Export-Package>
+                    </instructions>
                 </configuration>
             </plugin>
         </plugins>
@@ -71,6 +125,11 @@
         via dependency management
     -->
     <dependencies>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+            <version>5.0.0</version>
+        </dependency>
         <dependency>
             <groupId>commons-beanutils</groupId>
             <artifactId>commons-beanutils</artifactId>
