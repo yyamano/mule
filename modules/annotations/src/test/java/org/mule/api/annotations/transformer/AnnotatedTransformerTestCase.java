@@ -10,10 +10,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import org.mule.api.annotations.ContainsTransformerMethods;
-import org.mule.api.annotations.Transformer;
+import org.mule.module.annotations.api.annotations.ContainsTransformerMethods;
+import org.mule.module.annotations.api.annotations.Transformer;
 import org.mule.api.transformer.DataType;
-import org.mule.config.transformer.AnnotatedTransformerProxy;
+import org.mule.module.annotations.config.transformer.AnnotatedTransformerProxy;
 import org.mule.tck.junit4.AbstractMuleContextTestCase;
 import org.mule.transformer.types.CollectionDataType;
 import org.mule.transformer.types.DataTypeFactory;

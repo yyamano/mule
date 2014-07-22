@@ -6,9 +6,9 @@
  */
 package org.mule.api.annotations;
 
-import org.mule.api.annotations.expressions.Function;
-import org.mule.api.annotations.param.InboundHeaders;
-import org.mule.api.annotations.param.Payload;
+import org.mule.module.annotations.api.annotations.expressions.Function;
+import org.mule.module.annotations.api.annotations.param.InboundHeaders;
+import org.mule.module.annotations.api.annotations.param.Payload;
 import org.mule.tck.testmodels.fruit.FruitBowl;
 
 

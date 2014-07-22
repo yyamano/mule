@@ -9,7 +9,7 @@ package org.mule.config;
 import org.mule.DefaultMuleMessage;
 import org.mule.api.MuleMessage;
 import org.mule.api.routing.filter.Filter;
-import org.mule.config.expression.ExpressionFilterParser;
+import org.mule.module.annotations.config.expression.ExpressionFilterParser;
 import org.mule.routing.filters.ExpressionFilter;
 import org.mule.routing.filters.logic.AndFilter;
 import org.mule.tck.junit4.AbstractMuleContextTestCase;

@@ -77,7 +77,46 @@
                             org.mule.routing.outbound,
                             org.mule.routing.requestreply,
                             <!-- required by annotations module -->
-                            org.mule.expression.transformers
+                            org.mule.expression.transformers,
+                            org.mule.component,
+                            org.mule.config.builders,
+                            org.mule.model.resolvers,
+                            org.mule.routing.filter.logic,
+                            org.mule.transformer,
+                            org.mule.transformer.types,
+                            org.mule.util.annotation,
+                            org.mule.routing.filters.logic,
+
+                            <!-- required at least by spring-config module -->
+                            org.mule.component.simple,
+                            org.mule.construct,
+                            org.mule.construct.builder,
+                            org.mule.construct.flow,
+                            org.mule.context,
+                            org.mule.el,
+                            org.mule.el.mvel,
+                            org.mule.enricher,
+                            org.mule.interceptor,
+                            org.mule.model.seda,
+                            org.mule.object,
+                            org.mule.processor.strategy,
+                            org.mule.retry.async,
+                            org.mule.retry.notifiers,
+                            org.mule.retry.policies,
+                            org.mule.security,
+                            org.mule.security.filters,
+                            org.mule.transaction.lookup,
+                            org.mule.transformer.codec,
+                            org.mule.transformer.compression,
+                            org.mule.transformer.encryption,
+                            org.mule.transformer.simple,
+                            org.mule.transport.polling,
+                            org.mule.transport.polling.schedule,
+                            org.mule.transport.polling.watermark,
+                            org.mule.transport.polling.watermark.selector,
+                            org.mule.util.pool,
+                            org.mule.model,
+                            org.mule.util.compression
                         </Export-Package>
                     </instructions>
                 </configuration>

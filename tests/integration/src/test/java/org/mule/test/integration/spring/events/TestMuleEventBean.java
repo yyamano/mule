@@ -6,8 +6,8 @@
  */
 package org.mule.test.integration.spring.events;
 
-import org.mule.module.spring.events.MuleApplicationEvent;
-import org.mule.module.spring.events.MuleEventListener;
+import org.mule.module.springconfig.events.MuleApplicationEvent;
+import org.mule.module.springconfig.events.MuleEventListener;
 import org.mule.tck.functional.EventCallback;
 import org.mule.util.StringMessageUtils;
 

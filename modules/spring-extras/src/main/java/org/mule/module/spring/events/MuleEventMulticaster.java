@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.spring.events;
+package org.mule.module.springconfig.events;
 
 import org.mule.DefaultMuleEvent;
 import org.mule.DefaultMuleMessage;
@@ -37,7 +37,7 @@ import org.mule.config.QueueProfile;
 import org.mule.endpoint.MuleEndpointURI;
 import org.mule.model.seda.SedaModel;
 import org.mule.model.seda.SedaService;
-import org.mule.module.spring.i18n.SpringMessages;
+import org.mule.module.springconfig.i18n.SpringMessages;
 import org.mule.object.SingletonObjectFactory;
 import org.mule.routing.filters.WildcardFilter;
 import org.mule.service.ServiceCompositeMessageSource;

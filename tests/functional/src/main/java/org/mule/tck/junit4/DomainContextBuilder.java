@@ -8,7 +8,7 @@ package org.mule.tck.junit4;
 
 import org.mule.api.MuleContext;
 import org.mule.api.config.ConfigurationBuilder;
-import org.mule.config.spring.SpringXmlDomainConfigurationBuilder;
+import org.mule.module.springconfig.SpringXmlDomainConfigurationBuilder;
 import org.mule.context.DefaultMuleContextBuilder;
 import org.mule.context.DefaultMuleContextFactory;
 

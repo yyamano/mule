@@ -9,7 +9,7 @@ package org.mule.api.annotations.transformer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import org.mule.config.transformer.AnnotatedTransformerProxy;
+import org.mule.module.annotations.config.transformer.AnnotatedTransformerProxy;
 import org.mule.tck.junit4.AbstractMuleContextTestCase;
 
 import org.junit.Test;

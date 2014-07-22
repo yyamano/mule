@@ -8,7 +8,7 @@
     <!--class="org.mule.module.spring.config.MuleObjectNameProcessor"/>-->
 
     <bean id="applicationEventMulticaster"
-          class="org.mule.module.spring.events.MuleEventMulticaster">
+          class="org.mule.module.springconfig.events.MuleEventMulticaster">
         <property name="subscriptions">
             <list>
                 <value>vm://*</value>

@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.spring.events;
+package org.mule.module.springconfig.events;
 
 /**
  * <code>MuleSubscriptionEventListener</code> is a Spring ApplicationListener that

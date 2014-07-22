@@ -6,8 +6,8 @@
  */
 package org.mule.api.annotations;
 
-import org.mule.api.annotations.param.InboundHeaders;
-import org.mule.api.annotations.param.Payload;
+import org.mule.module.annotations.api.annotations.param.InboundHeaders;
+import org.mule.module.annotations.api.annotations.param.Payload;
 
 import java.util.Map;
 

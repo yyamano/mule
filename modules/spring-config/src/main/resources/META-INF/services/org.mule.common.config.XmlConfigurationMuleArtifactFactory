@@ -1,1 +1,1 @@
-org.mule.config.spring.SpringXmlConfigurationMuleArtifactFactory
+springconfig.SpringXmlConfigurationMuleArtifactFactory

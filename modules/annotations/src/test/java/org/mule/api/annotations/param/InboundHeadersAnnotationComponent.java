@@ -12,6 +12,8 @@ import org.mule.tck.testmodels.fruit.Fruit;
 import java.util.List;
 import java.util.Map;
 
+import org.mule.module.annotations.api.annotations.param.InboundHeaders;
+
 /**
  * Tests various cases for how headers can be injected into a component invocation
  */

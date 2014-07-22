@@ -16,7 +16,7 @@ import org.mule.api.service.Service;
 import org.mule.api.transport.Connector;
 import org.mule.api.transport.MessageReceiver;
 import org.mule.config.i18n.CoreMessages;
-import org.mule.config.spring.SpringRegistry;
+import org.mule.module.springconfig.SpringRegistry;
 import org.mule.construct.AbstractFlowConstruct;
 import org.mule.context.notification.MuleContextNotification;
 import org.mule.context.notification.NotificationException;

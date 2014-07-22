@@ -6,7 +6,7 @@
  */
 package org.mule.transport.soap.axis;
 
-import org.mule.config.spring.editors.QNamePropertyEditor;
+import org.mule.module.springconfig.editors.QNamePropertyEditor;
 import org.mule.util.ClassUtils;
 import org.mule.util.StringUtils;
 

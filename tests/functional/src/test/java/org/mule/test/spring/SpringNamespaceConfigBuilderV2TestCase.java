@@ -19,7 +19,7 @@ import org.mule.api.endpoint.ImmutableEndpoint;
 import org.mule.api.routing.MessageInfoMapping;
 import org.mule.api.service.Service;
 import org.mule.api.transformer.Transformer;
-import org.mule.config.spring.SpringXmlConfigurationBuilder;
+import org.mule.module.springconfig.SpringXmlConfigurationBuilder;
 import org.mule.routing.ExpressionMessageInfoMapping;
 import org.mule.service.ServiceCompositeMessageSource;
 import org.mule.tck.AbstractConfigBuilderTestCase;

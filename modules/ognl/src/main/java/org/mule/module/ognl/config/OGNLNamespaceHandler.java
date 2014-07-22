@@ -6,9 +6,9 @@
  */
 package org.mule.module.ognl.config;
 
-import org.mule.config.spring.parsers.assembly.BeanAssembler;
-import org.mule.config.spring.parsers.generic.ChildDefinitionParser;
-import org.mule.config.spring.parsers.specific.FilterDefinitionParser;
+import org.mule.module.springconfig.parsers.assembly.BeanAssembler;
+import org.mule.module.springconfig.parsers.generic.ChildDefinitionParser;
+import org.mule.module.springconfig.parsers.specific.FilterDefinitionParser;
 import org.mule.module.ognl.filters.OGNLFilter;
 
 import org.springframework.beans.factory.xml.NamespaceHandlerSupport;

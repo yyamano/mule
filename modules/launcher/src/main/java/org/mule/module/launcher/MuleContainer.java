@@ -26,8 +26,10 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.LogManager;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
 
-public class MuleContainer
+public class MuleContainer implements BundleActivator
 {
 
     public static final String CLI_OPTIONS[][] = {
@@ -61,6 +63,20 @@ public class MuleContainer
     protected final DeploymentService deploymentService;
     private final MuleCoreExtensionManager coreExtensionManager;
     private final PluginClassLoaderManager pluginClassLoaderManager = new MulePluginClassLoaderManager();
+
+    @Override
+    public void start(BundleContext bundleContext) throws Exception
+    {
+        System.out.println("Starting mule container");
+        start(false);
+    }
+
+    @Override
+    public void stop(BundleContext bundleContext) throws Exception
+    {
+        System.out.println("Stopping mule container");
+        stop();
+    }
 
     static
     {

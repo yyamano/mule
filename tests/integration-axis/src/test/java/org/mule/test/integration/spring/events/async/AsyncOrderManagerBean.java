@@ -6,7 +6,7 @@
  */
 package org.mule.test.integration.spring.events.async;
 
-import org.mule.module.spring.events.MuleApplicationEvent;
+import org.mule.module.springconfig.events.MuleApplicationEvent;
 import org.mule.test.integration.spring.events.Order;
 import org.mule.test.integration.spring.events.OrderManagerBean;
 

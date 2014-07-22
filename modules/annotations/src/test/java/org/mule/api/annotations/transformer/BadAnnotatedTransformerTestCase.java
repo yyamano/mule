@@ -6,7 +6,7 @@
  */
 package org.mule.api.annotations.transformer;
 
-import org.mule.config.transformer.AnnotatedTransformerProxy;
+import org.mule.module.annotations.config.transformer.AnnotatedTransformerProxy;
 import org.mule.tck.junit4.AbstractMuleContextTestCase;
 
 import java.lang.reflect.Method;

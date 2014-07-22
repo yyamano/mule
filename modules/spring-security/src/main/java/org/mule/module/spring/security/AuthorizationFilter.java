@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.spring.security;
+package org.mule.module.springconfig.security;
 
 import org.mule.api.MuleEvent;
 import org.mule.api.lifecycle.InitialisationException;
@@ -17,7 +17,7 @@ import org.mule.api.security.SecurityProviderNotFoundException;
 import org.mule.api.security.UnauthorisedException;
 import org.mule.api.security.UnknownAuthenticationTypeException;
 import org.mule.config.i18n.CoreMessages;
-import org.mule.module.spring.security.i18n.SpringSecurityMessages;
+import org.mule.module.springconfig.security.i18n.SpringSecurityMessages;
 import org.mule.security.AbstractSecurityFilter;
 
 import java.text.MessageFormat;

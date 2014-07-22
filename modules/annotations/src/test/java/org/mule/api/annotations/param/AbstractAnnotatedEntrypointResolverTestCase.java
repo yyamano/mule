@@ -20,7 +20,7 @@ import org.mule.api.config.MuleProperties;
 import org.mule.api.construct.FlowConstruct;
 import org.mule.api.model.EntryPointResolver;
 import org.mule.api.model.InvocationResult;
-import org.mule.impl.model.resolvers.AnnotatedEntryPointResolver;
+import org.mule.module.annotations.impl.model.resolvers.AnnotatedEntryPointResolver;
 import org.mule.tck.junit4.AbstractMuleContextTestCase;
 import org.mule.util.IOUtils;
 import org.mule.util.StringDataSource;

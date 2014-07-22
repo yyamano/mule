@@ -4,14 +4,14 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.spring.security.config;
+package org.mule.module.springconfig.security.config;
 
-import org.mule.config.spring.parsers.collection.ChildMapEntryDefinitionParser;
-import org.mule.config.spring.parsers.generic.ChildDefinitionParser;
-import org.mule.config.spring.parsers.specific.SecurityFilterDefinitionParser;
-import org.mule.module.spring.security.AuthorizationFilter;
-import org.mule.module.spring.security.SpringProviderAdapter;
-import org.mule.module.spring.security.filters.http.HttpBasicAuthenticationFilter;
+import org.mule.module.springconfig.parsers.collection.ChildMapEntryDefinitionParser;
+import org.mule.module.springconfig.parsers.generic.ChildDefinitionParser;
+import org.mule.module.springconfig.parsers.specific.SecurityFilterDefinitionParser;
+import org.mule.module.springconfig.security.AuthorizationFilter;
+import org.mule.module.springconfig.security.SpringProviderAdapter;
+import org.mule.module.springconfig.security.filters.http.HttpBasicAuthenticationFilter;
 
 import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 

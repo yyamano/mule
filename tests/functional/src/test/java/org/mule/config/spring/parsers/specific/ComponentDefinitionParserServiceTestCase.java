@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.config.spring.parsers.specific;
+package org.mule.module.springconfig.parsers.specific;
 
 import org.mule.api.MuleContext;
 import org.mule.api.component.JavaComponent;
@@ -19,9 +19,9 @@ import org.mule.component.DefaultJavaComponent;
 import org.mule.component.PooledJavaComponent;
 import org.mule.component.simple.PassThroughComponent;
 import org.mule.config.PoolingProfile;
-import org.mule.config.spring.SpringXmlConfigurationBuilder;
-import org.mule.config.spring.parsers.specific.ComponentDelegatingDefinitionParser.CheckExclusiveClassAttributeObjectFactoryException;
-import org.mule.config.spring.util.SpringBeanLookup;
+import org.mule.module.springconfig.SpringXmlConfigurationBuilder;
+import org.mule.module.springconfig.parsers.specific.ComponentDelegatingDefinitionParser.CheckExclusiveClassAttributeObjectFactoryException;
+import org.mule.module.springconfig.util.SpringBeanLookup;
 import org.mule.context.DefaultMuleContextFactory;
 import org.mule.model.resolvers.ArrayEntryPointResolver;
 import org.mule.model.resolvers.CallableEntryPointResolver;

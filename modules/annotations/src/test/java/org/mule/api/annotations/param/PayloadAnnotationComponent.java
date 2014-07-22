@@ -8,6 +8,8 @@ package org.mule.api.annotations.param;
 
 import java.io.InputStream;
 
+import org.mule.module.annotations.api.annotations.param.Payload;
+
 /**
  * Test cases where the Payload annotation can be used to specify the parameter to inject the payload of the message, including
  * doing automatic transforms

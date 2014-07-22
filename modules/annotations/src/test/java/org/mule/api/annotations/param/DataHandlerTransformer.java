@@ -6,8 +6,8 @@
  */
 package org.mule.api.annotations.param;
 
-import org.mule.api.annotations.ContainsTransformerMethods;
-import org.mule.api.annotations.Transformer;
+import org.mule.module.annotations.api.annotations.ContainsTransformerMethods;
+import org.mule.module.annotations.api.annotations.Transformer;
 import org.mule.util.IOUtils;
 
 import java.io.IOException;

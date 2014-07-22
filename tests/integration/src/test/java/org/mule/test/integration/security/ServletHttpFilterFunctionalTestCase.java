@@ -6,7 +6,7 @@
  */
 package org.mule.test.integration.security;
 
-import org.mule.module.spring.security.HttpFilterFunctionalTestCase;
+import org.mule.module.springconfig.security.HttpFilterFunctionalTestCase;
 import org.mule.transport.servlet.MuleReceiverServlet;
 import org.mule.transport.servlet.jetty.util.EmbeddedJettyServer;
 

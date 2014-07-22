@@ -9,6 +9,8 @@ package org.mule.api.annotations.param;
 import java.util.List;
 import java.util.Map;
 
+import org.mule.module.annotations.api.annotations.param.OutboundHeaders;
+
 /**
  * Tests various cases for how headers can added to an outbound message through a generic map by injecting the 
  * map into a component invocation

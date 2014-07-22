@@ -6,9 +6,9 @@
  */
 package org.mule.module.client.config;
 
-import org.mule.config.spring.factories.InboundEndpointFactoryBean;
-import org.mule.config.spring.parsers.generic.ChildDefinitionParser;
-import org.mule.config.spring.parsers.specific.endpoint.support.ChildEndpointDefinitionParser;
+import org.mule.module.springconfig.factories.InboundEndpointFactoryBean;
+import org.mule.module.springconfig.parsers.generic.ChildDefinitionParser;
+import org.mule.module.springconfig.parsers.specific.endpoint.support.ChildEndpointDefinitionParser;
 import org.mule.module.xml.transformer.wire.XStreamWireFormat;
 import org.mule.transformer.wire.SerializedMuleMessageWireFormat;
 

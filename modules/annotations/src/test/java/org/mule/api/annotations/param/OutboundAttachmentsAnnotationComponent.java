@@ -13,6 +13,8 @@ import java.util.Map;
 
 import javax.activation.DataHandler;
 
+import org.mule.module.annotations.api.annotations.param.OutboundAttachments;
+
 /**
  * Tests various cases for how attachments can added to an outbound message through a generic map by injecting the
  * map into a component invocation

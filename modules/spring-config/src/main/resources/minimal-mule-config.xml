@@ -8,9 +8,9 @@
        default-init-method="initialise">
     <!-- Marker for MULE-4813-->
 
-    <bean name="_muleNotificationManager" class="org.mule.config.spring.ServerNotificationManagerConfigurator"/>
+    <bean name="_muleNotificationManager" class="org.mule.module.springconfig.ServerNotificationManagerConfigurator"/>
 
-    <bean name="_muleConfiguration" class="org.mule.config.spring.MuleConfigurationConfigurator"/>
+    <bean name="_muleConfiguration" class="org.mule.module.springconfig.MuleConfigurationConfigurator"/>
 
     <mule:mule>
 

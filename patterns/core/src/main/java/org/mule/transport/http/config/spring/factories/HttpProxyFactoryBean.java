@@ -11,7 +11,7 @@ import org.mule.api.endpoint.EndpointBuilder;
 import org.mule.api.endpoint.OutboundEndpoint;
 import org.mule.api.processor.MessageProcessor;
 import org.mule.api.transformer.Transformer;
-import org.mule.config.spring.factories.AbstractFlowConstructFactoryBean;
+import org.mule.module.springconfig.factories.AbstractFlowConstructFactoryBean;
 import org.mule.construct.builder.AbstractFlowConstructBuilder;
 import org.mule.transport.http.construct.HttpProxy;
 import org.mule.transport.http.construct.builder.HttpProxyBuilder;

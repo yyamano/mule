@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.spring.events;
+package org.mule.module.springconfig.events;
 
 import org.mule.api.MuleEventContext;
 import org.mule.api.endpoint.MalformedEndpointException;

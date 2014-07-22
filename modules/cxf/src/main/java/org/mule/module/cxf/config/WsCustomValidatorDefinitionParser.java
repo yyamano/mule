@@ -6,12 +6,9 @@
  */
 package org.mule.module.cxf.config;
 
-import org.mule.config.spring.MuleHierarchicalBeanDefinitionParserDelegate;
-import org.mule.config.spring.parsers.generic.ChildDefinitionParser;
+import org.mule.module.springconfig.MuleHierarchicalBeanDefinitionParserDelegate;
+import org.mule.module.springconfig.parsers.generic.ChildDefinitionParser;
 import org.mule.module.cxf.support.MuleSecurityManagerValidator;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.springframework.beans.factory.config.MapFactoryBean;

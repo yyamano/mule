@@ -6,7 +6,7 @@
  */
 package org.mule.module.client.config;
 
-import org.mule.config.spring.parsers.specific.DefaultNameMuleOrphanDefinitionParser;
+import org.mule.module.springconfig.parsers.specific.DefaultNameMuleOrphanDefinitionParser;
 import org.mule.module.client.remoting.RemoteDispatcherAgent;
 
 public class RemoteDispatcherAgentDefinitionParser extends DefaultNameMuleOrphanDefinitionParser

@@ -6,19 +6,19 @@
  */
 package org.mule.transport.soap.axis.config;
 
-import org.mule.config.spring.handlers.AbstractMuleNamespaceHandler;
-import org.mule.config.spring.parsers.PreProcessor;
-import org.mule.config.spring.parsers.assembly.MapEntryCombiner;
-import org.mule.config.spring.parsers.assembly.configuration.PropertyConfiguration;
-import org.mule.config.spring.parsers.collection.ChildListEntryDefinitionParser;
-import org.mule.config.spring.parsers.delegate.ParentContextDefinitionParser;
-import org.mule.config.spring.parsers.processors.AttributeConcatenation;
-import org.mule.config.spring.parsers.specific.ComponentDefinitionParser;
-import org.mule.config.spring.parsers.specific.properties.ElementInNestedMapDefinitionParser;
-import org.mule.config.spring.parsers.specific.properties.ListPropertyDefinitionParser;
-import org.mule.config.spring.parsers.specific.properties.NestedListDefinitionParser;
-import org.mule.config.spring.parsers.specific.properties.NestedMapWithAttributesDefinitionParser;
-import org.mule.config.spring.parsers.specific.properties.SimplePropertyDefinitionParser;
+import org.mule.module.springconfig.handlers.AbstractMuleNamespaceHandler;
+import org.mule.module.springconfig.parsers.PreProcessor;
+import org.mule.module.springconfig.parsers.assembly.MapEntryCombiner;
+import org.mule.module.springconfig.parsers.assembly.configuration.PropertyConfiguration;
+import org.mule.module.springconfig.parsers.collection.ChildListEntryDefinitionParser;
+import org.mule.module.springconfig.parsers.delegate.ParentContextDefinitionParser;
+import org.mule.module.springconfig.parsers.processors.AttributeConcatenation;
+import org.mule.module.springconfig.parsers.specific.ComponentDefinitionParser;
+import org.mule.module.springconfig.parsers.specific.properties.ElementInNestedMapDefinitionParser;
+import org.mule.module.springconfig.parsers.specific.properties.ListPropertyDefinitionParser;
+import org.mule.module.springconfig.parsers.specific.properties.NestedListDefinitionParser;
+import org.mule.module.springconfig.parsers.specific.properties.NestedMapWithAttributesDefinitionParser;
+import org.mule.module.springconfig.parsers.specific.properties.SimplePropertyDefinitionParser;
 import org.mule.module.cxf.SoapConstants;
 import org.mule.transport.soap.axis.AxisConnector;
 import org.mule.transport.soap.axis.AxisMessageReceiver;

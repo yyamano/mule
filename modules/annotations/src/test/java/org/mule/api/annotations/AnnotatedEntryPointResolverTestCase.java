@@ -11,7 +11,10 @@ import org.mule.api.config.MuleProperties;
 import org.mule.api.model.InvocationResult;
 import org.mule.api.transport.PropertyScope;
 import org.mule.component.simple.EchoComponent;
-import org.mule.impl.model.resolvers.AnnotatedEntryPointResolver;
+
+import org.mule.module.annotations.api.annotations.ContainsTransformerMethods;
+import org.mule.module.annotations.api.annotations.Transformer;
+import org.mule.module.annotations.impl.model.resolvers.AnnotatedEntryPointResolver;
 import org.mule.tck.junit4.AbstractMuleContextTestCase;
 import org.mule.tck.testmodels.fruit.Apple;
 import org.mule.tck.testmodels.fruit.Banana;

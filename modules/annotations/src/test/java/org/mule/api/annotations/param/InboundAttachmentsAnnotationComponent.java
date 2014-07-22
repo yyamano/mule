@@ -15,6 +15,8 @@ import java.util.Map;
 
 import javax.activation.DataHandler;
 
+import org.mule.module.annotations.api.annotations.param.InboundAttachments;
+
 /**
  * Tests various cases for how attachments can be injected into a component invocation
  */

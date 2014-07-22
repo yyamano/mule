@@ -29,7 +29,7 @@
 
     <flow name="authorize">
         <http:inbound-endpoint host="localhost" port="${port1}" />
-        <custom-processor class="org.mule.module.spring.security.SecurityContextSerializationTestCase$AddNotSerializableProperty"/>
+        <custom-processor class="org.mule.module.springconfig.security.SecurityContextSerializationTestCase$AddNotSerializableProperty"/>
         <http:basic-security-filter realm="mule-realm"/>
         <mule-ss:authorization-filter requiredAuthorities="ROLE_ADMIN"/>
         <outbound-endpoint address="vm://in" exchange-pattern="request-response" />

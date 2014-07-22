@@ -9,19 +9,19 @@
               http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 
     <spring:bean id="doSpringWork"
-        class="org.mule.module.spring.remoting.DoSomeWork" />
+        class="org.mule.module.springconfig.remoting.DoSomeWork" />
 
     <!--
         Transform a byte[] from an Http request into a Spring RemoteInvocation instance.
     -->
     <custom-transformer name="springInputXform"
-        class="org.mule.module.spring.remoting.ObjectToRemoteInvocationTransformer" />
+        class="org.mule.module.springconfig.remoting.ObjectToRemoteInvocationTransformer" />
     <!--
         Convert an Object to a Spring RemoteInvocationResult and then into a byte[]
         for return to the caller via Http.
     -->
     <custom-transformer name="springOutputXform"
-        class="org.mule.module.spring.remoting.ObjectToRemoteInvocationResultTransformer" />
+        class="org.mule.module.springconfig.remoting.ObjectToRemoteInvocationResultTransformer" />
 
     <model name="main">
 
@@ -50,7 +50,7 @@
 
             <pooled-component>
                 <prototype-object
-                    class="org.mule.module.spring.remoting.SpringRemoteInvokerComponent">
+                    class="org.mule.module.springconfig.remoting.SpringRemoteInvokerComponent">
                     <properties>
 
                         <!--
@@ -67,7 +67,7 @@
                             Set the serviceInterface property of Spring's RemoteInvocationBasedExporter
                         -->
                         <spring:entry key="serviceInterface"
-                            value="org.mule.module.spring.remoting.WorkInterface" />
+                            value="org.mule.module.springconfig.remoting.WorkInterface" />
 
                         <!--
                             Set other properties of Spring's RemoteInvocationBasedExporter

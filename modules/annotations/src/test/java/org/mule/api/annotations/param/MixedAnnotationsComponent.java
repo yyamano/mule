@@ -12,13 +12,17 @@ import java.util.Map;
 
 import javax.activation.DataHandler;
 
+import org.mule.module.annotations.api.annotations.param.InboundAttachments;
+import org.mule.module.annotations.api.annotations.param.InboundHeaders;
+import org.mule.module.annotations.api.annotations.param.Payload;
+
 /**
  * A component for testing invocations with more than one parameter
  */
 public class MixedAnnotationsComponent
 {
-    public Map<?, ?> processAllAnnotated(@Payload String payload, 
-        @InboundHeaders("foo, bar") Map<?, ?> headers, 
+    public Map<?, ?> processAllAnnotated(@Payload String payload,
+        @InboundHeaders("foo, bar") Map<?, ?> headers,
         @InboundAttachments("*") Map<String, DataHandler> attachments)
     {
         Map<String, Object> m = new HashMap<String, Object>(3);

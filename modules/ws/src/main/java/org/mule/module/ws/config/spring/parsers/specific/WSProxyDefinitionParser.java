@@ -6,9 +6,9 @@
  */
 package org.mule.module.ws.config.spring.parsers.specific;
 
-import org.mule.config.spring.parsers.processors.CheckExclusiveAttributes;
-import org.mule.config.spring.parsers.processors.CheckExclusiveAttributesAndChildren;
-import org.mule.config.spring.parsers.specific.AbstractFlowConstructDefinitionParser;
+import org.mule.module.springconfig.parsers.processors.CheckExclusiveAttributes;
+import org.mule.module.springconfig.parsers.processors.CheckExclusiveAttributesAndChildren;
+import org.mule.module.springconfig.parsers.specific.AbstractFlowConstructDefinitionParser;
 import org.mule.module.ws.config.spring.factories.WSProxyFactoryBean;
 import org.w3c.dom.Element;
 

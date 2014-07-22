@@ -6,8 +6,8 @@
  */
 package org.mule.api.annotations.transformer;
 
-import org.mule.api.annotations.ContainsTransformerMethods;
-import org.mule.api.annotations.Transformer;
+import org.mule.module.annotations.api.annotations.ContainsTransformerMethods;
+import org.mule.module.annotations.api.annotations.Transformer;
 
 /**
  * Custom transformers cannot have an object source type

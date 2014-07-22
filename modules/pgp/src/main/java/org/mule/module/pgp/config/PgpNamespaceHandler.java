@@ -7,10 +7,10 @@
 package org.mule.module.pgp.config;
 
 import org.mule.api.config.MuleProperties;
-import org.mule.config.spring.parsers.generic.ChildDefinitionParser;
-import org.mule.config.spring.parsers.generic.NamedDefinitionParser;
-import org.mule.config.spring.parsers.generic.ParentDefinitionParser;
-import org.mule.config.spring.parsers.specific.SecurityFilterDefinitionParser;
+import org.mule.module.springconfig.parsers.generic.ChildDefinitionParser;
+import org.mule.module.springconfig.parsers.generic.NamedDefinitionParser;
+import org.mule.module.springconfig.parsers.generic.ParentDefinitionParser;
+import org.mule.module.springconfig.parsers.specific.SecurityFilterDefinitionParser;
 import org.mule.module.pgp.KeyBasedEncryptionStrategy;
 import org.mule.module.pgp.PGPSecurityProvider;
 import org.mule.module.pgp.filters.PGPSecurityFilter;
@@ -20,7 +20,6 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.xml.BeanDefinitionParser;
 import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 import org.springframework.beans.factory.xml.ParserContext;
-import org.w3c.dom.Element;
 
 public class PgpNamespaceHandler extends NamespaceHandlerSupport
 {

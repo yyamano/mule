@@ -221,7 +221,7 @@ public class DefaultMuleDomain implements Domain
     {
         try
         {
-            return (ConfigurationBuilder) ClassUtils.instanciateClass("org.mule.config.spring.SpringXmlDomainConfigurationBuilder",
+            return (ConfigurationBuilder) ClassUtils.instanciateClass("org.mule.module.spring.SpringXmlDomainConfigurationBuilder",
                                                                       new Object[] {getResourceFiles()[0].getName()}, deploymentClassLoader.getClassLoader());
         }
         catch (Exception e)

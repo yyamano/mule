@@ -6,10 +6,10 @@
  */
 package org.mule.pattern.core.config;
 
-import org.mule.config.spring.handlers.AbstractMuleNamespaceHandler;
-import org.mule.config.spring.parsers.specific.BridgeDefinitionParser;
-import org.mule.config.spring.parsers.specific.SimpleServiceDefinitionParser;
-import org.mule.config.spring.parsers.specific.ValidatorDefinitionParser;
+import org.mule.module.springconfig.handlers.AbstractMuleNamespaceHandler;
+import org.mule.module.springconfig.parsers.specific.BridgeDefinitionParser;
+import org.mule.module.springconfig.parsers.specific.SimpleServiceDefinitionParser;
+import org.mule.module.springconfig.parsers.specific.ValidatorDefinitionParser;
 import org.mule.module.ws.config.spring.parsers.specific.WSProxyDefinitionParser;
 import org.mule.transport.http.config.spring.parsers.specific.HttpProxyDefinitionParser;
 

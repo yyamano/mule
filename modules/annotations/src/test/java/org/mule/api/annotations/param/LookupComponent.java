@@ -6,7 +6,7 @@
  */
 package org.mule.api.annotations.param;
 
-import org.mule.api.annotations.expressions.Lookup;
+import org.mule.module.annotations.api.annotations.expressions.Lookup;
 import org.mule.api.transformer.Transformer;
 import org.mule.tck.testmodels.fruit.Apple;
 import org.mule.tck.testmodels.fruit.Banana;
