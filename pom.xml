@@ -56,6 +56,8 @@
         <!--<module>distributions</module>-->
         <!--<module>examples</module>-->
         <module>modules</module>
+        <module>v1</module>
+        <module>v2</module>
         <!--<module>patterns</module>-->
         <!--<module>tools</module>-->
         <!--<module>transports</module>-->
