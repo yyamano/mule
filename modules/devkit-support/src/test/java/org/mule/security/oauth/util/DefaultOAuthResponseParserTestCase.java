@@ -6,6 +6,11 @@
  */
 package org.mule.security.oauth.util;
 
+import static org.mule.security.oauth.OAuthUtils.ACCESS_CODE_PATTERN;
+import static org.mule.security.oauth.OAuthUtils.EXPIRATION_TIME_PATTERN;
+import static org.mule.security.oauth.OAuthUtils.REFRESH_TOKEN_PATTERN;
+
+import org.mule.security.oauth.OAuthUtils;
 import org.mule.tck.size.SmallTest;
 
 import java.util.Date;
@@ -25,10 +30,6 @@ public class DefaultOAuthResponseParserTestCase
                                            + "\"expires_in\" : 3600,\n"
                                            + "\"refresh_token\" : \"1/HKSmLFXzqP0leUihZp2xUt3-5wkU7Gmu2Os_eBnzw74\"\n"
                                            + "}";
-
-    private final static Pattern ACCESS_CODE_PATTERN = Pattern.compile("\"access_token\"[ ]*:[ ]*\"([^\\\"]*)\"");
-    private final static Pattern REFRESH_TOKEN_PATTERN = Pattern.compile("\"refresh_token\"[ ]*:[ ]*\"([^\\\"]*)\"");
-    private final static Pattern EXPIRATION_TIME_PATTERN = Pattern.compile("\"expires_in\"[ ]*:[ ]*([\\d]*)");
 
     private OAuthResponseParser parser = new DefaultOAuthResponseParser();
 

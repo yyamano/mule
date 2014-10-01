@@ -13,6 +13,7 @@ import org.mule.api.MuleException;
 import org.mule.api.processor.MessageProcessor;
 import org.mule.config.i18n.MessageFactory;
 import org.mule.security.oauth.OAuthProperties;
+import org.mule.security.oauth.OAuthUtils;
 import org.mule.security.oauth.exception.AuthorizationCodeNotFoundException;
 
 import java.net.URLDecoder;
@@ -46,15 +47,7 @@ public class ExtractAuthorizationCodeMessageProcessor implements MessageProcesso
 
     private String extractAuthorizationCode(String response) throws Exception
     {
-        Matcher matcher = pattern.matcher(response);
-        if (matcher.find() && (matcher.groupCount() >= 1))
-        {
-            return URLDecoder.decode(matcher.group(1), "UTF-8");
-        }
-        else
-        {
-            throw new AuthorizationCodeNotFoundException(this.pattern, response);
-        }
+       return OAuthUtils.extractAuthorizationCode(response, pattern);
     }
 
 }

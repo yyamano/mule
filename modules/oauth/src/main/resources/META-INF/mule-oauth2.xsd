@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<xsd:schema xmlns="http://www.mulesoft.org/schema/mule/oauth2"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:mule="http://www.mulesoft.org/schema/mule/core"
+            targetNamespace="http://www.mulesoft.org/schema/mule/oauth2"
+            elementFormDefault="qualified"
+            attributeFormDefault="unqualified">
+
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace"/>
+    <xsd:import namespace="http://www.mulesoft.org/schema/mule/core"
+                schemaLocation="http://www.mulesoft.org/schema/mule/core/3.6/mule.xsd"/>
+    <xsd:import namespace="http://www.springframework.org/schema/beans"
+                schemaLocation="http://www.springframework.org/schema/beans/spring-beans-3.1.xsd"/>
+
+    <!-- Database configuration -->
+
+    <xsd:element name="authentication-code" substitutionGroup="mule:abstract-shared-extension" type="authenticationCodeType">
+        <xsd:annotation>
+            <xsd:documentation>
+                Place holder for database configuration elements.
+            </xsd:documentation>
+        </xsd:annotation>
+    </xsd:element>
+
+    <xsd:complexType name="authenticationCodeType">
+        <xsd:complexContent>
+            <xsd:extension base="mule:abstractExtensionType">
+                <xsd:sequence>
+                    <xsd:sequence>
+                        <xsd:element name="custom-parameters" minOccurs="0" maxOccurs="1">
+                            <xsd:complexType>
+                                <xsd:sequence>
+                                    <xsd:element name="custom-parameter" minOccurs="1" maxOccurs="unbounded">
+                                        <xsd:complexType>
+                                            <xsd:attribute name="paramName" type="xsd:string" use="required"/>
+                                            <xsd:attribute name="value" type="xsd:string" use="required"/>
+                                        </xsd:complexType>
+                                    </xsd:element>
+                                </xsd:sequence>
+                            </xsd:complexType>
+                        </xsd:element>
+                        <xsd:element name="parameter-extraction-customizer" minOccurs="0" maxOccurs="1">
+                            <xsd:complexType>
+                                <xsd:attribute name="authenticationCode" use="optional" />
+                                <xsd:attribute name="state" use="optional" />
+                                <xsd:attribute name="accessToken" use="optional" />
+                                <xsd:attribute name="refreshToken" use="optional" />
+                                <xsd:attribute name="expiresIn" use="optional" />
+                            </xsd:complexType>
+                        </xsd:element>
+                    </xsd:sequence>
+                </xsd:sequence>
+                <xsd:attribute name="name" type="mule:substitutableName" use="required">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            Identifies the database configuration so other elements can reference it.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="clientId" type="xsd:string" use="required">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            Reference to a JDBC DataSource object. This object is typically created using Spring. When
+                            using XA transactions, an XADataSource object must be provided.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="clientSecret" type="xsd:string" use="required">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="localAuthorizationUrl" type="xsd:string" use="optional">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="authorizationUrl" type="xsd:string" use="optional">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="redirectionUrl" type="xsd:string" use="optional">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="tokenUrl" type="xsd:string" use="optional">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="scope" type="xsd:string" use="optional">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="state" type="xsd:string" use="optional">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+
+</xsd:schema>

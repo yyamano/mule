@@ -50,7 +50,6 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.pool.KeyedPoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.slf4j.Logger;
@@ -354,46 +353,20 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
                                           String authorizationUrl,
                                           String redirectUri)
     {
+        String authorizationUrlForRequest = authorizationUrl;
         StringBuilder urlBuilder = new StringBuilder();
-        if (authorizationUrl != null)
+        if (authorizationUrlForRequest == null)
         {
-            urlBuilder.append(authorizationUrl);
-        }
-        else
-        {
-            urlBuilder.append(this.getDefaultUnauthorizedConnector().getAuthorizationUrl());
+            authorizationUrlForRequest = this.getDefaultUnauthorizedConnector().getAuthorizationUrl();
         }
 
-        urlBuilder.append("?")
-            .append("response_type=code&")
-            .append("client_id=")
-            .append(this.getDefaultUnauthorizedConnector().getConsumerKey());
-
-        try
-        {
-            if (!StringUtils.isBlank(this.getScope()))
-            {
-                urlBuilder.append("&scope=").append(URLEncoder.encode(this.getScope(), "UTF-8"));
-            }
-
-            for (Map.Entry<String, String> entry : extraParameters.entrySet())
-            {
-                urlBuilder.append("&")
-                    .append(entry.getKey())
-                    .append("=")
-                    .append(URLEncoder.encode(entry.getValue(), "UTF-8"));
-            }
-
-            urlBuilder.append("&redirect_uri=").append(URLEncoder.encode(redirectUri, "UTF-8"));
-        }
-        catch (UnsupportedEncodingException e)
-        {
-            throw new RuntimeException(e);
-        }
+        final String authenticationUrl = OAuthUtils.buildAuthorizeUrl(this.getDefaultUnauthorizedConnector().getConsumerKey(),
+                                                      authorizationUrlForRequest, redirectUri, this.getScope(), null,
+                                                      extraParameters);
 
         if (getLogger().isDebugEnabled())
         {
-            getLogger().debug(("Authorization URL has been generated as follows: " + urlBuilder));
+            getLogger().debug(("Authorization URL has been generated as follows: " + authenticationUrl));
         }
 
         return urlBuilder.toString();
@@ -406,25 +379,9 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
     public final void fetchAccessToken(OAuth2Adapter adapter, String redirectUri)
         throws UnableToAcquireAccessTokenException
     {
-        StringBuilder builder = new StringBuilder();
-        try
-        {
-            builder.append("code=");
-            builder.append(URLEncoder.encode(adapter.getOauthVerifier(), "UTF-8"));
-            builder.append("&client_id=");
-            builder.append(URLEncoder.encode(adapter.getConsumerKey(), "UTF-8"));
-            builder.append("&client_secret=");
-            builder.append(URLEncoder.encode(adapter.getConsumerSecret(), "UTF-8"));
-            builder.append("&grant_type=");
-            builder.append(URLEncoder.encode("authorization_code", "UTF-8"));
-            builder.append("&redirect_uri=");
-            builder.append(URLEncoder.encode(redirectUri, "UTF-8"));
-        }
-        catch (UnsupportedEncodingException e)
-        {
-            throw new RuntimeException(e);
-        }
-        this.fetchAndExtract(adapter, builder.toString(), null);
+        final String body = OAuthUtils.buildTokenBody(adapter.getConsumerKey(),
+                   adapter.getConsumerSecret(), redirectUri, adapter.getOauthVerifier());
+        this.fetchAndExtract(adapter, body, null);
     }
 
     /**
@@ -575,7 +532,8 @@ public abstract class BaseOAuth2Manager<C extends OAuth2Adapter> extends Default
                                                                    : this.getDefaultUnauthorizedConnector()
                                                                        .getAccessTokenUrl();
 
-        String response = this.httpUtil.post(accessTokenUrl, requestBody);
+
+        String response = OAuthUtils.callTokenUrl(accessTokenUrl, requestBody);
 
         if (getLogger().isDebugEnabled())
         {
