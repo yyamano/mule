@@ -18,9 +18,15 @@ public class OAuthNamespaceHandler extends MuleNamespaceHandler
 
     public void init()
     {
-        registerMuleBeanDefinitionParser("authentication-code", new MuleOrphanDefinitionParser(AuthenticationCodeGrantType.class, true));
+        registerMuleBeanDefinitionParser("authentication-code", new MuleOrphanDefinitionParser(AuthorizationCodeGrantTypeConfig.class, true));
+        registerMuleBeanDefinitionParser("authorization-request", new ChildDefinitionParser("authorizationRequest", AuthorizationRequest.class));
+        registerMuleBeanDefinitionParser("token-request", new ChildDefinitionParser("tokenRequest", TokenRequest.class));
+        registerMuleBeanDefinitionParser("token-response", new ChildDefinitionParser("tokenResponse", TokenResponse.class));
         registerMuleBeanDefinitionParser("custom-parameters", new GenericChildMapDefinitionParser("customParameters", "custom-parameter", "paramName", "value"));
-        registerMuleBeanDefinitionParser("parameter-extraction-customizer", new ChildDefinitionParser("parameterExtractor", ParameterExtractor.class));
+        registerMuleBeanDefinitionParser("custom-parameter-extractor", new ChildDefinitionParser("parameterExtractor", ParameterExtractor.class));
+        final ChildDefinitionParser authenticationDefinitionParser = new ChildDefinitionParser("auth", AuthenticationCodeAuthenticate.class);
+        authenticationDefinitionParser.addReference("config");
+        registerMuleBeanDefinitionParser("authentication-code-auth", authenticationDefinitionParser);
     }
 
 }

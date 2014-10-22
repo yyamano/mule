@@ -1,4 +1,4 @@
-package org.mule.module.oauth;
+package org.mule.module.oauth.asserter;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -6,14 +6,14 @@ import static org.junit.Assert.assertThat;
 
 import org.mule.util.ClassUtils;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.HttpResponse;
 
 public class AssertHttpResponse
 {
 
-    protected final CloseableHttpResponse response;
+    protected final HttpResponse response;
 
-    public AssertHttpResponse(CloseableHttpResponse response)
+    public AssertHttpResponse(HttpResponse response)
     {
         this.response = response;
     }

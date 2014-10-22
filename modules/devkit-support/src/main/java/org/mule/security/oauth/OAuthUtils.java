@@ -24,9 +24,12 @@ import org.apache.commons.lang.StringUtils;
 public class OAuthUtils
 {
 
-    public final static Pattern ACCESS_CODE_PATTERN = Pattern.compile("\"access_token\"[ ]*:[ ]*\"([^\\\"]*)\"");
+    public final static Pattern ACCESS_TOKEN_PATTERN = Pattern.compile("\"access_token\"[ ]*:[ ]*\"([^\\\"]*)\"");
     public final static Pattern REFRESH_TOKEN_PATTERN = Pattern.compile("\"refresh_token\"[ ]*:[ ]*\"([^\\\"]*)\"");
     public final static Pattern EXPIRATION_TIME_PATTERN = Pattern.compile("\"expires_in\"[ ]*:[ ]*([\\d]*)");
+    public final static String ACCESS_TOKEN_EXPRESSION = "#[regex('" + ".*\"access_token\"[ ]*:[ ]*\"([^\\\"]*)\".*" + "')]";
+    public final static String REFRESH_TOKEN_EXPRESSION = "#[regex('" + ".*\"refresh_token\"[ ]*:[ ]*\"([^\\\"]*)\".*" + "')]";
+    public final static String EXPIRATION_TIME_EXPRESSION = "#[regex('" + ".*\"expires_in\"[ ]*:[ ]*([\\\\d]*).*" + "')]";
 
     private static HttpUtil httpUtil = new HttpUtilImpl();
 
@@ -143,7 +146,7 @@ public class OAuthUtils
 
     public static String extractAccessToken(String tokenUrlCallResponse) throws Exception
     {
-        return extractContentUsingPattern(tokenUrlCallResponse, ACCESS_CODE_PATTERN);
+        return extractContentUsingPattern(tokenUrlCallResponse, ACCESS_TOKEN_PATTERN);
     }
 
     public static String extractRefreshToken(String tokenUrlCallResponse) throws Exception
@@ -180,5 +183,10 @@ public class OAuthUtils
             query_pairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
         }
         return query_pairs;
+    }
+
+    public static String buildAuthorizationHeaderContent(String accessToken)
+    {
+        return "Bearer " + accessToken;
     }
 }

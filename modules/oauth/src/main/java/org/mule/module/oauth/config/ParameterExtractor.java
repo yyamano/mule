@@ -10,34 +10,27 @@ package org.mule.module.oauth.config;
 public class ParameterExtractor
 {
 
-    private String authenticationCode;
-    private String state;
-    private String accessToken;
-    private String refreshToken;
-    private String expiresIn;
+    private String paramName;
+    private String value;
 
-    public void setAuthenticationCode(String authenticationCode)
+    public void setParamName(String paramName)
     {
-        this.authenticationCode = authenticationCode;
+        this.paramName = paramName;
     }
 
-    public void setState(String state)
+    public void setValue(String value)
     {
-        this.state = state;
+        this.value = value;
     }
 
-    public void setAccessToken(String accessToken)
+
+    public String getParamName()
     {
-        this.accessToken = accessToken;
+        return paramName;
     }
 
-    public void setRefreshToken(String refreshToken)
+    public String getValue()
     {
-        this.refreshToken = refreshToken;
-    }
-
-    public void setExpiresIn(String expiresIn)
-    {
-        this.expiresIn = expiresIn;
+        return value;
     }
 }

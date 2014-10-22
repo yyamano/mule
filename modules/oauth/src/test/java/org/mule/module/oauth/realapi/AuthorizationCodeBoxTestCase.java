@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.oauth;
+package org.mule.module.oauth.realapi;
 
 import org.mule.tck.junit4.FunctionalTestCase;
 import org.mule.tck.junit4.rule.DynamicPort;
@@ -20,8 +20,6 @@ public class AuthorizationCodeBoxTestCase extends FunctionalTestCase
 {
 
     public static final String TOKEN_PATH = "/token";
-    @Rule
-    public HttpTestClient httpTestClient = new HttpTestClient().disableRedirects().start();
     private final DynamicPort localHostPort = new DynamicPort("port1");
     private final DynamicPort fakeOauthServerPort = new DynamicPort("port2");
     @Rule

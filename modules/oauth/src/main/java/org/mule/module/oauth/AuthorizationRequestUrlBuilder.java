@@ -12,46 +12,70 @@ import org.mule.util.Preconditions;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AuthorizationRequest
+public class AuthorizationRequestUrlBuilder
 {
 
-    private Logger logger = LoggerFactory.getLogger(getClass());
-
-    private final String clientId;
-    private final String clientSecret;
-    private final String scope;
-    private final String authorizationUrl;
-    private final Map<String, String> customParameters;
+    private Logger logger = LoggerFactory.getLogger(AuthorizationRequestUrlBuilder.class);
+    private String authorizationUrl;
     private String redirectUrl;
+    private String clientId;
+    private String scope;
+    private String clientSecret;
+    private Map<String, String> customParameters = new HashMap<String, String>();
+    private String state;
 
-    public AuthorizationRequest(String clientId, String clientSecret, String scope, String authorizationUrl, Map<String, String> customParameters)
+    public AuthorizationRequestUrlBuilder setAuthorizationUrl(String authorizationUrl)
+    {
+        this.authorizationUrl = authorizationUrl;
+        return this;
+    }
+
+    public AuthorizationRequestUrlBuilder setRedirectUrl(String redirectUrl)
+    {
+        this.redirectUrl = redirectUrl;
+        return this;
+    }
+
+    public AuthorizationRequestUrlBuilder setClientId(String clientId)
+    {
+        this.clientId = clientId;
+        return this;
+    }
+
+    public AuthorizationRequestUrlBuilder setClientSecret(String clientSecret)
+    {
+        this.clientSecret = clientSecret;
+        return this;
+    }
+
+    public AuthorizationRequestUrlBuilder setScope(String scope)
+    {
+        this.scope = scope;
+        return this;
+    }
+
+    public AuthorizationRequestUrlBuilder setCustomParameters(Map<String, String> customParameters)
+    {
+        this.customParameters = customParameters;
+        return this;
+    }
+
+    public String buildUrl()
     {
         Preconditions.checkArgument(isNotBlank(clientId), "client cannot be blank");
         Preconditions.checkArgument(isNotBlank(clientSecret), "client cannot be blank");
         Preconditions.checkArgument(isNotBlank(authorizationUrl), "client cannot be blank");
         Preconditions.checkArgument(customParameters != null, "client cannot be null");
-        this.clientId = clientId;
-        this.clientSecret = clientSecret;
-        this.scope = scope;
-        this.authorizationUrl = authorizationUrl;
-        this.customParameters = customParameters;
-        this.redirectUrl = null;
-        buildAuthorizeUrl();
+        return buildAuthorizeUrl();
     }
 
-    public AuthorizationRequest(String clientId, String clientSecret, String scope, String authorizationUrl, Map<String, String> customParameters, String redirectUrl)
-    {
-        this(clientId, clientSecret, scope, authorizationUrl, customParameters);
-        Preconditions.checkArgument(redirectUrl != null && !redirectUrl.isEmpty(), "redirectUrl cannot be null or empty");
-        this.redirectUrl = redirectUrl;
-    }
-
-    public final String buildAuthorizeUrl()
+    private final String buildAuthorizeUrl()
     {
         StringBuilder urlBuilder = new StringBuilder();
         urlBuilder.append(authorizationUrl);
@@ -66,6 +90,10 @@ public class AuthorizationRequest
             if (isNotBlank(scope))
             {
                 urlBuilder.append("&scope=").append(URLEncoder.encode(scope, "UTF-8"));
+            }
+            if (isNotBlank(state))
+            {
+                urlBuilder.append("&state=").append(URLEncoder.encode(state, "UTF-8"));
             }
 
             for (Map.Entry<String, String> entry : customParameters.entrySet())
@@ -89,4 +117,11 @@ public class AuthorizationRequest
         }
         return urlBuilder.toString();
     }
+
+    public AuthorizationRequestUrlBuilder setState(String state)
+    {
+        this.state = state;
+        return this;
+    }
+
 }

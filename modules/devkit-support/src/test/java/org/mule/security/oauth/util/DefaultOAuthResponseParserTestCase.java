@@ -6,15 +6,13 @@
  */
 package org.mule.security.oauth.util;
 
-import static org.mule.security.oauth.OAuthUtils.ACCESS_CODE_PATTERN;
+import static org.mule.security.oauth.OAuthUtils.ACCESS_TOKEN_PATTERN;
 import static org.mule.security.oauth.OAuthUtils.EXPIRATION_TIME_PATTERN;
 import static org.mule.security.oauth.OAuthUtils.REFRESH_TOKEN_PATTERN;
 
-import org.mule.security.oauth.OAuthUtils;
 import org.mule.tck.size.SmallTest;
 
 import java.util.Date;
-import java.util.regex.Pattern;
 
 import junit.framework.Assert;
 
@@ -36,14 +34,14 @@ public class DefaultOAuthResponseParserTestCase
     @Test
     public void accessToken()
     {
-        Assert.assertEquals(parser.extractAccessCode(ACCESS_CODE_PATTERN, response),
+        Assert.assertEquals(parser.extractAccessCode(ACCESS_TOKEN_PATTERN, response),
             "ya29.AHES6ZTtm7SuokEB-RGtbBty9IIlNiP9-eNMMQKtXdMP3sfjL1Fc");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void noAccessToken()
     {
-        this.parser.extractAccessCode(ACCESS_CODE_PATTERN, "i have no token for you");
+        this.parser.extractAccessCode(ACCESS_TOKEN_PATTERN, "i have no token for you");
     }
 
     @Test

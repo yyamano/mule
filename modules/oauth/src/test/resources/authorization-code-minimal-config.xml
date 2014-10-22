@@ -6,13 +6,16 @@
        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
        http://www.mulesoft.org/schema/mule/oauth2 http://www.mulesoft.org/schema/mule/oauth2/current/mule-oauth2.xsd">
 
-    <oauth2:authentication-code name="basicConfig"
-                              clientId="${client.id}"
-                              clientSecret="${client.secret}"
-                              localAuthorizationUrl="${local.authorization.url}"
-                              authorizationUrl="${authorization.url}"
-                              redirectionUrl="${redirect.url}"
-                              tokenUrl="${token.url}">
+    <oauth2:authentication-code name="minimalConfig"
+                                clientId="${client.id}"
+                                clientSecret="${client.secret}"
+                                redirectionUrl="${redirect.url}">
+        <oauth2:authorization-request
+                localAuthorizationUrl="${local.authorization.url}"
+                authorizationUrl="${authorization.url}">
+        </oauth2:authorization-request>
+        <oauth2:token-request
+                tokenUrl="${token.url}"/>
     </oauth2:authentication-code>
 
 </mule>

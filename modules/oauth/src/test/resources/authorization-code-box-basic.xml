@@ -2,40 +2,27 @@
 <mule xmlns="http://www.mulesoft.org/schema/mule/core"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xmlns:oauth2="http://www.mulesoft.org/schema/mule/oauth2"
+      xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
       xsi:schemaLocation="
        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+       http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
        http://www.mulesoft.org/schema/mule/oauth2 http://www.mulesoft.org/schema/mule/oauth2/current/mule-oauth2.xsd">
+
+    <tls:context name="globalTlsContext">
+        <tls:trust-store path="ssltest-cacerts.jks" password="changeit"/>
+        <tls:key-store path="ssltest-keystore.jks" keyPassword="changeit" password="changeit"/>
+    </tls:context>
 
     <oauth2:authentication-code name="basicConfig"
                               clientId="ndli93xdws2qoe6ms1d389vl6bxquv3e"
                               clientSecret="yL692Az1cNhfk1VhTzyx4jOjjMKBrO9T"
-                              localAuthorizationUrl="https://localhost:8082/authorization"
-                              authorizationUrl="https://www.box.com/api/oauth2/authorize"
-                              redirectionUrl="https://localhost:8082/"
-                              tokenUrl="https://www.box.com/api/oauth2/token">
-        <authorization-request-builder/>
-        <oauth2:redirect-url-request-parameters-extractor authenticationCode="" state="">
-            <custom-parameter-extractor paramName="authenticationTheme" value="#[http.queryParams['authenticationTheme']]"/>
-        </oauth2:redirect-url-request-parameters-extractor>
-        <token-request-builder/>
-        <oauth2:token-url-response-parameters-extractor accessToken="" expiresIn="" refreshToken="" />
+                              redirectionUrl="https://localhost:8082/redirectUrl">
+        <oauth2:authorization-request
+                localAuthorizationUrl="https://localhost:8082/authorization"
+                authorizationUrl="https://www.box.com/api/oauth2/authorize">
+        </oauth2:authorization-request>
+        <oauth2:token-request
+                tokenUrl="https://www.box.com/api/oauth2/token"/>
     </oauth2:authentication-code>
-
-    <oauth2:custom-authentication-code name="customOAuth"
-                                       name="basicConfig"
-                                       clientId="ndli93xdws2qoe6ms1d389vl6bxquv3e"
-                                       clientSecret="yL692Az1cNhfk1VhTzyx4jOjjMKBrO9T"
-                                       localAuthorizationUrl="https://localhost:8082/authorization"
-                                       authorizationUrl="https://www.box.com/api/oauth2/authorize"/>
-    </oauth2:custom-authentication-code>
-
-    <flow>
-        <http:listener url="https://localhost:8082/"/>
-        ...
-        <http:request url="https://www.box.com/api/oauth2/token"/>
-        <oauth2:store-token config="customOAuth" accessTokenId="box" value="#[payload['access_token']]"/>
-    </flow>
-
-
 
 </mule>
