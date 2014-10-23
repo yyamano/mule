@@ -10,5 +10,6 @@ public interface AuthorizationCodeGrantConfig
     String getClientId();
     String getRedirectionUrl();
     String getRefreshTokenWhen();
+    String getOAuthStateId();
     void refreshToken(MuleEvent currentFlowEvent, String userId);
 }

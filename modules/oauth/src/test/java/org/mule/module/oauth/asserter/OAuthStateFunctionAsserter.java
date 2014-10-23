@@ -12,50 +12,52 @@ public class OAuthStateFunctionAsserter
 
     private final ExpressionLanguage expressionLanguage;
     private final String configName;
+    private final String userId;
 
-    private OAuthStateFunctionAsserter(ExpressionLanguage expressionLanguage, String configName)
+    private OAuthStateFunctionAsserter(ExpressionLanguage expressionLanguage, String configName, String userId)
     {
         this.expressionLanguage = expressionLanguage;
         this.configName = configName;
+        this.userId = userId;
     }
 
     public static OAuthStateFunctionAsserter createFrom(ExpressionLanguage expressionLanguage, String configName)
     {
-        return new OAuthStateFunctionAsserter(expressionLanguage, configName);
+        return new OAuthStateFunctionAsserter(expressionLanguage, configName, UserOAuthState.DEFAULT_USER_ID);
     }
 
-    public static OAuthStateFunctionAsserter createFrom(ExpressionLanguage expressionLanguage)
+    public static OAuthStateFunctionAsserter createFrom(ExpressionLanguage expressionLanguage, String configName, String userId)
     {
-        return new OAuthStateFunctionAsserter(expressionLanguage, UserOAuthState.DEFAULT_USER_ID);
+        return new OAuthStateFunctionAsserter(expressionLanguage, configName, userId);
     }
 
     public OAuthStateFunctionAsserter assertAccessTokenIs(String expectedAccessToken)
     {
-        assertThat(expressionLanguage.evaluate(String.format("oauthState('%s').accessToken", configName)), Is.<Object>is(expectedAccessToken));
+        assertThat(expressionLanguage.evaluate(String.format("oauthState('%s','%s').accessToken", configName, userId)), Is.<Object>is(expectedAccessToken));
         return this;
     }
 
     public OAuthStateFunctionAsserter assertRefreshTokenIs(String expectedRefreshToken)
     {
-        assertThat(expressionLanguage.evaluate(String.format("oauthState('%s').refreshToken", configName)), Is.<Object>is(expectedRefreshToken));
+        assertThat(expressionLanguage.evaluate(String.format("oauthState('%s','%s').refreshToken", configName, userId)), Is.<Object>is(expectedRefreshToken));
         return this;
     }
 
     public OAuthStateFunctionAsserter assertState(String expectedState)
     {
-        assertThat(expressionLanguage.evaluate(String.format("oauthState('%s').state", configName)), Is.<Object>is(expectedState));
+        assertThat(expressionLanguage.evaluate(String.format("oauthState('%s','%s').state", configName, userId)), Is.<Object>is(expectedState));
         return this;
     }
 
     public OAuthStateFunctionAsserter assertExpiresInIs(String expectedExpiresIs)
     {
-        assertThat(expressionLanguage.evaluate(String.format("oauthState('%s').expiresIn", configName)), Is.<Object>is(expectedExpiresIs));
+        assertThat(expressionLanguage.evaluate(String.format("oauthState('%s','%s').expiresIn", configName, userId)), Is.<Object>is(expectedExpiresIs));
         return this;
     }
 
     public OAuthStateFunctionAsserter assertContainsCustomTokenResponseParam(String paramName, String paramValue)
     {
-        assertThat(expressionLanguage.evaluate(String.format("oauthState('%s').tokenResponseParameters['%s']", configName, paramName)), Is.<Object>is(paramValue));
+        assertThat(expressionLanguage.evaluate(String.format("oauthState('%s','%s').tokenResponseParameters['%s']", configName, userId, paramName)), Is.<Object>is(paramValue));
         return this;
     }
 }

@@ -7,10 +7,12 @@ import org.mule.api.context.MuleContextAware;
 import org.mule.api.lifecycle.Initialisable;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.registry.RegistrationException;
+import org.mule.module.http.HttpHeaders;
 import org.mule.module.http.request.HttpAuth;
 import org.mule.module.oauth.state.ContextOAuthState;
 import org.mule.module.oauth.state.UserOAuthState;
 import org.mule.security.oauth.OAuthUtils;
+import org.mule.util.AttributeEvaluator;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.client.api.Authentication;
@@ -21,14 +23,14 @@ public class AuthenticationCodeAuthenticate implements HttpAuth, MuleContextAwar
     private MuleContext muleContext;
     private AuthorizationCodeGrantConfig config;
     private String oauthStateId = UserOAuthState.DEFAULT_USER_ID;
+    private AttributeEvaluator oauthStateIdEvaluator;
     private ContextOAuthState contextOAuthState;
-
 
     @Override
     public void authenticate(MuleEvent muleEvent)
     {
-        final String accessToken = contextOAuthState.getStateForConfig(config.getConfigName()).getStateForUser(oauthStateId).getAccessToken();
-        muleEvent.getMessage().setOutboundProperty("Authorization", OAuthUtils.buildAuthorizationHeaderContent(accessToken));
+        final String accessToken = contextOAuthState.getStateForConfig(config.getConfigName()).getStateForUser(oauthStateIdEvaluator.resolveStringValue(muleEvent)).getAccessToken();
+        muleEvent.getMessage().setOutboundProperty(HttpHeaders.Names.AUTHORIZATION, OAuthUtils.buildAuthorizationHeaderContent(accessToken));
     }
 
     @Override
@@ -47,7 +49,7 @@ public class AuthenticationCodeAuthenticate implements HttpAuth, MuleContextAwar
             final Boolean shouldRetryRequest = muleContext.getExpressionLanguage().evaluate(refreshTokenWhen, firstAttemptResponseEvent);
             if (shouldRetryRequest)
             {
-                config.refreshToken(firstAttemptResponseEvent, UserOAuthState.DEFAULT_USER_ID);
+                config.refreshToken(firstAttemptResponseEvent, oauthStateIdEvaluator.resolveStringValue(firstAttemptResponseEvent));
             }
             return shouldRetryRequest;
         }
@@ -75,8 +77,8 @@ public class AuthenticationCodeAuthenticate implements HttpAuth, MuleContextAwar
     {
         try
         {
-            //TODO see if we can decouple this from the registry
-            this.contextOAuthState = muleContext.getRegistry().lookupObject(ContextOAuthState.class);
+            contextOAuthState = muleContext.getRegistry().lookupObject(ContextOAuthState.class);
+            oauthStateIdEvaluator = new AttributeEvaluator(oauthStateId).initialize(muleContext.getExpressionManager());
         }
         catch (RegistrationException e)
         {

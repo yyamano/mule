@@ -23,6 +23,7 @@ public class AuthorizationCodeGrantTypeConfig implements Startable, Authorizatio
     private String clientId;
     private String clientSecret;
     private String redirectionUrl;
+    private String oauthStateId;
     private AuthorizationRequest authorizationRequest;
     private TokenRequest tokenRequest;
     private String userId = UserOAuthState.DEFAULT_USER_ID;
@@ -84,6 +85,12 @@ public class AuthorizationCodeGrantTypeConfig implements Startable, Authorizatio
     }
 
     @Override
+    public String getOAuthStateId()
+    {
+        return oauthStateId;
+    }
+
+    @Override
     public void refreshToken(final MuleEvent currentFlowEvent, final String userId)
     {
         tokenRequest.refreshToken(currentFlowEvent, userId);
@@ -108,5 +115,10 @@ public class AuthorizationCodeGrantTypeConfig implements Startable, Authorizatio
     public String getUserId()
     {
         return userId;
+    }
+
+    public void setOauthStateId(String oauthStateId)
+    {
+        this.oauthStateId = oauthStateId;
     }
 }

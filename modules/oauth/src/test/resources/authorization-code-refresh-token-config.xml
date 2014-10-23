@@ -28,4 +28,26 @@
         <http:request host="localhost" port="${oauth.server.port}" path="/resource" method="POST" config-ref="requestConfig"/>
     </flow>
 
+    <oauth2:authentication-code name="multitenantOauthConfig"
+                                clientId="${client.id}"
+                                clientSecret="${client.secret}"
+                                redirectionUrl="${redirect.url}"
+                                oauthStateId="#[message.inboundProperties['http.properties'].queryParams['userId']]">
+        <oauth2:authorization-request
+                localAuthorizationUrl="${local.authorization.url}"
+                authorizationUrl="${authorization.url}">
+        </oauth2:authorization-request>
+        <oauth2:token-request
+                refreshTokenWhen="#[message.inboundProperties['http.status'] == 500]"
+                tokenUrl="${token.url}"/>
+    </oauth2:authentication-code>
+
+    <http:request-config name="multitenantRequestConfig">
+        <oauth2:authentication-code-auth config="multitenantOauthConfig" oauthStateId="#[flowVars['userId']]"/>
+    </http:request-config>
+
+    <flow name="testMultitenantFlow">
+        <http:request host="localhost" port="${oauth.server.port}" path="/resource" method="POST" config-ref="multitenantRequestConfig"/>
+    </flow>
+
 </mule>

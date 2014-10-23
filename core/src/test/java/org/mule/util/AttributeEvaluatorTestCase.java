@@ -7,13 +7,17 @@
 package org.mule.util;
 
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.mule.api.MuleEvent;
 import org.mule.api.expression.ExpressionManager;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
+import org.hamcrest.core.IsNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -27,6 +31,8 @@ public class AttributeEvaluatorTestCase extends AbstractMuleTestCase
 
     @Mock
     private ExpressionManager mockExpressionManager;
+    @Mock
+    private MuleEvent mockMuleEvent;
 
     @Test
     public void testPlainTextValue()
@@ -34,7 +40,7 @@ public class AttributeEvaluatorTestCase extends AbstractMuleTestCase
         AttributeEvaluator attributeEvaluator = new AttributeEvaluator("attributeEvaluator");
         Mockito.when(mockExpressionManager.isExpression("attributeEvaluator")).thenReturn(false);
         attributeEvaluator.initialize(mockExpressionManager);
-        assertThat(attributeEvaluator.isString(), is(true));
+        assertThat(attributeEvaluator.isParseExpression(), is(false));
         assertThat(attributeEvaluator.isExpression(), is(false));
     }
 
@@ -45,7 +51,7 @@ public class AttributeEvaluatorTestCase extends AbstractMuleTestCase
         when(mockExpressionManager.isExpression(attributeValue)).thenReturn(true);
         AttributeEvaluator attributeEvaluator = new AttributeEvaluator(attributeValue);
         attributeEvaluator.initialize(mockExpressionManager);
-        assertThat(attributeEvaluator.isString(), is(false));
+        assertThat(attributeEvaluator.isParseExpression(), is(false));
         assertThat(attributeEvaluator.isExpression(), is(true));
     }
 
@@ -57,7 +63,7 @@ public class AttributeEvaluatorTestCase extends AbstractMuleTestCase
         Mockito.when(mockExpressionManager.isExpression(attributeValue)).thenReturn(true);
         AttributeEvaluator attributeEvaluator = new AttributeEvaluator(attributeValue);
         attributeEvaluator.initialize(mockExpressionManager);
-        assertThat(attributeEvaluator.isString(), is(false));
+        assertThat(attributeEvaluator.isParseExpression(), is(false));
         assertThat(attributeEvaluator.isExpression(), is(true));
     }
 
@@ -66,7 +72,7 @@ public class AttributeEvaluatorTestCase extends AbstractMuleTestCase
     {
         AttributeEvaluator attributeEvaluator = new AttributeEvaluator("1#[2]3#[4]5");
         attributeEvaluator.initialize(mockExpressionManager);
-        assertThat(attributeEvaluator.isString(), is(true));
+        assertThat(attributeEvaluator.isParseExpression(), is(true));
         assertThat(attributeEvaluator.isExpression(), is(false));
     }
 
@@ -75,7 +81,7 @@ public class AttributeEvaluatorTestCase extends AbstractMuleTestCase
     {
         AttributeEvaluator attributeEvaluator = new AttributeEvaluator("#[1]234#[5]");
         attributeEvaluator.initialize(mockExpressionManager);
-        assertThat(attributeEvaluator.isString(), is(true));
+        assertThat(attributeEvaluator.isParseExpression(), is(true));
         assertThat(attributeEvaluator.isExpression(), is(false));
     }
 
@@ -84,7 +90,7 @@ public class AttributeEvaluatorTestCase extends AbstractMuleTestCase
     {
         AttributeEvaluator attributeEvaluator = new AttributeEvaluator("#[1]#[2]");
         attributeEvaluator.initialize(mockExpressionManager);
-        assertThat(attributeEvaluator.isString(), is(true));
+        assertThat(attributeEvaluator.isParseExpression(), is(true));
         assertThat(attributeEvaluator.isExpression(), is(false));
     }
 
@@ -93,8 +99,19 @@ public class AttributeEvaluatorTestCase extends AbstractMuleTestCase
     {
         AttributeEvaluator attributeEvaluator = new AttributeEvaluator("#[(1)]");
         attributeEvaluator.initialize(mockExpressionManager);
-        assertThat(attributeEvaluator.isString(), is(false));
+        assertThat(attributeEvaluator.isParseExpression(), is(false));
         assertThat(attributeEvaluator.isExpression(), is(true));
+    }
+
+    @Test
+    public void testNull()
+    {
+        final AttributeEvaluator nullAttributeEvaluator = new AttributeEvaluator(null);
+        nullAttributeEvaluator.initialize(mockExpressionManager);
+        assertThat(nullAttributeEvaluator.isExpression(), is(false));
+        assertThat(nullAttributeEvaluator.isParseExpression(), is(false));
+        assertThat(nullAttributeEvaluator.resolveValue(mockMuleEvent), nullValue());
+        assertThat(nullAttributeEvaluator.resolveIntegerValue(mockMuleEvent), nullValue());
     }
 
 }

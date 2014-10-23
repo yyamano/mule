@@ -11,6 +11,7 @@ import org.mule.module.http.listener.HttpListener;
 import org.mule.module.http.listener.HttpListenerBuilder;
 import org.mule.module.http.listener.HttpResponseBuilder;
 import org.mule.module.oauth.AuthorizationRequestUrlBuilder;
+import org.mule.util.AttributeEvaluator;
 
 import java.net.MalformedURLException;
 import java.util.HashMap;
@@ -31,6 +32,8 @@ public class AuthorizationRequest implements MuleContextAware
     private HttpListener listener;
     private MuleContext muleContext;
     private AuthorizationCodeGrantTypeConfig oauthConfig;
+    private AttributeEvaluator oauthStateIdEvaluator;
+    private AttributeEvaluator stateEvaluator;
 
     public void setScopes(String scopes)
     {
@@ -67,30 +70,50 @@ public class AuthorizationRequest implements MuleContextAware
         //TODO validate authorization url
         try
         {
+            oauthStateIdEvaluator = new AttributeEvaluator(oauthConfig.getOAuthStateId()).initialize(muleContext.getExpressionManager());
+            stateEvaluator = new AttributeEvaluator(state).initialize(muleContext.getExpressionManager());
             final HttpListenerBuilder httpListenerBuilder = new HttpListenerBuilder(muleContext);
-            //TODO verify state is not being used.
-            final String authorizationUrlWithParams = new AuthorizationRequestUrlBuilder()
-                    .setAuthorizationUrl(authorizationUrl)
-                    .setClientId(oauthConfig.getClientId())
-                    .setClientSecret(oauthConfig.getClientSecret())
-                    .setCustomParameters(customParameters)
-                    .setRedirectUrl(oauthConfig.getRedirectionUrl())
-                    .setState(state)
-                    .setScope(scopes).buildUrl();
             final HttpResponseBuilder responseBuilder = new HttpResponseBuilder();
-            responseBuilder.setStatusCode(302);
-            responseBuilder.addHeader(HttpHeaders.Names.LOCATION, authorizationUrlWithParams);
+            responseBuilder.setStatusCode("302");
+            responseBuilder.setMuleContext(muleContext);
+            responseBuilder.initialise();
             this.listener = httpListenerBuilder.setUrl(localAuthorizationUrl)
                     .setMuleContext(muleContext)
                     .setResponseBuilder(responseBuilder)
                     .setListener(new MessageProcessor()
-            {
-                @Override
-                public MuleEvent process(MuleEvent muleEvent) throws MuleException
-                {
-                    return muleEvent;
-                }
-            }).build();
+                    {
+                        @Override
+                        public MuleEvent process(MuleEvent muleEvent) throws MuleException
+                        {
+                            final String oauthStateId = oauthStateIdEvaluator.resolveStringValue(muleEvent);
+                            muleEvent.setFlowVariable("oauthStateId", oauthStateId);
+                            String currentState;
+                            if (state == null && oauthStateId != null)
+                            {
+                                currentState = ":oauthStateId=" + oauthStateId;
+                            }
+                            else if (oauthStateId != null)
+                            {
+                                currentState = stateEvaluator.resolveStringValue(muleEvent) + ":oauthStateId=" + oauthStateId;
+                            }
+                            else
+                            {
+                                currentState = stateEvaluator.resolveStringValue(muleEvent);
+                            }
+                            //TODO verify state is not being used.
+                            final String authorizationUrlWithParams = new AuthorizationRequestUrlBuilder()
+                                    .setAuthorizationUrl(authorizationUrl)
+                                    .setClientId(oauthConfig.getClientId())
+                                    .setClientSecret(oauthConfig.getClientSecret())
+                                    .setCustomParameters(customParameters)
+                                    .setRedirectUrl(oauthConfig.getRedirectionUrl())
+                                    .setState(currentState)
+                                    .setScope(scopes).buildUrl();
+
+                            muleEvent.getMessage().setOutboundProperty(HttpHeaders.Names.LOCATION, authorizationUrlWithParams);
+                            return muleEvent;
+                        }
+                    }).build();
             this.listener.start();
         }
         catch (MalformedURLException e)

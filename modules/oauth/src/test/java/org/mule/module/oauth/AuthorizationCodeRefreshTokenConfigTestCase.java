@@ -11,6 +11,7 @@ import static org.junit.Assert.assertThat;
 import org.mule.api.MuleEvent;
 import org.mule.construct.Flow;
 import org.mule.module.http.HttpHeaders;
+import org.mule.module.oauth.asserter.OAuthStateFunctionAsserter;
 import org.mule.module.oauth.state.ContextOAuthState;
 import org.mule.module.oauth.state.UserOAuthState;
 import org.mule.security.oauth.OAuthConstants;
@@ -28,6 +29,13 @@ public class AuthorizationCodeRefreshTokenConfigTestCase extends AbstractAuthori
     private static final String RESOURCE_PATH = "/resource";
     public static final String RESOURCE_RESULT = "resource result";
     public static final String REFRESHED_ACCESS_TOKEN = "rbBQLgJXBEYo83K4Fqs4guasdfsdfa";
+    public static final String MULTITENANT_OAUTH_CONFIG = "multitenantOauthConfig";
+    public static final String SINGLE_TENANT_OAUTH_CONFIG = "oauthConfig";
+
+    public static final String USER_ID_JOHN = "john";
+    public static final String JOHN_ACCESS_TOKEN = "123456789";
+    public static final String USER_ID_TONY = "tony";
+    public static final String TONY_ACCESS_TOKEN = "abcdefghi";
 
     @Rule
     public SystemProperty localAuthorizationUrl = new SystemProperty("local.authorization.url", String.format("http://localhost:%d/authorization", localHostPort.getNumber()));
@@ -37,6 +45,8 @@ public class AuthorizationCodeRefreshTokenConfigTestCase extends AbstractAuthori
     public SystemProperty redirectUrl = new SystemProperty("redirect.url", String.format("http://localhost:%d/redirect", localHostPort.getNumber()));
     @Rule
     public SystemProperty tokenUrl = new SystemProperty("token.url", String.format("http://localhost:%d" + TOKEN_PATH, oauthServerPort.getNumber()));
+    @Rule
+    public SystemProperty multitenantUser = new SystemProperty("multitenant.user", "john");
 
 
     @Override
@@ -46,7 +56,29 @@ public class AuthorizationCodeRefreshTokenConfigTestCase extends AbstractAuthori
     }
 
     @Test
-    public void afterFailureDoRefreshTokenWithDefaultValue() throws Exception
+    public void afterFailureDoRefreshTokenWithDefaultValueNoOauthStateId() throws Exception
+    {
+        executeRefreshToken("testFlow", SINGLE_TENANT_OAUTH_CONFIG, UserOAuthState.DEFAULT_USER_ID, 403);
+    }
+
+    @Test
+    public void afterFailureDoRefreshTokenWithCustomValueWithOauthStateId() throws Exception
+    {
+        final ContextOAuthState contextOAuthState = muleContext.getRegistry().lookupObject(ContextOAuthState.class);
+        contextOAuthState.getStateForConfig(MULTITENANT_OAUTH_CONFIG).getStateForUser(USER_ID_TONY).setAccessToken(TONY_ACCESS_TOKEN);
+        contextOAuthState.getStateForConfig(MULTITENANT_OAUTH_CONFIG).getStateForUser(USER_ID_JOHN).setAccessToken(JOHN_ACCESS_TOKEN);
+
+        executeRefreshToken("testMultitenantFlow", MULTITENANT_OAUTH_CONFIG, multitenantUser.getValue(), 500);
+
+        OAuthStateFunctionAsserter.createFrom(muleContext.getExpressionLanguage(), MULTITENANT_OAUTH_CONFIG, USER_ID_JOHN)
+                .assertAccessTokenIs(REFRESHED_ACCESS_TOKEN)
+                .assertState(null);
+        OAuthStateFunctionAsserter.createFrom(muleContext.getExpressionLanguage(), MULTITENANT_OAUTH_CONFIG, USER_ID_TONY)
+                .assertAccessTokenIs(TONY_ACCESS_TOKEN)
+                .assertState(null);
+    }
+
+    private void executeRefreshToken(String flowName, String oauthConfigName, String userId, int failureStatusCode) throws Exception
     {
         wireMockRule.stubFor(post(urlEqualTo(TOKEN_PATH))
                                      .willReturn(aResponse()
@@ -65,16 +97,18 @@ public class AuthorizationCodeRefreshTokenConfigTestCase extends AbstractAuthori
                                      .withHeader(HttpHeaders.Names.AUTHORIZATION,
                                                  containing(ACCESS_TOKEN))
                                      .willReturn(aResponse()
-                                                         .withStatus(403)
+                                                         .withStatus(failureStatusCode)
                                                          .withBody("")));
 
         final ContextOAuthState oauthState = muleContext.getRegistry().lookupObject(ContextOAuthState.class);
-        final UserOAuthState userOauthState = oauthState.getStateForConfig("oauthConfig").getStateForUser(UserOAuthState.DEFAULT_USER_ID);
+        final UserOAuthState userOauthState = oauthState.getStateForConfig(oauthConfigName).getStateForUser(userId);
         userOauthState.setAccessToken(ACCESS_TOKEN);
         userOauthState.setRefreshToken(REFRESH_TOKEN);
 
-        Flow flow = (Flow) getFlowConstruct("testFlow");
-        final MuleEvent result = flow.process(getTestEvent("message"));
+        Flow flow = (Flow) getFlowConstruct(flowName);
+        final MuleEvent testEvent = getTestEvent("message");
+        testEvent.setFlowVariable("userId", userId);
+        final MuleEvent result = flow.process(testEvent);
         assertThat(result.getMessage().getPayloadAsString(), is(RESOURCE_RESULT));
 
         wireMockRule.verify(postRequestedFor(urlEqualTo(TOKEN_PATH))

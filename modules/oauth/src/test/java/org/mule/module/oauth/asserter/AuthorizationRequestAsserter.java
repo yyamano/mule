@@ -8,60 +8,60 @@ import org.mule.module.http.ParameterMap;
 
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 
-public class LocalAuthorizationRequestAsserter
+public class AuthorizationRequestAsserter
 {
 
     private final LoggedRequest loggedRequest;
     private final ParameterMap queryParameters;
 
-    public static LocalAuthorizationRequestAsserter create(LoggedRequest loggedRequest)
+    public static AuthorizationRequestAsserter create(LoggedRequest loggedRequest)
     {
-        return new LocalAuthorizationRequestAsserter(loggedRequest);
+        return new AuthorizationRequestAsserter(loggedRequest);
     }
 
-    private LocalAuthorizationRequestAsserter(LoggedRequest loggedRequest)
+    private AuthorizationRequestAsserter(LoggedRequest loggedRequest)
     {
         this.loggedRequest = loggedRequest;
         queryParameters = HttpParser.decodeQueryString(HttpParser.extractQueryParams(loggedRequest.getUrl()));
     }
 
-    public LocalAuthorizationRequestAsserter assertMethodIsGet()
+    public AuthorizationRequestAsserter assertMethodIsGet()
     {
         assertThat(loggedRequest.getMethod().value(), is("GET"));
         return this;
     }
 
-    public LocalAuthorizationRequestAsserter assertClientIdIs(String expectedClientId)
+    public AuthorizationRequestAsserter assertClientIdIs(String expectedClientId)
     {
         assertThat(queryParameters.get("client_id"), is(expectedClientId));
         return this;
     }
 
-    public LocalAuthorizationRequestAsserter assertRedirectUriIs(String redirectUri)
+    public AuthorizationRequestAsserter assertRedirectUriIs(String redirectUri)
     {
         assertThat(queryParameters.get("redirect_uri"), is(redirectUri));
         return this;
     }
 
-    public LocalAuthorizationRequestAsserter assertResponseTypeIsCode()
+    public AuthorizationRequestAsserter assertResponseTypeIsCode()
     {
         assertThat(queryParameters.get("response_type"), is("code"));
         return this;
     }
 
-    public LocalAuthorizationRequestAsserter assertScopeIs(String expectedScope)
+    public AuthorizationRequestAsserter assertScopeIs(String expectedScope)
     {
         assertThat(queryParameters.get("scope"), is(expectedScope));
         return this;
     }
 
-    public LocalAuthorizationRequestAsserter assertStateIs(String expectedState)
+    public AuthorizationRequestAsserter assertStateIs(String expectedState)
     {
         assertThat(queryParameters.get("state"), is(expectedState));
         return this;
     }
 
-    public LocalAuthorizationRequestAsserter assertContainsCustomParameter(String paramName, String paramValue)
+    public AuthorizationRequestAsserter assertContainsCustomParameter(String paramName, String paramValue)
     {
         assertThat(queryParameters.get(paramName), is(paramValue));
         return this;

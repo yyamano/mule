@@ -18,12 +18,11 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-import org.mule.module.oauth.asserter.LocalAuthorizationRequestAsserter;
+import org.mule.module.oauth.asserter.AuthorizationRequestAsserter;
 import org.mule.module.oauth.asserter.OAuthStateFunctionAsserter;
 import org.mule.security.oauth.OAuthConstants;
 import org.mule.tck.junit4.rule.SystemProperty;
 
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 
 import java.net.URLEncoder;
@@ -63,7 +62,7 @@ public class AuthorizationCodeMinimalConfigTestCase extends AbstractAuthorizatio
         final List<LoggedRequest> requests = findAll(getRequestedFor(urlMatching(AUTHORIZE_PATH + ".*")));
         assertThat(requests.size(), is(1));
 
-        LocalAuthorizationRequestAsserter.create((requests.get(0)))
+        AuthorizationRequestAsserter.create((requests.get(0)))
                 .assertMethodIsGet()
                 .assertClientIdIs(clientId.getValue())
                 .assertRedirectUriIs(redirectUrl.getValue())

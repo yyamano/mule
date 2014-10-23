@@ -18,6 +18,7 @@ import org.mule.module.http.listener.HttpListenerBuilder;
 import org.mule.module.http.listener.MessageProperties;
 import org.mule.module.oauth.state.ContextOAuthState;
 import org.mule.module.oauth.state.UserOAuthState;
+import org.mule.security.oauth.OAuthConstants;
 import org.mule.transport.ssl.DefaultTlsContextFactory;
 
 import java.net.MalformedURLException;
@@ -94,15 +95,11 @@ public class TokenRequest implements MuleContextAware
             public MuleEvent process(MuleEvent event) throws MuleException
             {
                 MessageProperties messageProperties = event.getMessage().getInboundProperty("http.properties");
-                String authorizationCode = messageProperties.getQueryParams().get("code");
-                String state = messageProperties.getQueryParams().get("state");
-
+                String authorizationCode = messageProperties.getQueryParams().get(OAuthConstants.CODE_PARAMETER);
+                String state = messageProperties.getQueryParams().get(OAuthConstants.STATE_PARAMETER);
                 setMapPayloadWithTokenRequestParameters(event, authorizationCode);
-
                 final MuleEvent tokenUrlResposne = invokeTokenUrl(event);
-                //TODO se were to get the user id from. Probably using the state attribute?
-                updateUserOAuthState(tokenUrlResposne, state);
-
+                decodeStateAndUpdateOAuthUserState(tokenUrlResposne, state);
                 return event;
             }
         };
@@ -150,12 +147,28 @@ public class TokenRequest implements MuleContextAware
         return httpRequester.process(event);
     }
 
-    private void updateUserOAuthState(final MuleEvent tokenUrlResposne, String state) throws org.mule.api.registry.RegistrationException
+    private void decodeStateAndUpdateOAuthUserState(final MuleEvent tokenUrlResposne, String state) throws org.mule.api.registry.RegistrationException
+    {
+        String oauthStateId = UserOAuthState.DEFAULT_USER_ID;
+        if (state != null && state.contains(":oauthStateId"))
+        {
+            final int ouathStateIdSuffixIndex = state.indexOf(":oauthStateId=");
+            oauthStateId = state.substring(ouathStateIdSuffixIndex + ":oauthStateId=".length(), state.length());
+            state = state.substring(0, ouathStateIdSuffixIndex);
+            if (state.isEmpty())
+            {
+                state = null;
+            }
+        }
+        updateOAuthUserState(tokenUrlResposne, state, oauthStateId);
+    }
+
+    private void updateOAuthUserState(MuleEvent tokenUrlResposne, String state, String oauthStateId) throws RegistrationException
     {
         final String accessToken = muleContext.getExpressionManager().parse(tokenResponse.getAccessToken(), tokenUrlResposne);
         final String refreshToken = muleContext.getExpressionManager().parse(tokenResponse.getRefreshToken(), tokenUrlResposne);
         final String expiresIn = muleContext.getExpressionManager().parse(tokenResponse.getExpiresIn(), tokenUrlResposne);
-        final UserOAuthState userOAuthState = muleContext.getRegistry().lookupObject(ContextOAuthState.class).getStateForConfig(oauthConfig.getConfigName()).getStateForUser(oauthConfig.getUserId());
+        final UserOAuthState userOAuthState = muleContext.getRegistry().lookupObject(ContextOAuthState.class).getStateForConfig(oauthConfig.getConfigName()).getStateForUser(oauthStateId);
         userOAuthState.setAccessToken(accessToken);
         userOAuthState.setRefreshToken(refreshToken);
         userOAuthState.setExpiresIn(expiresIn);
@@ -200,7 +213,7 @@ public class TokenRequest implements MuleContextAware
             muleEvent.getMessage().clearProperties(PropertyScope.OUTBOUND);
             setMapPayloadWithRefreshTokenRequestParameters(muleEvent, userOAuthState.getRefreshToken());
             final MuleEvent refreshTokenResponse = invokeTokenUrl(muleEvent);
-            updateUserOAuthState(refreshTokenResponse, null);
+            updateOAuthUserState(refreshTokenResponse, null, userId);
         }
         catch (Exception e)
         {
