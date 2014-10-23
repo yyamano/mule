@@ -12,6 +12,7 @@
                                 redirectionUrl="${redirect.url}"
                                 oauthStateId="#[message.inboundProperties['http.properties'].queryParams['userId']]">
         <oauth2:authorization-request
+                state="#[message.inboundProperties['http.properties'].queryParams['state'] == null ? '' : message.inboundProperties['http.properties'].queryParams['state']]"
                 localAuthorizationUrl="${local.authorization.url}"
                 authorizationUrl="${authorization.url}">
         </oauth2:authorization-request>

@@ -28,9 +28,12 @@ public class AuthorizationCodeMultitenantTestCase extends AbstractAuthorizationC
 
     public static final String USER_ID_JOHN = "john";
     public static final String JOHN_ACCESS_TOKEN = "123456789";
+    public static final String JOHN_STATE = "rock";
     public static final String USER_ID_TONY = "tony";
     public static final String TONY_ACCESS_TOKEN = "abcdefghi";
+    public static final String TONY_STATE = "punk";
     public static final String MULTITENANT_CONFIG = "multitenantConfig";
+    public static final String NO_STATE = null;
 
     @Rule
     public SystemProperty localAuthorizationUrl = new SystemProperty("local.authorization.url", String.format("http://localhost:%d/authorization", localHostPort.getNumber()));
@@ -51,9 +54,9 @@ public class AuthorizationCodeMultitenantTestCase extends AbstractAuthorizationC
     @Test
     public void danceWithCustomOAuthStateId() throws Exception
     {
-        executeForUserWithAccessToken(USER_ID_JOHN, JOHN_ACCESS_TOKEN);
+        executeForUserWithAccessToken(USER_ID_JOHN, JOHN_ACCESS_TOKEN, NO_STATE);
         WireMock.reset();
-        executeForUserWithAccessToken(USER_ID_TONY, TONY_ACCESS_TOKEN);
+        executeForUserWithAccessToken(USER_ID_TONY, TONY_ACCESS_TOKEN, NO_STATE);
 
         OAuthStateFunctionAsserter.createFrom(muleContext.getExpressionLanguage(), MULTITENANT_CONFIG, USER_ID_JOHN)
                 .assertAccessTokenIs(JOHN_ACCESS_TOKEN)
@@ -64,11 +67,26 @@ public class AuthorizationCodeMultitenantTestCase extends AbstractAuthorizationC
     }
 
     @Test
+    public void danceWithCustomOAuthStateIdAndState() throws Exception
+    {
+        executeForUserWithAccessToken(USER_ID_JOHN, JOHN_ACCESS_TOKEN, JOHN_STATE);
+        WireMock.reset();
+        executeForUserWithAccessToken(USER_ID_TONY, TONY_ACCESS_TOKEN, TONY_STATE);
+
+        OAuthStateFunctionAsserter.createFrom(muleContext.getExpressionLanguage(), MULTITENANT_CONFIG, USER_ID_JOHN)
+                .assertAccessTokenIs(JOHN_ACCESS_TOKEN)
+                .assertState(JOHN_STATE);
+        OAuthStateFunctionAsserter.createFrom(muleContext.getExpressionLanguage(), MULTITENANT_CONFIG, USER_ID_TONY)
+                .assertAccessTokenIs(TONY_ACCESS_TOKEN)
+                .assertState(TONY_STATE);
+    }
+
+    @Test
     public void refreshToken() throws Exception
     {
-        executeForUserWithAccessToken(USER_ID_JOHN, JOHN_ACCESS_TOKEN);
+        executeForUserWithAccessToken(USER_ID_JOHN, JOHN_ACCESS_TOKEN, NO_STATE);
         WireMock.reset();
-        executeForUserWithAccessToken(USER_ID_TONY, TONY_ACCESS_TOKEN);
+        executeForUserWithAccessToken(USER_ID_TONY, TONY_ACCESS_TOKEN, NO_STATE);
 
         OAuthStateFunctionAsserter.createFrom(muleContext.getExpressionLanguage(), MULTITENANT_CONFIG, USER_ID_JOHN)
                 .assertAccessTokenIs(JOHN_ACCESS_TOKEN)
@@ -78,12 +96,18 @@ public class AuthorizationCodeMultitenantTestCase extends AbstractAuthorizationC
                 .assertState(null);
     }
 
-    private void executeForUserWithAccessToken(String userId, String accessToken) throws IOException
+    private void executeForUserWithAccessToken(String userId, String accessToken, String state) throws IOException
     {
         wireMockRule.stubFor(get(urlMatching(AUTHORIZE_PATH + ".*")).willReturn(aResponse().withStatus(200)));
 
-        final String expectedState = ":oauthStateId=" + userId;
-        Request.Get(localAuthorizationUrl.getValue() + "?userId=" + userId).execute();
+        final String expectedState = (state == null ? "" : state) + ":oauthStateId=" + userId;
+
+        final ParameterMap localAuthorizationUrlParameters = new ParameterMap().putAndReturn("userId", userId);
+        if (state != NO_STATE)
+        {
+            localAuthorizationUrlParameters.put("state", state);
+        }
+        Request.Get(localAuthorizationUrl.getValue() + "?" + HttpParser.encodeQueryString(localAuthorizationUrlParameters)).execute();
 
         AuthorizationRequestAsserter.create((findAll(getRequestedFor(urlMatching(AUTHORIZE_PATH + ".*"))).get(0)))
                 .assertStateIs(expectedState);
