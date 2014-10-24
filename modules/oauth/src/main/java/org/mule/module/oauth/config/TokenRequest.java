@@ -24,6 +24,7 @@ import org.mule.transport.ssl.DefaultTlsContextFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +74,7 @@ public class TokenRequest implements MuleContextAware
                     .setUrl(oauthConfig.getRedirectionUrl())
                     .setFlowConstruct(new Flow("some flow name", muleContext))
                     .setMuleContext(muleContext)
+                    .setListenerConfig(oauthConfig.getListenerConfig())
                     .setListener(createRedirectUrlListener()).build();
             this.redirectUrlListener.start();
         }
@@ -94,12 +96,13 @@ public class TokenRequest implements MuleContextAware
             @Override
             public MuleEvent process(MuleEvent event) throws MuleException
             {
-                MessageProperties messageProperties = event.getMessage().getInboundProperty("http.properties");
-                String authorizationCode = messageProperties.getQueryParams().get(OAuthConstants.CODE_PARAMETER);
-                String state = messageProperties.getQueryParams().get(OAuthConstants.STATE_PARAMETER);
+                Map<String, String> queryParams = event.getMessage().getInboundProperty(MessageProperties.HTTP_QUERY_PARAMS);
+                String authorizationCode = queryParams.get(OAuthConstants.CODE_PARAMETER);
+                String state = queryParams.get(OAuthConstants.STATE_PARAMETER);
                 setMapPayloadWithTokenRequestParameters(event, authorizationCode);
                 final MuleEvent tokenUrlResposne = invokeTokenUrl(event);
                 decodeStateAndUpdateOAuthUserState(tokenUrlResposne, state);
+                event.getMessage().setPayload("Successfully retrieved access token!");
                 return event;
             }
         };

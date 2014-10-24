@@ -9,6 +9,8 @@ package org.mule.module.oauth.config;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
 import org.mule.api.lifecycle.Startable;
+import org.mule.module.http.HttpRequestConfig;
+import org.mule.module.http.listener.HttpListenerConfig;
 import org.mule.module.oauth.state.UserOAuthState;
 
 import org.slf4j.Logger;
@@ -24,6 +26,8 @@ public class AuthorizationCodeGrantTypeConfig implements Startable, Authorizatio
     private String clientSecret;
     private String redirectionUrl;
     private String oauthStateId;
+    private HttpRequestConfig requestConfig;
+    private HttpListenerConfig listenerConfig;
     private AuthorizationRequest authorizationRequest;
     private TokenRequest tokenRequest;
     private String userId = UserOAuthState.DEFAULT_USER_ID;
@@ -58,6 +62,16 @@ public class AuthorizationCodeGrantTypeConfig implements Startable, Authorizatio
         this.tokenRequest = tokenRequest;
     }
 
+    public void setRequestConfig(HttpRequestConfig requestConfig)
+    {
+        this.requestConfig = requestConfig;
+    }
+
+    public void setListenerConfig(HttpListenerConfig listenerConfig)
+    {
+        this.listenerConfig = listenerConfig;
+    }
+
     @Override
     public void start() throws MuleException
     {
@@ -88,6 +102,18 @@ public class AuthorizationCodeGrantTypeConfig implements Startable, Authorizatio
     public String getOAuthStateId()
     {
         return oauthStateId;
+    }
+
+    @Override
+    public HttpRequestConfig getRequestConfig()
+    {
+        return requestConfig;
+    }
+
+    @Override
+    public HttpListenerConfig getListenerConfig()
+    {
+        return listenerConfig;
     }
 
     @Override

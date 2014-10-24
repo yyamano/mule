@@ -18,10 +18,16 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
+import org.mule.api.MuleEvent;
+import org.mule.module.http.HttpRequestConfig;
+import org.mule.module.http.request.HttpRequestBuilder;
+import org.mule.module.http.request.HttpRequesterBuilder;
 import org.mule.module.oauth.asserter.AuthorizationRequestAsserter;
 import org.mule.module.oauth.asserter.OAuthStateFunctionAsserter;
 import org.mule.security.oauth.OAuthConstants;
 import org.mule.tck.junit4.rule.SystemProperty;
+import org.mule.transport.NullPayload;
+import org.mule.transport.ssl.DefaultTlsContextFactory;
 
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 
@@ -37,14 +43,20 @@ public class AuthorizationCodeMinimalConfigTestCase extends AbstractAuthorizatio
 {
 
     @Rule
-    public SystemProperty localAuthorizationUrl = new SystemProperty("local.authorization.url", String.format("http://localhost:%d/authorization", localHostPort.getNumber()));
-    @Rule
-    public SystemProperty authorizationUrl = new SystemProperty("authorization.url", String.format("http://localhost:%d" + AUTHORIZE_PATH, oauthServerPort.getNumber()));
-    @Rule
-    public SystemProperty redirectUrl = new SystemProperty("redirect.url", String.format("http://localhost:%d/redirect", localHostPort.getNumber()));
-    @Rule
-    public SystemProperty tokenUrl = new SystemProperty("token.url", String.format("http://localhost:%d" + TOKEN_PATH, oauthServerPort.getNumber()));
+    public SystemProperty localAuthorizationUrl = new SystemProperty("local.authorization.url", String.format("%s://localhost:%d/authorization", getProtocol(), localHostPort.getNumber()));
 
+    @Rule
+    public SystemProperty authorizationUrl = new SystemProperty("authorization.url", String.format("%s://localhost:%d" + AUTHORIZE_PATH, getProtocol(), resolveOauthServerPort()));
+
+    private int resolveOauthServerPort()
+    {
+        return getProtocol().equals("http") ? oauthServerPort.getNumber() : oauthHttpsServerPort.getNumber();
+    }
+
+    @Rule
+    public SystemProperty redirectUrl = new SystemProperty("redirect.url", String.format("%s://localhost:%d/redirect", getProtocol(), localHostPort.getNumber()));
+    @Rule
+    public SystemProperty tokenUrl = new SystemProperty("token.url", String.format("%s://localhost:%d" + TOKEN_PATH, getProtocol(), resolveOauthServerPort()));
 
     @Override
     protected String getConfigFile()
@@ -52,12 +64,35 @@ public class AuthorizationCodeMinimalConfigTestCase extends AbstractAuthorizatio
         return "authorization-code-minimal-config.xml";
     }
 
+    protected String getProtocol()
+    {
+        return "http";
+    }
+
+    @Override
+    protected int getTimeoutSystemProperty()
+    {
+        return 999999;
+    }
+
     @Test
     public void localAuthorizationUrlRedirectsToOAuthAuthorizationUrl() throws Exception
     {
+        //System.out.println(localAuthorizationUrl.getValue());
+        //System.out.println(authorizationUrl.getValue());
+        //if (true)
+        //{
+        //    while (1 == 1)
+        //    {
+        //        Thread.sleep(1000);
+        //    }
+        //}
+
         wireMockRule.stubFor(get(urlMatching(AUTHORIZE_PATH + ".*")).willReturn(aResponse().withStatus(200)));
 
-        Request.Get(localAuthorizationUrl.getValue()).execute();
+        final HttpRequestConfig requestConfig = muleContext.getRegistry().get("httpsRequestConfig");
+        final MuleEvent response = new HttpRequesterBuilder(muleContext).setAddress(localAuthorizationUrl.getValue()).setMethod("GET").setConfig(requestConfig).build().process(getTestEvent(NullPayload.getInstance()));
+        //Request.Get(localAuthorizationUrl.getValue()).execute();
 
         final List<LoggedRequest> requests = findAll(getRequestedFor(urlMatching(AUTHORIZE_PATH + ".*")));
         assertThat(requests.size(), is(1));

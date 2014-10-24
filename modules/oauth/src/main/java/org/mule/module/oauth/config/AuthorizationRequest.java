@@ -80,6 +80,7 @@ public class AuthorizationRequest implements MuleContextAware
             this.listener = httpListenerBuilder.setUrl(localAuthorizationUrl)
                     .setMuleContext(muleContext)
                     .setResponseBuilder(responseBuilder)
+                    .setListenerConfig(oauthConfig.getListenerConfig())
                     .setListener(new MessageProcessor()
                     {
                         @Override
@@ -94,7 +95,8 @@ public class AuthorizationRequest implements MuleContextAware
                             }
                             else if (oauthStateId != null)
                             {
-                                currentState = stateEvaluator.resolveStringValue(muleEvent) + ":oauthStateId=" + oauthStateId;
+                                final String stateValue = stateEvaluator.resolveStringValue(muleEvent);
+                                currentState = (stateValue == null ? "" : stateValue) + ":oauthStateId=" + oauthStateId;
                             }
                             else
                             {

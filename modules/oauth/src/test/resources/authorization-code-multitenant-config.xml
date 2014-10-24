@@ -10,9 +10,9 @@
                                 clientId="${client.id}"
                                 clientSecret="${client.secret}"
                                 redirectionUrl="${redirect.url}"
-                                oauthStateId="#[message.inboundProperties['http.properties'].queryParams['userId']]">
+                                oauthStateId="#[message.inboundProperties['http.query.params']['userId']]">
         <oauth2:authorization-request
-                state="#[message.inboundProperties['http.properties'].queryParams['state'] == null ? '' : message.inboundProperties['http.properties'].queryParams['state']]"
+                state="#[message.inboundProperties['http.query.params'] == null ? '' : message.inboundProperties['http.query.params']['state']]"
                 localAuthorizationUrl="${local.authorization.url}"
                 authorizationUrl="${authorization.url}">
         </oauth2:authorization-request>

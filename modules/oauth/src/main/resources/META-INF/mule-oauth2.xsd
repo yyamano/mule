@@ -111,6 +111,18 @@
                         </xsd:documentation>
                     </xsd:annotation>
                 </xsd:attribute>
+                <xsd:attribute name="requestConfig" type="xsd:string" use="optional">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
+                <xsd:attribute name="listenerConfig" type="xsd:string" use="optional">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                        </xsd:documentation>
+                    </xsd:annotation>
+                </xsd:attribute>
             </xsd:extension>
         </xsd:complexContent>
     </xsd:complexType>

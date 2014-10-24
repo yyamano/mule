@@ -18,9 +18,10 @@ public abstract class AbstractAuthorizationCodeFunctionalTestCase extends Functi
     public static final String AUTHORIZE_PATH = "/authorize";
     protected final DynamicPort localHostPort = new DynamicPort("port1");
     protected final DynamicPort oauthServerPort = new DynamicPort("port2");
+    protected final DynamicPort oauthHttpsServerPort = new DynamicPort("port3");
 
     @Rule
-    public WireMockRule wireMockRule = new WireMockRule(oauthServerPort.getNumber());
+    public WireMockRule wireMockRule = new WireMockRule(oauthServerPort.getNumber(), oauthHttpsServerPort.getNumber());
     @Rule
     public SystemProperty clientId = new SystemProperty("client.id", "ndli93xdws2qoe6ms1d389vl6bxquv3e");
     @Rule
