@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.oauth;
+package org.mule.module.oauth2;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.containing;
@@ -20,14 +20,12 @@ import static org.junit.Assert.assertThat;
 
 import org.mule.api.MuleEvent;
 import org.mule.module.http.HttpRequestConfig;
-import org.mule.module.http.request.HttpRequestBuilder;
 import org.mule.module.http.request.HttpRequesterBuilder;
-import org.mule.module.oauth.asserter.AuthorizationRequestAsserter;
-import org.mule.module.oauth.asserter.OAuthStateFunctionAsserter;
+import org.mule.module.oauth2.asserter.AuthorizationRequestAsserter;
+import org.mule.module.oauth2.asserter.OAuthStateFunctionAsserter;
 import org.mule.security.oauth.OAuthConstants;
 import org.mule.tck.junit4.rule.SystemProperty;
 import org.mule.transport.NullPayload;
-import org.mule.transport.ssl.DefaultTlsContextFactory;
 
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 

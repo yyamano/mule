@@ -1,4 +1,10 @@
-package org.mule.module.oauth.config;
+/*
+ * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
+ * The software in this package is published under the terms of the CPAL v1.0
+ * license, a copy of which has been included with this distribution in the
+ * LICENSE.txt file.
+ */
+package org.mule.module.oauth2;
 
 import org.mule.api.DefaultMuleException;
 import org.mule.api.MuleContext;
@@ -10,7 +16,6 @@ import org.mule.module.http.HttpHeaders;
 import org.mule.module.http.listener.HttpListener;
 import org.mule.module.http.listener.HttpListenerBuilder;
 import org.mule.module.http.listener.HttpResponseBuilder;
-import org.mule.module.oauth.AuthorizationRequestUrlBuilder;
 import org.mule.util.AttributeEvaluator;
 
 import java.net.MalformedURLException;
@@ -20,10 +25,10 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AuthorizationRequest implements MuleContextAware
+public class AuthorizationRequestHandler implements MuleContextAware
 {
 
-    private Logger logger = LoggerFactory.getLogger(AuthorizationRequest.class);
+    private Logger logger = LoggerFactory.getLogger(AuthorizationRequestHandler.class);
     private String scopes;
     private String state;
     private String localAuthorizationUrl;
@@ -31,7 +36,7 @@ public class AuthorizationRequest implements MuleContextAware
     private Map<String, String> customParameters = new HashMap<String, String>();
     private HttpListener listener;
     private MuleContext muleContext;
-    private AuthorizationCodeGrantTypeConfig oauthConfig;
+    private AuthorizationCodeConfig oauthConfig;
     private AttributeEvaluator oauthStateIdEvaluator;
     private AttributeEvaluator stateEvaluator;
 
@@ -131,12 +136,12 @@ public class AuthorizationRequest implements MuleContextAware
         this.muleContext = muleContext;
     }
 
-    public void setOauthConfig(AuthorizationCodeGrantTypeConfig oauthConfig)
+    public void setOauthConfig(AuthorizationCodeConfig oauthConfig)
     {
         this.oauthConfig = oauthConfig;
     }
 
-    public AuthorizationCodeGrantTypeConfig getOauthConfig()
+    public AuthorizationCodeConfig getOauthConfig()
     {
         return oauthConfig;
     }

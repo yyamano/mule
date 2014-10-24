@@ -1,4 +1,10 @@
-package org.mule.module.oauth;
+/*
+ * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
+ * The software in this package is published under the terms of the CPAL v1.0
+ * license, a copy of which has been included with this distribution in the
+ * LICENSE.txt file.
+ */
+package org.mule.module.oauth2;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.containing;
@@ -11,9 +17,9 @@ import static org.junit.Assert.assertThat;
 import org.mule.api.MuleEvent;
 import org.mule.construct.Flow;
 import org.mule.module.http.HttpHeaders;
-import org.mule.module.oauth.asserter.OAuthStateFunctionAsserter;
-import org.mule.module.oauth.state.ContextOAuthState;
-import org.mule.module.oauth.state.UserOAuthState;
+import org.mule.module.oauth2.asserter.OAuthStateFunctionAsserter;
+import org.mule.module.oauth2.state.OAuthStateRegistry;
+import org.mule.module.oauth2.state.UserOAuthState;
 import org.mule.security.oauth.OAuthConstants;
 import org.mule.tck.junit4.rule.SystemProperty;
 
@@ -64,7 +70,7 @@ public class AuthorizationCodeRefreshTokenConfigTestCase extends AbstractAuthori
     @Test
     public void afterFailureDoRefreshTokenWithCustomValueWithOauthStateId() throws Exception
     {
-        final ContextOAuthState contextOAuthState = muleContext.getRegistry().lookupObject(ContextOAuthState.class);
+        final OAuthStateRegistry contextOAuthState = muleContext.getRegistry().lookupObject(OAuthStateRegistry.class);
         contextOAuthState.getStateForConfig(MULTITENANT_OAUTH_CONFIG).getStateForUser(USER_ID_TONY).setAccessToken(TONY_ACCESS_TOKEN);
         contextOAuthState.getStateForConfig(MULTITENANT_OAUTH_CONFIG).getStateForUser(USER_ID_JOHN).setAccessToken(JOHN_ACCESS_TOKEN);
 
@@ -100,7 +106,7 @@ public class AuthorizationCodeRefreshTokenConfigTestCase extends AbstractAuthori
                                                          .withStatus(failureStatusCode)
                                                          .withBody("")));
 
-        final ContextOAuthState oauthState = muleContext.getRegistry().lookupObject(ContextOAuthState.class);
+        final OAuthStateRegistry oauthState = muleContext.getRegistry().lookupObject(OAuthStateRegistry.class);
         final UserOAuthState userOauthState = oauthState.getStateForConfig(oauthConfigName).getStateForUser(userId);
         userOauthState.setAccessToken(ACCESS_TOKEN);
         userOauthState.setRefreshToken(REFRESH_TOKEN);

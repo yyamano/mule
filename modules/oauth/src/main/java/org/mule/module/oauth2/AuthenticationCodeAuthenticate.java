@@ -1,4 +1,10 @@
-package org.mule.module.oauth.config;
+/*
+ * Copyright (c) MuleSoft, Inc.  All rights reserved.  http://www.mulesoft.com
+ * The software in this package is published under the terms of the CPAL v1.0
+ * license, a copy of which has been included with this distribution in the
+ * LICENSE.txt file.
+ */
+package org.mule.module.oauth2;
 
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
@@ -9,8 +15,8 @@ import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.registry.RegistrationException;
 import org.mule.module.http.HttpHeaders;
 import org.mule.module.http.request.HttpAuth;
-import org.mule.module.oauth.state.ContextOAuthState;
-import org.mule.module.oauth.state.UserOAuthState;
+import org.mule.module.oauth2.state.OAuthStateRegistry;
+import org.mule.module.oauth2.state.UserOAuthState;
 import org.mule.security.oauth.OAuthUtils;
 import org.mule.util.AttributeEvaluator;
 
@@ -21,22 +27,21 @@ public class AuthenticationCodeAuthenticate implements HttpAuth, MuleContextAwar
 {
 
     private MuleContext muleContext;
-    private AuthorizationCodeGrantConfig config;
-    private String oauthStateId = UserOAuthState.DEFAULT_USER_ID;
+    private AuthorizationCodeGrantType config;
     private AttributeEvaluator oauthStateIdEvaluator;
-    private ContextOAuthState contextOAuthState;
+    private OAuthStateRegistry oauthStateRegistry;
 
     @Override
     public void authenticate(MuleEvent muleEvent)
     {
-        final String accessToken = contextOAuthState.getStateForConfig(config.getConfigName()).getStateForUser(oauthStateIdEvaluator.resolveStringValue(muleEvent)).getAccessToken();
+        final String accessToken = oauthStateRegistry.getStateForConfig(config.getConfigName()).getStateForUser(oauthStateIdEvaluator.resolveStringValue(muleEvent)).getAccessToken();
         muleEvent.getMessage().setOutboundProperty(HttpHeaders.Names.AUTHORIZATION, OAuthUtils.buildAuthorizationHeaderContent(accessToken));
     }
 
     @Override
     public Authentication buildAuthentication()
     {
-        //TODO remove
+        //TODO remove once we fix the HttpAuth interface in the new http module.
         return null;
     }
 
@@ -62,14 +67,14 @@ public class AuthenticationCodeAuthenticate implements HttpAuth, MuleContextAwar
         this.muleContext = context;
     }
 
-    public void setConfig(AuthorizationCodeGrantTypeConfig config)
+    public void setConfig(AuthorizationCodeConfig config)
     {
         this.config = config;
     }
 
     public void setOauthStateId(String oauthStateId)
     {
-        this.oauthStateId = oauthStateId;
+        oauthStateIdEvaluator = new AttributeEvaluator(oauthStateId);
     }
 
     @Override
@@ -77,8 +82,12 @@ public class AuthenticationCodeAuthenticate implements HttpAuth, MuleContextAwar
     {
         try
         {
-            contextOAuthState = muleContext.getRegistry().lookupObject(ContextOAuthState.class);
-            oauthStateIdEvaluator = new AttributeEvaluator(oauthStateId).initialize(muleContext.getExpressionManager());
+            if (oauthStateIdEvaluator == null)
+            {
+                oauthStateIdEvaluator = new AttributeEvaluator(UserOAuthState.DEFAULT_USER_ID);
+            }
+            oauthStateIdEvaluator.initialize(muleContext.getExpressionManager());
+            oauthStateRegistry = muleContext.getRegistry().lookupObject(OAuthStateRegistry.class);
         }
         catch (RegistrationException e)
         {

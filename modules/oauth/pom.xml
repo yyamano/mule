@@ -30,7 +30,6 @@
         <dependency>
             <groupId>org.mule.modules</groupId>
             <artifactId>mule-module-devkit-support</artifactId>
-            <!-- TODO remove hardcode dversion -->
             <version>${project.version}</version>
         </dependency>
 
