@@ -6,9 +6,7 @@
  */
 package org.mule.module.oauth2.functional;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.containing;
-import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 
@@ -80,12 +78,7 @@ public class AuthorizationCodeCustomTokenRequestTestCase extends AbstractAuthori
     @Test
     public void hitRedirectUrlAndGetToken() throws Exception
     {
-        wireMockRule.stubFor(post(urlEqualTo(TOKEN_PATH))
-                                     .willReturn(aResponse()
-                                                         .withBody("{" +
-                                                                   "\"" + OAuthConstants.ACCESS_TOKEN_PARAMETER + "\":\"" + ACCESS_TOKEN + "\"," +
-                                                                   "\"" + OAuthConstants.EXPIRES_IN_PARAMETER + "\":" + EXPIRES_IN + "," +
-                                                                   "\"" + OAuthConstants.REFRESH_TOKEN_PARAMETER + "\":\"" + REFRESH_TOKEN + "\"}")));
+        configureWireMockToExpectTokenPathRequestAndReturnJsonResponse();
 
 
         final ParameterMap queryParams = new ParameterMap()

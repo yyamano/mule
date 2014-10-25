@@ -78,7 +78,7 @@ public class AuthorizationCodeRefreshTokenConfigTestCase extends AbstractAuthori
     {
         return Arrays.asList(new Object[][]
                                      {
-                                             //{"authorization-code-refresh-token-config.xml"},
+                                             {"authorization-code-refresh-token-config.xml"},
                                              {"authorization-code-custom-token-request-refresh-token-config.xml"},
                                      });
     }
@@ -114,12 +114,7 @@ public class AuthorizationCodeRefreshTokenConfigTestCase extends AbstractAuthori
 
     private void executeRefreshToken(String flowName, String oauthConfigName, String userId, int failureStatusCode) throws Exception
     {
-        wireMockRule.stubFor(post(urlEqualTo(TOKEN_PATH))
-                                     .willReturn(aResponse()
-                                                         .withBody("{" +
-                                                                   "\"" + OAuthConstants.ACCESS_TOKEN_PARAMETER + "\":\"" + REFRESHED_ACCESS_TOKEN + "\"," +
-                                                                   "\"" + OAuthConstants.EXPIRES_IN_PARAMETER + "\":" + EXPIRES_IN + "," +
-                                                                   "\"" + OAuthConstants.REFRESH_TOKEN_PARAMETER + "\":\"" + REFRESH_TOKEN + "\"}")));
+        configureWireMockToExpectTokenPathRequestAndReturnJsonResponse(REFRESHED_ACCESS_TOKEN);
 
         wireMockRule.stubFor(post(urlEqualTo(RESOURCE_PATH))
                                      .withHeader(HttpHeaders.Names.AUTHORIZATION,

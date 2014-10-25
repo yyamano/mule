@@ -6,11 +6,22 @@
  */
 package org.mule.module.oauth2.functional;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.containing;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+
+import org.mule.security.oauth.OAuthConstants;
 import org.mule.tck.junit4.FunctionalTestCase;
 import org.mule.tck.junit4.rule.DynamicPort;
 import org.mule.tck.junit4.rule.SystemProperty;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import org.junit.Rule;
 
@@ -41,5 +52,37 @@ public abstract class AbstractAuthorizationCodeFunctionalTestCase extends Functi
     public SystemProperty state = new SystemProperty("state", "expected state");
     @Rule
     public SystemProperty oauthServerPortNumber = new SystemProperty("oauth.server.port", String.valueOf(oauthServerPort.getNumber()));
+    @Rule
+    public SystemProperty redirectUrl = new SystemProperty("redirect.url", String.format("%s://localhost:%d/redirect", getProtocol(), localHostPort.getNumber()));
+
+    protected String getProtocol()
+    {
+        return "http";
+    }
+
+    protected void configureWireMockToExpectTokenPathRequestAndReturnJsonResponse()
+    {
+        configureWireMockToExpectTokenPathRequestAndReturnJsonResponse(ACCESS_TOKEN);
+    }
+
+    protected void configureWireMockToExpectTokenPathRequestAndReturnJsonResponse(String accessToken)
+    {
+        wireMockRule.stubFor(post(urlEqualTo(TOKEN_PATH))
+                                     .willReturn(aResponse()
+                                                         .withBody("{" +
+                                                                   "\"" + OAuthConstants.ACCESS_TOKEN_PARAMETER + "\":\"" + accessToken + "\"," +
+                                                                   "\"" + OAuthConstants.EXPIRES_IN_PARAMETER + "\":" + EXPIRES_IN + "," +
+                                                                   "\"" + OAuthConstants.REFRESH_TOKEN_PARAMETER + "\":\"" + REFRESH_TOKEN + "\"}")));
+    }
+
+    protected void verifyRequestDoneToTokenUrl() throws UnsupportedEncodingException
+    {
+        wireMockRule.verify(postRequestedFor(urlEqualTo(TOKEN_PATH))
+                                    .withRequestBody(containing(OAuthConstants.CLIENT_ID_PARAMETER + "=" + URLEncoder.encode(clientId.getValue(), StandardCharsets.UTF_8.name())))
+                                    .withRequestBody(containing(OAuthConstants.CODE_PARAMETER + "=" + URLEncoder.encode(AUTHENTICATION_CODE, StandardCharsets.UTF_8.name())))
+                                    .withRequestBody(containing(OAuthConstants.CLIENT_SECRET_PARAMETER + "=" + URLEncoder.encode(clientSecret.getValue(), StandardCharsets.UTF_8.name())))
+                                    .withRequestBody(containing(OAuthConstants.GRANT_TYPE_PARAMETER + "=" + URLEncoder.encode(OAuthConstants.GRANT_TYPE_AUTHENTICATION_CODE, StandardCharsets.UTF_8.name())))
+                                    .withRequestBody(containing(OAuthConstants.REDIRECT_URI_PARAMETER + "=" + URLEncoder.encode(redirectUrl.getValue(), StandardCharsets.UTF_8.name()))));
+    }
 
 }

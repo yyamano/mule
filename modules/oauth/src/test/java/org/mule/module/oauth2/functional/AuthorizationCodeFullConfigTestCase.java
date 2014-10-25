@@ -47,8 +47,6 @@ public class AuthorizationCodeFullConfigTestCase extends AbstractAuthorizationCo
     @Rule
     public SystemProperty authorizationUrl = new SystemProperty("authorization.url", String.format("http://localhost:%d" + AUTHORIZE_PATH, oauthServerPort.getNumber()));
     @Rule
-    public SystemProperty redirectUrl = new SystemProperty("redirect.url", String.format("http://localhost:%d/redirect", localHostPort.getNumber()));
-    @Rule
     public SystemProperty tokenUrl = new SystemProperty("token.url", String.format("http://localhost:%d" + TOKEN_PATH, oauthServerPort.getNumber()));
     @Rule
     public SystemProperty authenticationRequestParam1 = new SystemProperty("auth.request.param1", "auth-req-param1");
@@ -119,12 +117,7 @@ public class AuthorizationCodeFullConfigTestCase extends AbstractAuthorizationCo
                 .socketTimeout(REQUEST_TIMEOUT)
                 .execute();
 
-        wireMockRule.verify(postRequestedFor(urlEqualTo(TOKEN_PATH))
-                                    .withRequestBody(containing(OAuthConstants.CLIENT_ID_PARAMETER + "=" + URLEncoder.encode(clientId.getValue(), StandardCharsets.UTF_8.name())))
-                                    .withRequestBody(containing(OAuthConstants.CODE_PARAMETER + "=" + URLEncoder.encode(AUTHENTICATION_CODE, StandardCharsets.UTF_8.name())))
-                                    .withRequestBody(containing(OAuthConstants.CLIENT_SECRET_PARAMETER + "=" + URLEncoder.encode(clientSecret.getValue(), StandardCharsets.UTF_8.name())))
-                                    .withRequestBody(containing(OAuthConstants.GRANT_TYPE_PARAMETER + "=" + URLEncoder.encode(OAuthConstants.GRANT_TYPE_AUTHENTICATION_CODE, StandardCharsets.UTF_8.name())))
-                                    .withRequestBody(containing(OAuthConstants.REDIRECT_URI_PARAMETER + "=" + URLEncoder.encode(redirectUrl.getValue(), StandardCharsets.UTF_8.name()))));
+        verifyRequestDoneToTokenUrl();
 
         OAuthStateFunctionAsserter.createFrom(muleContext.getExpressionLanguage(), "fullConfig")
                 .assertAccessTokenIs(ACCESS_TOKEN)

@@ -28,6 +28,7 @@ import org.mule.transport.NullPayload;
 
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -50,8 +51,6 @@ public class AuthorizationCodeMinimalConfigTestCase extends AbstractAuthorizatio
         return getProtocol().equals("http") ? oauthServerPort.getNumber() : oauthHttpsServerPort.getNumber();
     }
 
-    @Rule
-    public SystemProperty redirectUrl = new SystemProperty("redirect.url", String.format("%s://localhost:%d/redirect", getProtocol(), localHostPort.getNumber()));
     @Rule
     public SystemProperty tokenUrl = new SystemProperty("token.url", String.format("%s://localhost:%d" + TOKEN_PATH, getProtocol(), resolveOauthServerPort()));
 
@@ -105,26 +104,12 @@ public class AuthorizationCodeMinimalConfigTestCase extends AbstractAuthorizatio
                 .socketTimeout(REQUEST_TIMEOUT)
                 .execute();
 
-        wireMockRule.verify(postRequestedFor(urlEqualTo(TOKEN_PATH))
-                                    .withRequestBody(containing(OAuthConstants.CLIENT_ID_PARAMETER + "=" + URLEncoder.encode(clientId.getValue(), StandardCharsets.UTF_8.name())))
-                                    .withRequestBody(containing(OAuthConstants.CODE_PARAMETER + "=" + URLEncoder.encode(AUTHENTICATION_CODE, StandardCharsets.UTF_8.name())))
-                                    .withRequestBody(containing(OAuthConstants.CLIENT_SECRET_PARAMETER + "=" + URLEncoder.encode(clientSecret.getValue(), StandardCharsets.UTF_8.name())))
-                                    .withRequestBody(containing(OAuthConstants.GRANT_TYPE_PARAMETER + "=" + URLEncoder.encode(OAuthConstants.GRANT_TYPE_AUTHENTICATION_CODE, StandardCharsets.UTF_8.name())))
-                                    .withRequestBody(containing(OAuthConstants.REDIRECT_URI_PARAMETER + "=" + URLEncoder.encode(redirectUrl.getValue(), StandardCharsets.UTF_8.name()))));
+        verifyRequestDoneToTokenUrl();
 
         OAuthStateFunctionAsserter.createFrom(muleContext.getExpressionLanguage(), "minimalConfig")
                 .assertAccessTokenIs(ACCESS_TOKEN)
                 .assertRefreshTokenIs(REFRESH_TOKEN);
     }
 
-    protected void configureWireMockToExpectTokenPathRequestAndReturnJsonResponse()
-    {
-        wireMockRule.stubFor(post(urlEqualTo(TOKEN_PATH))
-                                     .willReturn(aResponse()
-                                                         .withBody("{" +
-                                                                   "\"" + OAuthConstants.ACCESS_TOKEN_PARAMETER + "\":\"" + ACCESS_TOKEN + "\"," +
-                                                                   "\"" + OAuthConstants.EXPIRES_IN_PARAMETER + "\":" + EXPIRES_IN + "," +
-                                                                   "\"" + OAuthConstants.REFRESH_TOKEN_PARAMETER + "\":\"" + REFRESH_TOKEN + "\"}")));
-    }
 
 }
