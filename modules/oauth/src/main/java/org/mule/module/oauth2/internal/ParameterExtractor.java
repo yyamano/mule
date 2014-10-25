@@ -4,8 +4,11 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.oauth2;
+package org.mule.module.oauth2.internal;
 
+/**
+ * Configuration of a custom parameter to extract from the token response.
+ */
 public class ParameterExtractor
 {
 
@@ -22,12 +25,17 @@ public class ParameterExtractor
         this.value = value;
     }
 
-
+    /**
+     * @return name of the parameter used to store it in the oauth state.
+     */
     public String getParamName()
     {
         return paramName;
     }
 
+    /**
+     * @return value extracted from the token response.
+     */
     public String getValue()
     {
         return value;

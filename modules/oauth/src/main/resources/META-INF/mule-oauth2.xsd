@@ -52,31 +52,39 @@
                             <xsd:attribute name="state" type="xsd:string" use="optional"/>
                         </xsd:complexType>
                     </xsd:element>
-                    <xsd:element name="token-request">
-                        <xsd:complexType>
-                            <xsd:sequence>
-                                <xsd:element name="token-response" minOccurs="0" maxOccurs="1">
-                                    <xsd:complexType>
-                                        <xsd:sequence>
-                                            <xsd:element name="custom-parameter-extractor" minOccurs="0" maxOccurs="unbounded">
-                                                <xsd:complexType>
-                                                    <xsd:attribute name="paramName" type="xsd:string" use="required"/>
-                                                    <xsd:attribute name="value" type="xsd:string" use="required"/>
-                                                    <xsd:attribute name="required" type="mule:substitutableBoolean"
-                                                                   use="optional"/>
-                                                </xsd:complexType>
-                                            </xsd:element>
-                                        </xsd:sequence>
-                                        <xsd:attribute name="accessToken" type="xsd:string" use="optional"/>
-                                        <xsd:attribute name="refreshToken" type="xsd:string" use="optional"/>
-                                        <xsd:attribute name="expiresIn" type="xsd:string" use="optional"/>
-                                    </xsd:complexType>
-                                </xsd:element>
-                            </xsd:sequence>
-                            <xsd:attribute name="tokenUrl" type="xsd:string" use="required"/>
-                            <xsd:attribute name="refreshTokenWhen" type="xsd:string" use="optional"/>
-                        </xsd:complexType>
-                    </xsd:element>
+                    <xsd:choice>
+
+                        <xsd:element name="token-request">
+                            <xsd:complexType>
+                                <xsd:sequence>
+                                    <xsd:element name="token-response" minOccurs="0" maxOccurs="1">
+                                        <xsd:complexType>
+                                            <xsd:sequence>
+                                                <xsd:element name="custom-parameter-extractor" minOccurs="0" maxOccurs="unbounded">
+                                                    <xsd:complexType>
+                                                        <xsd:attribute name="paramName" type="xsd:string" use="required"/>
+                                                        <xsd:attribute name="value" type="xsd:string" use="required"/>
+                                                    </xsd:complexType>
+                                                </xsd:element>
+                                            </xsd:sequence>
+                                            <xsd:attribute name="accessToken" type="xsd:string" use="optional"/>
+                                            <xsd:attribute name="refreshToken" type="xsd:string" use="optional"/>
+                                            <xsd:attribute name="expiresIn" type="xsd:string" use="optional"/>
+                                        </xsd:complexType>
+                                    </xsd:element>
+                                </xsd:sequence>
+                                <xsd:attribute name="tokenUrl" type="xsd:string" use="required"/>
+                                <xsd:attribute name="refreshTokenWhen" type="xsd:string" use="optional"/>
+                            </xsd:complexType>
+                        </xsd:element>
+                        <xsd:element name="custom-token-request">
+                            <xsd:complexType>
+                                <xsd:attribute name="refreshTokenWhen" type="xsd:string" />
+                                <xsd:attribute name="tokenUrlCallFlow" type="xsd:string" />
+                                <xsd:attribute name="refreshTokenFlow" type="xsd:string" />
+                            </xsd:complexType>
+                        </xsd:element>
+                    </xsd:choice>
                 </xsd:sequence>
                 <xsd:attribute name="name" type="mule:substitutableName" use="required">
                     <xsd:annotation>
@@ -133,6 +141,20 @@
                 <xsd:extension base="http:abstractHttpRequestAuthenticationProvider">
                     <xsd:attribute name="config" type="xsd:string" use="required"/>
                     <xsd:attribute name="oauthStateId" type="xsd:string" />
+                </xsd:extension>
+            </xsd:complexContent>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:element name="store-authentication-code-state" substitutionGroup="mule:abstract-message-processor">
+        <xsd:complexType>
+            <xsd:complexContent>
+                <xsd:extension base="mule:abstractMessageProcessorType">
+                    <xsd:attribute name="config" type="xsd:string" use="required"/>
+                    <xsd:attribute name="oauthStateId" type="xsd:string" />
+                    <xsd:attribute name="accessToken" type="xsd:string" use="required"/>
+                    <xsd:attribute name="refreshToken" type="xsd:string"/>
+                    <xsd:attribute name="expiresIn" type="xsd:string"/>
                 </xsd:extension>
             </xsd:complexContent>
         </xsd:complexType>

@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.oauth2;
+package org.mule.module.oauth2.functional;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.containing;
@@ -76,16 +76,6 @@ public class AuthorizationCodeMinimalConfigTestCase extends AbstractAuthorizatio
     @Test
     public void localAuthorizationUrlRedirectsToOAuthAuthorizationUrl() throws Exception
     {
-        //System.out.println(localAuthorizationUrl.getValue());
-        //System.out.println(authorizationUrl.getValue());
-        //if (true)
-        //{
-        //    while (1 == 1)
-        //    {
-        //        Thread.sleep(1000);
-        //    }
-        //}
-
         wireMockRule.stubFor(get(urlMatching(AUTHORIZE_PATH + ".*")).willReturn(aResponse().withStatus(200)));
 
         final HttpRequestConfig requestConfig = muleContext.getRegistry().get("httpsRequestConfig");
@@ -112,7 +102,7 @@ public class AuthorizationCodeMinimalConfigTestCase extends AbstractAuthorizatio
                                                    "\"" + OAuthConstants.EXPIRES_IN_PARAMETER + "\":" + EXPIRES_IN + "," +
                                                    "\"" + OAuthConstants.REFRESH_TOKEN_PARAMETER + "\":\"" + REFRESH_TOKEN + "\"}")));
 
-        Request.Get(redirectUrl.getValue() + "?" + OAuthConstants.CODE_PARAMETER + "=" + AUTHENTICATION_CODE).socketTimeout(1000000).execute();
+        Request.Get(redirectUrl.getValue() + "?" + OAuthConstants.CODE_PARAMETER + "=" + AUTHENTICATION_CODE).socketTimeout(1000).execute();
 
         wireMockRule.verify(postRequestedFor(urlEqualTo(TOKEN_PATH))
                                     .withRequestBody(containing(OAuthConstants.CLIENT_ID_PARAMETER + "=" + URLEncoder.encode(clientId.getValue(), StandardCharsets.UTF_8.name())))

@@ -4,12 +4,13 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.oauth2;
+package org.mule.module.oauth2.internal;
 
 import org.mule.api.MuleEvent;
+import org.mule.api.MuleException;
 import org.mule.module.http.HttpRequestConfig;
 import org.mule.module.http.listener.HttpListenerConfig;
-import org.mule.module.oauth2.state.ConfigOAuthState;
+import org.mule.module.oauth2.internal.state.ConfigOAuthState;
 
 /**
  * Provides access to the general configuration of an authorization code oauth config.
@@ -64,7 +65,7 @@ public interface AuthorizationCodeGrantType
      * @param currentFlowEvent event from the flow that requires a new access token.
      * @param oauthStateId the id of the oauth state to refresh.
      */
-    void refreshToken(MuleEvent currentFlowEvent, String oauthStateId);
+    void refreshToken(MuleEvent currentFlowEvent, String oauthStateId) throws MuleException;
 
     /**
      * @return the oauth state holder for all the users authenticated in this config.

@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.oauth2;
+package org.mule.module.oauth2.internal;
 
 import org.mule.api.DefaultMuleException;
 import org.mule.api.MuleContext;
@@ -27,6 +27,9 @@ import org.slf4j.LoggerFactory;
 
 public class AuthorizationRequestHandler implements MuleContextAware
 {
+
+    public static final String REDIRECT_STATUS_CODE = "302";
+    public static final String OAUTH_STATE_ID_FLOW_VAR_NAME = "oauthStateId";
 
     private Logger logger = LoggerFactory.getLogger(AuthorizationRequestHandler.class);
     private String scopes;
@@ -70,16 +73,15 @@ public class AuthorizationRequestHandler implements MuleContextAware
         this.customParameters = customParameters;
     }
 
-    public void startListener() throws MuleException
+    public void init() throws MuleException
     {
-        //TODO validate authorization url
         try
         {
             oauthStateIdEvaluator = new AttributeEvaluator(oauthConfig.getOAuthStateId()).initialize(muleContext.getExpressionManager());
             stateEvaluator = new AttributeEvaluator(state).initialize(muleContext.getExpressionManager());
             final HttpListenerBuilder httpListenerBuilder = new HttpListenerBuilder(muleContext);
             final HttpResponseBuilder responseBuilder = new HttpResponseBuilder();
-            responseBuilder.setStatusCode("302");
+            responseBuilder.setStatusCode(REDIRECT_STATUS_CODE);
             responseBuilder.setMuleContext(muleContext);
             responseBuilder.initialise();
             this.listener = httpListenerBuilder.setUrl(localAuthorizationUrl)
@@ -92,22 +94,13 @@ public class AuthorizationRequestHandler implements MuleContextAware
                         public MuleEvent process(MuleEvent muleEvent) throws MuleException
                         {
                             final String oauthStateId = oauthStateIdEvaluator.resolveStringValue(muleEvent);
-                            muleEvent.setFlowVariable("oauthStateId", oauthStateId);
-                            String currentState;
-                            if (state == null && oauthStateId != null)
+                            muleEvent.setFlowVariable(OAUTH_STATE_ID_FLOW_VAR_NAME, oauthStateId);
+                            final String stateValue = stateEvaluator.resolveStringValue(muleEvent);
+                            String currentState = stateValue;
+                            if (oauthStateId != null)
                             {
-                                currentState = ":oauthStateId=" + oauthStateId;
+                                currentState = StateEncoder.encodeOAuthStateIdInState(stateValue, oauthStateId);
                             }
-                            else if (oauthStateId != null)
-                            {
-                                final String stateValue = stateEvaluator.resolveStringValue(muleEvent);
-                                currentState = (stateValue == null ? "" : stateValue) + ":oauthStateId=" + oauthStateId;
-                            }
-                            else
-                            {
-                                currentState = stateEvaluator.resolveStringValue(muleEvent);
-                            }
-                            //TODO verify state is not being used.
                             final String authorizationUrlWithParams = new AuthorizationRequestUrlBuilder()
                                     .setAuthorizationUrl(authorizationUrl)
                                     .setClientId(oauthConfig.getClientId())

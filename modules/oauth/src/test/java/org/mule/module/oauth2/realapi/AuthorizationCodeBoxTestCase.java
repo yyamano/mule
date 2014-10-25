@@ -10,6 +10,7 @@ import org.mule.tck.junit4.FunctionalTestCase;
 import org.mule.tck.junit4.rule.DynamicPort;
 import org.mule.tck.junit4.rule.SystemProperty;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -38,6 +39,7 @@ public class AuthorizationCodeBoxTestCase extends FunctionalTestCase
     }
 
     @Test
+    @Ignore
     public void localAuthorizationUrlRedirectsToOAuthAuthorizationUrl() throws Exception
     {
         while (true)

@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.oauth2;
+package org.mule.module.oauth2.functional;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.containing;
@@ -18,17 +18,23 @@ import org.mule.api.MuleEvent;
 import org.mule.construct.Flow;
 import org.mule.module.http.HttpHeaders;
 import org.mule.module.oauth2.asserter.OAuthStateFunctionAsserter;
-import org.mule.module.oauth2.state.OAuthStateRegistry;
-import org.mule.module.oauth2.state.UserOAuthState;
+import org.mule.module.oauth2.internal.state.OAuthStateRegistry;
+import org.mule.module.oauth2.internal.state.UserOAuthState;
 import org.mule.security.oauth.OAuthConstants;
 import org.mule.tck.junit4.rule.SystemProperty;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
 public class AuthorizationCodeRefreshTokenConfigTestCase extends AbstractAuthorizationCodeFunctionalTestCase
 {
 
@@ -52,13 +58,36 @@ public class AuthorizationCodeRefreshTokenConfigTestCase extends AbstractAuthori
     @Rule
     public SystemProperty tokenUrl = new SystemProperty("token.url", String.format("http://localhost:%d" + TOKEN_PATH, oauthServerPort.getNumber()));
     @Rule
+    public SystemProperty tokenHost = new SystemProperty("token.host", String.format("localhost"));
+    @Rule
+    public SystemProperty tokenPort = new SystemProperty("token.port", String.valueOf(oauthServerPort.getNumber()));
+    @Rule
+    public SystemProperty tokenPath = new SystemProperty("token.path", TOKEN_PATH);
+    @Rule
     public SystemProperty multitenantUser = new SystemProperty("multitenant.user", "john");
 
+    private String configFile;
+
+
+    public AuthorizationCodeRefreshTokenConfigTestCase(String config)
+    {
+        this.configFile = config;
+    }
+
+    @Parameterized.Parameters
+    public static List<Object[]> parameters()
+    {
+        return Arrays.asList(new Object[][]
+                                     {
+                                             //{"authorization-code-refresh-token-config.xml"},
+                                             {"authorization-code-custom-token-request-refresh-token-config.xml"},
+                                     });
+    }
 
     @Override
     protected String getConfigFile()
     {
-        return "authorization-code-refresh-token-config.xml";
+        return configFile;
     }
 
     @Test

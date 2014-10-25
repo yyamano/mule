@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.oauth2.mel;
+package org.mule.module.oauth2.internal.mel;
 
 import org.mule.api.MuleContext;
 import org.mule.api.MuleRuntimeException;
@@ -15,7 +15,7 @@ import org.mule.api.lifecycle.Initialisable;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.api.lifecycle.Startable;
 import org.mule.api.registry.RegistrationException;
-import org.mule.module.oauth2.state.OAuthStateRegistry;
+import org.mule.module.oauth2.internal.state.OAuthStateRegistry;
 
 /**
  * MEL extension for adding OAuth related functions.

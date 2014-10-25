@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.oauth2;
+package org.mule.module.oauth2.functional;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.containing;
@@ -112,7 +112,7 @@ public class AuthorizationCodeFullConfigTestCase extends AbstractAuthorizationCo
         final ParameterMap redirectUrlQueryParams = new ParameterMap()
                 .putAndReturn(OAuthConstants.CODE_PARAMETER, AUTHENTICATION_CODE)
                 .putAndReturn(OAuthConstants.STATE_PARAMETER, state.getValue());
-        Request.Get(redirectUrl.getValue() + "?" + HttpParser.encodeQueryString(redirectUrlQueryParams)).socketTimeout(1000000).execute();
+        Request.Get(redirectUrl.getValue() + "?" + HttpParser.encodeQueryString(redirectUrlQueryParams)).socketTimeout(1000).execute();
 
         wireMockRule.verify(postRequestedFor(urlEqualTo(TOKEN_PATH))
                                     .withRequestBody(containing(OAuthConstants.CLIENT_ID_PARAMETER + "=" + URLEncoder.encode(clientId.getValue(), StandardCharsets.UTF_8.name())))

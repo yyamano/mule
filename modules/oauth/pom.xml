@@ -51,18 +51,18 @@
             <version>4.3.2</version>
         </dependency>
 
-        <!--<dependency>-->
-            <!--<groupId>xalan</groupId>-->
-            <!--<artifactId>xalan</artifactId>-->
-            <!--<version>${xalanVersion}</version>-->
-            <!--<scope>test</scope>-->
-        <!--</dependency>-->
-
         <dependency>
             <groupId>org.mule.transports</groupId>
             <artifactId>mule-transport-ssl</artifactId>
             <version>${project.version}</version>
-            <!--<scope>test</scope>-->
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mule.modules</groupId>
+            <artifactId>mule-module-json</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>

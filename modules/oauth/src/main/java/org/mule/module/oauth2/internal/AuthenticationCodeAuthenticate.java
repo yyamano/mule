@@ -4,19 +4,22 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.oauth2;
+package org.mule.module.oauth2.internal;
+
+import static org.mule.config.i18n.MessageFactory.createStaticMessage;
 
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
+import org.mule.api.MuleException;
 import org.mule.api.MuleRuntimeException;
 import org.mule.api.context.MuleContextAware;
 import org.mule.api.lifecycle.Initialisable;
 import org.mule.api.lifecycle.InitialisationException;
-import org.mule.api.registry.RegistrationException;
+import org.mule.config.i18n.CoreMessages;
 import org.mule.module.http.HttpHeaders;
 import org.mule.module.http.request.HttpAuth;
-import org.mule.module.oauth2.state.OAuthStateRegistry;
-import org.mule.module.oauth2.state.UserOAuthState;
+import org.mule.module.oauth2.api.RequestAuthenticationException;
+import org.mule.module.oauth2.internal.state.UserOAuthState;
 import org.mule.security.oauth.OAuthUtils;
 import org.mule.util.AttributeEvaluator;
 
@@ -29,12 +32,20 @@ public class AuthenticationCodeAuthenticate implements HttpAuth, MuleContextAwar
     private MuleContext muleContext;
     private AuthorizationCodeGrantType config;
     private AttributeEvaluator oauthStateIdEvaluator;
-    private OAuthStateRegistry oauthStateRegistry;
 
     @Override
-    public void authenticate(MuleEvent muleEvent)
+    public void authenticate(MuleEvent muleEvent) throws MuleException
     {
-        final String accessToken = oauthStateRegistry.getStateForConfig(config.getConfigName()).getStateForUser(oauthStateIdEvaluator.resolveStringValue(muleEvent)).getAccessToken();
+        final String oauthStateId = oauthStateIdEvaluator.resolveStringValue(muleEvent);
+        if (oauthStateId == null)
+        {
+            throw new RequestAuthenticationException(createStaticMessage(String.format("Evaluation of %s return an empty oauthStateId", oauthStateIdEvaluator.getRawValue())));
+        }
+        final String accessToken = config.getOAuthState().getStateForUser(oauthStateId).getAccessToken();
+        if (accessToken == null)
+        {
+            throw new RequestAuthenticationException(createStaticMessage(String.format("No access token for the %s user. Verify that you have authenticated the user before trying to execute an operation to the API.", oauthStateId)));
+        }
         muleEvent.getMessage().setOutboundProperty(HttpHeaders.Names.AUTHORIZATION, OAuthUtils.buildAuthorizationHeaderContent(accessToken));
     }
 
@@ -51,10 +62,22 @@ public class AuthenticationCodeAuthenticate implements HttpAuth, MuleContextAwar
         final String refreshTokenWhen = config.getRefreshTokenWhen();
         if (!StringUtils.isBlank(refreshTokenWhen))
         {
-            final Boolean shouldRetryRequest = muleContext.getExpressionLanguage().evaluate(refreshTokenWhen, firstAttemptResponseEvent);
+            final Object value = muleContext.getExpressionManager().evaluate(refreshTokenWhen, firstAttemptResponseEvent);
+            if (!(value instanceof Boolean))
+            {
+                throw new MuleRuntimeException(CoreMessages.createStaticMessage("Expression %s should return a boolean but return %s", config.getRefreshTokenWhen(), value));
+            }
+            final Boolean shouldRetryRequest = (Boolean) value;
             if (shouldRetryRequest)
             {
-                config.refreshToken(firstAttemptResponseEvent, oauthStateIdEvaluator.resolveStringValue(firstAttemptResponseEvent));
+                try
+                {
+                    config.refreshToken(firstAttemptResponseEvent, oauthStateIdEvaluator.resolveStringValue(firstAttemptResponseEvent));
+                }
+                catch (MuleException e)
+                {
+                    throw new MuleRuntimeException(e);
+                }
             }
             return shouldRetryRequest;
         }
@@ -80,18 +103,10 @@ public class AuthenticationCodeAuthenticate implements HttpAuth, MuleContextAwar
     @Override
     public void initialise() throws InitialisationException
     {
-        try
+        if (oauthStateIdEvaluator == null)
         {
-            if (oauthStateIdEvaluator == null)
-            {
-                oauthStateIdEvaluator = new AttributeEvaluator(UserOAuthState.DEFAULT_USER_ID);
-            }
-            oauthStateIdEvaluator.initialize(muleContext.getExpressionManager());
-            oauthStateRegistry = muleContext.getRegistry().lookupObject(OAuthStateRegistry.class);
+            oauthStateIdEvaluator = new AttributeEvaluator(UserOAuthState.DEFAULT_USER_ID);
         }
-        catch (RegistrationException e)
-        {
-            throw new MuleRuntimeException(e);
-        }
+        oauthStateIdEvaluator.initialize(muleContext.getExpressionManager());
     }
 }

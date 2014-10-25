@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.oauth2;
+package org.mule.module.oauth2.internal;
 
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
@@ -17,8 +17,8 @@ import org.mule.api.lifecycle.Startable;
 import org.mule.api.registry.RegistrationException;
 import org.mule.module.http.HttpRequestConfig;
 import org.mule.module.http.listener.HttpListenerConfig;
-import org.mule.module.oauth2.state.ConfigOAuthState;
-import org.mule.module.oauth2.state.OAuthStateRegistry;
+import org.mule.module.oauth2.internal.state.ConfigOAuthState;
+import org.mule.module.oauth2.internal.state.OAuthStateRegistry;
 
 /**
  * Represents the config element for oauth:authentication-code-config.
@@ -38,7 +38,7 @@ public class AuthorizationCodeConfig implements Initialisable, Disposable, Start
     private HttpRequestConfig requestConfig;
     private HttpListenerConfig listenerConfig;
     private AuthorizationRequestHandler authorizationRequestHandler;
-    private TokenRequestHandler tokenRequestHandler;
+    private AbstractTokenRequestHandler tokenRequestHandler;
     private ConfigOAuthState configOAuthState = new ConfigOAuthState();
     private MuleContext muleContext;
     private OAuthStateRegistry oauthStateRegistry;
@@ -68,7 +68,7 @@ public class AuthorizationCodeConfig implements Initialisable, Disposable, Start
         this.authorizationRequestHandler = authorizationRequestHandler;
     }
 
-    public void setTokenRequestHandler(TokenRequestHandler tokenRequestHandler)
+    public void setTokenRequestHandler(AbstractTokenRequestHandler tokenRequestHandler)
     {
         this.tokenRequestHandler = tokenRequestHandler;
     }
@@ -89,12 +89,12 @@ public class AuthorizationCodeConfig implements Initialisable, Disposable, Start
         if (authorizationRequestHandler != null)
         {
             authorizationRequestHandler.setOauthConfig(this);
-            authorizationRequestHandler.startListener();
+            authorizationRequestHandler.init();
         }
         if (tokenRequestHandler != null)
         {
             tokenRequestHandler.setOauthConfig(this);
-            tokenRequestHandler.startListener();
+            tokenRequestHandler.init();
         }
     }
 
@@ -128,7 +128,7 @@ public class AuthorizationCodeConfig implements Initialisable, Disposable, Start
     }
 
     @Override
-    public void refreshToken(final MuleEvent currentFlowEvent, final String oauthStateId)
+    public void refreshToken(final MuleEvent currentFlowEvent, final String oauthStateId) throws MuleException
     {
         tokenRequestHandler.refreshToken(currentFlowEvent, oauthStateId);
     }
