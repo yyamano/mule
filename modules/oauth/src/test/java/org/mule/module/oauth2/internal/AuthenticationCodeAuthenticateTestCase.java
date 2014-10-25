@@ -13,6 +13,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mule.module.oauth2.internal.AuthenticationCodeAuthenticate.buildAuthorizationHeaderContent;
 
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
@@ -21,7 +22,6 @@ import org.mule.api.lifecycle.InitialisationException;
 import org.mule.module.http.HttpHeaders;
 import org.mule.module.oauth2.api.RequestAuthenticationException;
 import org.mule.module.oauth2.internal.state.UserOAuthState;
-import org.mule.security.oauth.OAuthUtils;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
@@ -57,7 +57,7 @@ public class AuthenticationCodeAuthenticateTestCase extends AbstractMuleTestCase
         when(mockUserOAuthState.getAccessToken()).thenReturn(ACCESS_TOKEN);
         authenticationCodeAuthenticate.authenticate(mockMuleEvent);
 
-        verify(mockMuleEvent.getMessage()).setOutboundProperty(HttpHeaders.Names.AUTHORIZATION, OAuthUtils.buildAuthorizationHeaderContent(ACCESS_TOKEN));
+        verify(mockMuleEvent.getMessage()).setOutboundProperty(HttpHeaders.Names.AUTHORIZATION, buildAuthorizationHeaderContent(ACCESS_TOKEN));
     }
 
     @Test

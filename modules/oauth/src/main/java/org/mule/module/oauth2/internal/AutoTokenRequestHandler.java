@@ -20,7 +20,6 @@ import org.mule.module.http.HttpRequester;
 import org.mule.module.http.listener.MessageProperties;
 import org.mule.module.http.request.HttpRequesterBuilder;
 import org.mule.module.oauth2.internal.state.UserOAuthState;
-import org.mule.security.oauth.OAuthConstants;
 
 import java.util.HashMap;
 import java.util.Map;

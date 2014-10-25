@@ -13,8 +13,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import org.mule.module.http.HttpParser;
 import org.mule.module.http.ParameterMap;
 import org.mule.module.oauth2.asserter.OAuthStateFunctionAsserter;
+import org.mule.module.oauth2.internal.OAuthConstants;
 import org.mule.module.oauth2.internal.state.UserOAuthState;
-import org.mule.security.oauth.OAuthConstants;
 import org.mule.tck.junit4.rule.SystemProperty;
 
 import java.net.URLEncoder;

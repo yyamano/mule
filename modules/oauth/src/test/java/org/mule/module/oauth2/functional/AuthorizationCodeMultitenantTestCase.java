@@ -18,7 +18,7 @@ import org.mule.module.http.HttpParser;
 import org.mule.module.http.ParameterMap;
 import org.mule.module.oauth2.asserter.AuthorizationRequestAsserter;
 import org.mule.module.oauth2.asserter.OAuthStateFunctionAsserter;
-import org.mule.security.oauth.OAuthConstants;
+import org.mule.module.oauth2.internal.OAuthConstants;
 import org.mule.tck.junit4.rule.SystemProperty;
 
 import com.github.tomakehurst.wiremock.client.WireMock;

@@ -11,7 +11,7 @@ import static org.junit.Assert.assertThat;
 
 import org.mule.module.http.HttpParser;
 import org.mule.module.http.ParameterMap;
-import org.mule.security.oauth.OAuthConstants;
+import org.mule.module.oauth2.internal.OAuthConstants;
 
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 

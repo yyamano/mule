@@ -18,9 +18,9 @@ import org.mule.api.MuleEvent;
 import org.mule.construct.Flow;
 import org.mule.module.http.HttpHeaders;
 import org.mule.module.oauth2.asserter.OAuthStateFunctionAsserter;
+import org.mule.module.oauth2.internal.OAuthConstants;
 import org.mule.module.oauth2.internal.state.OAuthStateRegistry;
 import org.mule.module.oauth2.internal.state.UserOAuthState;
-import org.mule.security.oauth.OAuthConstants;
 import org.mule.tck.junit4.rule.SystemProperty;
 
 import java.net.URLEncoder;

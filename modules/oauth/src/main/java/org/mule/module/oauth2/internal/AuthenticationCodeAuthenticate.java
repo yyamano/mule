@@ -20,7 +20,6 @@ import org.mule.module.http.HttpHeaders;
 import org.mule.module.http.request.HttpAuth;
 import org.mule.module.oauth2.api.RequestAuthenticationException;
 import org.mule.module.oauth2.internal.state.UserOAuthState;
-import org.mule.security.oauth.OAuthUtils;
 import org.mule.util.AttributeEvaluator;
 
 import org.apache.commons.lang.StringUtils;
@@ -46,7 +45,12 @@ public class AuthenticationCodeAuthenticate implements HttpAuth, MuleContextAwar
         {
             throw new RequestAuthenticationException(createStaticMessage(String.format("No access token for the %s user. Verify that you have authenticated the user before trying to execute an operation to the API.", oauthStateId)));
         }
-        muleEvent.getMessage().setOutboundProperty(HttpHeaders.Names.AUTHORIZATION, OAuthUtils.buildAuthorizationHeaderContent(accessToken));
+        muleEvent.getMessage().setOutboundProperty(HttpHeaders.Names.AUTHORIZATION, buildAuthorizationHeaderContent(accessToken));
+    }
+
+    public static String buildAuthorizationHeaderContent(String accessToken)
+    {
+        return "Bearer " + accessToken;
     }
 
     @Override

@@ -6,8 +6,6 @@
  */
 package org.mule.module.oauth2.internal;
 
-import org.mule.security.oauth.OAuthUtils;
-
 import java.util.Collections;
 import java.util.List;
 

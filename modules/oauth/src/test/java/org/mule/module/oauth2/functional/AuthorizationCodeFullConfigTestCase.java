@@ -7,12 +7,10 @@
 package org.mule.module.oauth2.functional;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.findAll;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static org.hamcrest.core.Is.is;
@@ -22,13 +20,11 @@ import org.mule.module.http.HttpParser;
 import org.mule.module.http.ParameterMap;
 import org.mule.module.oauth2.asserter.AuthorizationRequestAsserter;
 import org.mule.module.oauth2.asserter.OAuthStateFunctionAsserter;
-import org.mule.security.oauth.OAuthConstants;
+import org.mule.module.oauth2.internal.OAuthConstants;
 import org.mule.tck.junit4.rule.SystemProperty;
 
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.apache.http.HttpHeaders;
