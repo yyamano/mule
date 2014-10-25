@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractTokenRequestHandler implements MuleContextAware
 {
+
     protected Logger logger = LoggerFactory.getLogger(getClass());
 
     private String refreshTokenWhen = "#[message.inboundProperties['http.status'] == 401 || message.inboundProperties['http.status'] == 403]";

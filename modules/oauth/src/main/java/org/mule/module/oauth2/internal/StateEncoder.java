@@ -16,7 +16,7 @@ public class StateEncoder
      * Creates an state value with the oauth state id encoded in it.
      *
      * @param originalState the original state
-     * @param oauthStateId the oauthStateId to encode
+     * @param oauthStateId  the oauthStateId to encode
      * @return an updated state with the original content plus the oath state id.
      */
     public static final String encodeOAuthStateIdInState(String originalState, String oauthStateId)

@@ -11,9 +11,9 @@ import static org.mockito.Mockito.verify;
 
 import org.mule.api.MuleContext;
 import org.mule.api.lifecycle.InitialisationException;
+import org.mule.module.oauth2.internal.state.OAuthStateRegistry;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
-import org.mule.module.oauth2.internal.state.OAuthStateRegistry;
 
 import org.junit.Test;
 import org.mockito.Answers;

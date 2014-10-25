@@ -64,8 +64,6 @@ public class AuthorizationCodeFullConfigTestCase extends AbstractAuthorizationCo
     public SystemProperty customTokenResponseParameter2Name = new SystemProperty("custom.param.extractor2", "token-resp-param2");
 
 
-
-
     @Override
     protected String getConfigFile()
     {
@@ -77,7 +75,10 @@ public class AuthorizationCodeFullConfigTestCase extends AbstractAuthorizationCo
     {
         wireMockRule.stubFor(get(urlMatching(AUTHORIZE_PATH + ".*")).willReturn(aResponse().withStatus(200)));
 
-        Request.Get(localAuthorizationUrl.getValue()).execute();
+        Request.Get(localAuthorizationUrl.getValue())
+                .connectTimeout(REQUEST_TIMEOUT)
+                .socketTimeout(REQUEST_TIMEOUT)
+                .execute();
 
         final List<LoggedRequest> requests = findAll(getRequestedFor(urlMatching(AUTHORIZE_PATH + ".*")));
         assertThat(requests.size(), is(1));
@@ -106,13 +107,17 @@ public class AuthorizationCodeFullConfigTestCase extends AbstractAuthorizationCo
 
         wireMockRule.stubFor(post(urlEqualTo(TOKEN_PATH))
                                      .willReturn(aResponse()
-                                             .withHeader(HttpHeaders.CONTENT_TYPE, org.mule.module.http.HttpHeaders.Values.APPLICATION_X_WWW_FORM_URLENCODED)
-                                             .withBody(HttpParser.encodeString("UTF-8", tokenUrlResponseParameters))));
+                                                         .withHeader(HttpHeaders.CONTENT_TYPE, org.mule.module.http.HttpHeaders.Values.APPLICATION_X_WWW_FORM_URLENCODED)
+                                                         .withBody(HttpParser.encodeString("UTF-8", tokenUrlResponseParameters))));
 
         final ParameterMap redirectUrlQueryParams = new ParameterMap()
                 .putAndReturn(OAuthConstants.CODE_PARAMETER, AUTHENTICATION_CODE)
                 .putAndReturn(OAuthConstants.STATE_PARAMETER, state.getValue());
-        Request.Get(redirectUrl.getValue() + "?" + HttpParser.encodeQueryString(redirectUrlQueryParams)).socketTimeout(1000).execute();
+
+        Request.Get(redirectUrl.getValue() + "?" + HttpParser.encodeQueryString(redirectUrlQueryParams))
+                .connectTimeout(REQUEST_TIMEOUT)
+                .socketTimeout(REQUEST_TIMEOUT)
+                .execute();
 
         wireMockRule.verify(postRequestedFor(urlEqualTo(TOKEN_PATH))
                                     .withRequestBody(containing(OAuthConstants.CLIENT_ID_PARAMETER + "=" + URLEncoder.encode(clientId.getValue(), StandardCharsets.UTF_8.name())))

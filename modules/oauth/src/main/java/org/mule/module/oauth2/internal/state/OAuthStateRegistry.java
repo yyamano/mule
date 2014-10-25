@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *  Contains all the OAuth states in a certain mule context.
+ * Contains all the OAuth states in a certain mule context.
  */
 public class OAuthStateRegistry
 {
@@ -20,7 +20,7 @@ public class OAuthStateRegistry
     /**
      * Registers a new oauth state for a config.
      *
-     * @param configName name of the oauth config to register
+     * @param configName       name of the oauth config to register
      * @param configOAuthState the initial state for that config
      */
     public void registerOAuthState(final String configName, final ConfigOAuthState configOAuthState)

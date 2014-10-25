@@ -25,8 +25,10 @@
             <oauth2:token-response accessToken="#[payload['access_token']]"
                                    expiresIn="#[payload['expires_in']]"
                                    refreshToken="#[payload['refresh_token']]">
-                <oauth2:custom-parameter-extractor paramName="${custom.param.extractor1}" value="#[payload['${custom.param.extractor1}']]"/>
-                <oauth2:custom-parameter-extractor paramName="${custom.param.extractor2}" value="#[payload['${custom.param.extractor2}']]"/>
+                <oauth2:custom-parameter-extractor paramName="${custom.param.extractor1}"
+                                                   value="#[payload['${custom.param.extractor1}']]"/>
+                <oauth2:custom-parameter-extractor paramName="${custom.param.extractor2}"
+                                                   value="#[payload['${custom.param.extractor2}']]"/>
             </oauth2:token-response>
         </oauth2:token-request>
     </oauth2:authentication-code>

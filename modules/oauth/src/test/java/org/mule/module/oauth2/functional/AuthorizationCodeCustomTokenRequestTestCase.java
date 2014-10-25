@@ -92,7 +92,7 @@ public class AuthorizationCodeCustomTokenRequestTestCase extends AbstractAuthori
                 .putAndReturn(OAuthConstants.CODE_PARAMETER, AUTHENTICATION_CODE)
                 .putAndReturn(OAuthConstants.STATE_PARAMETER, oauthStateId);
 
-        Request.Get(redirectUrl.getValue() + "?" + HttpParser.encodeQueryString(queryParams)).socketTimeout(1000).execute();
+        Request.Get(redirectUrl.getValue() + "?" + HttpParser.encodeQueryString(queryParams)).socketTimeout(REQUEST_TIMEOUT).execute();
 
         wireMockRule.verify(postRequestedFor(urlEqualTo(TOKEN_PATH))
                                     .withRequestBody(containing(OAuthConstants.CLIENT_ID_PARAMETER + "=" + URLEncoder.encode(clientId.getValue(), StandardCharsets.UTF_8.name())))

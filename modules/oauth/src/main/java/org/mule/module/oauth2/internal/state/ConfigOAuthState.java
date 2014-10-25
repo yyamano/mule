@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *  Provides the OAuth state for a particular config
+ * Provides the OAuth state for a particular config
  */
 public class ConfigOAuthState
 {

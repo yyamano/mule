@@ -16,6 +16,7 @@ import org.mule.api.processor.MessageProcessor;
 import org.mule.api.registry.RegistrationException;
 import org.mule.api.transport.PropertyScope;
 import org.mule.config.i18n.CoreMessages;
+import org.mule.module.http.HttpRequester;
 import org.mule.module.http.listener.MessageProperties;
 import org.mule.module.http.request.HttpRequesterBuilder;
 import org.mule.module.oauth2.internal.state.UserOAuthState;
@@ -34,6 +35,7 @@ public class AutoTokenRequestHandler extends AbstractTokenRequestHandler
 
     private String tokenUrl;
     private TokenResponseConfiguration tokenResponseConfiguration = new TokenResponseConfiguration();
+    private HttpRequester httpRequester;
 
     public void setTokenUrl(String tokenUrl)
     {
@@ -55,6 +57,11 @@ public class AutoTokenRequestHandler extends AbstractTokenRequestHandler
     public void init() throws MuleException
     {
         createListenerForRedirectUrl();
+        httpRequester = new HttpRequesterBuilder(getMuleContext())
+                .setAddress(tokenUrl)
+                .setConfig(getOauthConfig().getRequestConfig())
+                .setMethod("POST")
+                .build();
     }
 
     protected MessageProcessor createRedirectUrlProcessor()
@@ -100,11 +107,7 @@ public class AutoTokenRequestHandler extends AbstractTokenRequestHandler
 
     private MuleEvent invokeTokenUrl(MuleEvent event) throws MuleException
     {
-        return new HttpRequesterBuilder(getMuleContext())
-                .setAddress(tokenUrl)
-                .setConfig(getOauthConfig().getRequestConfig())
-                .setMethod("POST")
-                .build().process(event);
+        return httpRequester.process(event);
     }
 
     private void decodeStateAndUpdateOAuthUserState(final MuleEvent tokenUrlResponse, final String originalState) throws org.mule.api.registry.RegistrationException

@@ -25,7 +25,8 @@
     </http:request-config>
 
     <flow name="testFlow">
-        <http:request host="localhost" port="${oauth.server.port}" path="/resource" method="POST" config-ref="requestConfig"/>
+        <http:request host="localhost" port="${oauth.server.port}" path="/resource" method="POST"
+                      config-ref="requestConfig"/>
     </flow>
 
     <oauth2:authentication-code name="multitenantOauthConfig"
@@ -47,7 +48,8 @@
     </http:request-config>
 
     <flow name="testMultitenantFlow">
-        <http:request host="localhost" port="${oauth.server.port}" path="/resource" method="POST" config-ref="multitenantRequestConfig"/>
+        <http:request host="localhost" port="${oauth.server.port}" path="/resource" method="POST"
+                      config-ref="multitenantRequestConfig"/>
     </flow>
 
 </mule>

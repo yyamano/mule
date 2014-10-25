@@ -97,6 +97,10 @@ public class StoreAuthenticationCodeStateMessageProcessor implements MessageProc
     @Override
     public void initialise() throws InitialisationException
     {
+        if (config == null)
+        {
+            throw new InitialisationException(CoreMessages.createStaticMessage("OAuth config must be configured"), this);
+        }
         if (oauthStateIdEvaluator == null)
         {
             oauthStateIdEvaluator = new AttributeEvaluator(UserOAuthState.DEFAULT_USER_ID);

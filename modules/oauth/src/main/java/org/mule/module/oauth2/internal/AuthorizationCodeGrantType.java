@@ -45,7 +45,7 @@ public interface AuthorizationCodeGrantType
 
     /**
      * @return the expression or static value of a certain user authenticated through this config. By being an expression we allow to
-     *  authenticate several users and hold state (access token, refresh token, etc) for all those users.
+     * authenticate several users and hold state (access token, refresh token, etc) for all those users.
      */
     String getOAuthStateId();
 
@@ -63,7 +63,7 @@ public interface AuthorizationCodeGrantType
      * Does a refresh token for a particular oauth state id.
      *
      * @param currentFlowEvent event from the flow that requires a new access token.
-     * @param oauthStateId the id of the oauth state to refresh.
+     * @param oauthStateId     the id of the oauth state to refresh.
      */
     void refreshToken(MuleEvent currentFlowEvent, String oauthStateId) throws MuleException;
 

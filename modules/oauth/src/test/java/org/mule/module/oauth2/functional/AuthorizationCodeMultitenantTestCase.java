@@ -113,7 +113,11 @@ public class AuthorizationCodeMultitenantTestCase extends AbstractAuthorizationC
         {
             localAuthorizationUrlParameters.put("state", state);
         }
-        Request.Get(localAuthorizationUrl.getValue() + "?" + HttpParser.encodeQueryString(localAuthorizationUrlParameters)).execute();
+
+        Request.Get(localAuthorizationUrl.getValue() + "?" + HttpParser.encodeQueryString(localAuthorizationUrlParameters))
+                .connectTimeout(REQUEST_TIMEOUT)
+                .socketTimeout(REQUEST_TIMEOUT)
+                .execute();
 
         AuthorizationRequestAsserter.create((findAll(getRequestedFor(urlMatching(AUTHORIZE_PATH + ".*"))).get(0)))
                 .assertStateIs(expectedState);
@@ -128,7 +132,10 @@ public class AuthorizationCodeMultitenantTestCase extends AbstractAuthorizationC
         final String redirectUrlQueryParams = HttpParser.encodeQueryString(new ParameterMap()
                                                                                    .putAndReturn(OAuthConstants.CODE_PARAMETER, AUTHENTICATION_CODE)
                                                                                    .putAndReturn(OAuthConstants.STATE_PARAMETER, expectedState));
-        Request.Get(redirectUrl.getValue() + "?" + redirectUrlQueryParams).socketTimeout(1000000).execute();
+        Request.Get(redirectUrl.getValue() + "?" + redirectUrlQueryParams)
+                .connectTimeout(REQUEST_TIMEOUT)
+                .socketTimeout(REQUEST_TIMEOUT)
+                .execute();
     }
 
 }

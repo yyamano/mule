@@ -7,14 +7,13 @@
        http://www.mulesoft.org/schema/mule/oauth http://www.mulesoft.org/schema/mule/oauth/current/mule-oauth.xsd">
 
     <oauth:authentication-code name="basicConfig"
-                              clientId="ndli93xdws2qoe6ms1d389vl6bxquv3e"
-                              clientSecret="yL692Az1cNhfk1VhTzyx4jOjjMKBrO9T"
-                              localAuthorizationUrl="https://localhost:8082/authorization/"
-                              authorizationUrl="https://accounts.google.com/o/oauth2/auth"
-                              redirectionUrl="https://localhost:8082/"
-                              tokenUrl="https://www.box.com/api/oauth2/token">
+                               clientId="ndli93xdws2qoe6ms1d389vl6bxquv3e"
+                               clientSecret="yL692Az1cNhfk1VhTzyx4jOjjMKBrO9T"
+                               localAuthorizationUrl="https://localhost:8082/authorization/"
+                               authorizationUrl="https://accounts.google.com/o/oauth2/auth"
+                               redirectionUrl="https://localhost:8082/"
+                               tokenUrl="https://www.box.com/api/oauth2/token">
     </oauth:authentication-code>
-
 
 
 </mule>

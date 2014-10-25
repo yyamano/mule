@@ -16,6 +16,9 @@ import org.junit.Rule;
 
 public abstract class AbstractAuthorizationCodeFunctionalTestCase extends FunctionalTestCase
 {
+
+    public static final int REQUEST_TIMEOUT = 1000;
+
     public static final String TOKEN_PATH = "/token";
     public static final String AUTHENTICATION_CODE = "9WGJOBZXAvSibONGAxVlLuML0e0RhfX4";
     public static final String ACCESS_TOKEN = "rbBQLgJXBEYo83K4Fqs4gu6vpCobc2ya";

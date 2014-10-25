@@ -12,8 +12,8 @@
 
     <http:request-config name="httpsRequestConfig">
         <!--<tls:context>-->
-            <!--&lt;!&ndash;<tls:trust-store path="trustStore" password="mulepassword"/>&ndash;&gt;-->
-            <!--<tls:key-store path="clientKeystore" keyPassword="mulepassword" password="mulepassword"/>-->
+        <!--&lt;!&ndash;<tls:trust-store path="trustStore" password="mulepassword"/>&ndash;&gt;-->
+        <!--<tls:key-store path="clientKeystore" keyPassword="mulepassword" password="mulepassword"/>-->
         <!--</tls:context>-->
         <tls:context>
             <!--<tls:trust-store path="ssltest-cacerts.jks" password="changeit"/>-->
@@ -27,8 +27,8 @@
             <tls:key-store path="ssltest-keystore.jks" keyPassword="changeit" password="changeit"/>
         </tls:context>
         <!--<tls:context>-->
-            <!--<tls:trust-store path="trustStore" password="mulepassword"/>-->
-            <!--<tls:key-store path="clientKeystore" keyPassword="mulepassword" password="mulepassword"/>-->
+        <!--<tls:trust-store path="trustStore" password="mulepassword"/>-->
+        <!--<tls:key-store path="clientKeystore" keyPassword="mulepassword" password="mulepassword"/>-->
         <!--</tls:context>-->
     </http:listener-config>
 

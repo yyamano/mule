@@ -13,7 +13,7 @@
     <xsd:import namespace="http://www.springframework.org/schema/beans"
                 schemaLocation="http://www.springframework.org/schema/beans/spring-beans-3.1.xsd"/>
     <xsd:import namespace="http://www.mulesoft.org/schema/mule/http"
-                schemaLocation="http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd" />
+                schemaLocation="http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd"/>
 
     <!-- Database configuration -->
 
@@ -60,9 +60,11 @@
                                     <xsd:element name="token-response" minOccurs="0" maxOccurs="1">
                                         <xsd:complexType>
                                             <xsd:sequence>
-                                                <xsd:element name="custom-parameter-extractor" minOccurs="0" maxOccurs="unbounded">
+                                                <xsd:element name="custom-parameter-extractor" minOccurs="0"
+                                                             maxOccurs="unbounded">
                                                     <xsd:complexType>
-                                                        <xsd:attribute name="paramName" type="xsd:string" use="required"/>
+                                                        <xsd:attribute name="paramName" type="xsd:string"
+                                                                       use="required"/>
                                                         <xsd:attribute name="value" type="xsd:string" use="required"/>
                                                     </xsd:complexType>
                                                 </xsd:element>
@@ -79,9 +81,9 @@
                         </xsd:element>
                         <xsd:element name="custom-token-request">
                             <xsd:complexType>
-                                <xsd:attribute name="refreshTokenWhen" type="xsd:string" />
-                                <xsd:attribute name="tokenUrlCallFlow" type="xsd:string" />
-                                <xsd:attribute name="refreshTokenFlow" type="xsd:string" />
+                                <xsd:attribute name="refreshTokenWhen" type="xsd:string"/>
+                                <xsd:attribute name="tokenUrlCallFlow" type="xsd:string"/>
+                                <xsd:attribute name="refreshTokenFlow" type="xsd:string"/>
                             </xsd:complexType>
                         </xsd:element>
                     </xsd:choice>
@@ -140,7 +142,7 @@
             <xsd:complexContent>
                 <xsd:extension base="http:abstractHttpRequestAuthenticationProvider">
                     <xsd:attribute name="config" type="xsd:string" use="required"/>
-                    <xsd:attribute name="oauthStateId" type="xsd:string" />
+                    <xsd:attribute name="oauthStateId" type="xsd:string"/>
                 </xsd:extension>
             </xsd:complexContent>
         </xsd:complexType>
@@ -151,7 +153,7 @@
             <xsd:complexContent>
                 <xsd:extension base="mule:abstractMessageProcessorType">
                     <xsd:attribute name="config" type="xsd:string" use="required"/>
-                    <xsd:attribute name="oauthStateId" type="xsd:string" />
+                    <xsd:attribute name="oauthStateId" type="xsd:string"/>
                     <xsd:attribute name="accessToken" type="xsd:string" use="required"/>
                     <xsd:attribute name="refreshToken" type="xsd:string"/>
                     <xsd:attribute name="expiresIn" type="xsd:string"/>

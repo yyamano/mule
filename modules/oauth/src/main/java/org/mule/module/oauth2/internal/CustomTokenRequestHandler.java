@@ -19,6 +19,7 @@ import org.mule.construct.Flow;
  */
 public class CustomTokenRequestHandler extends AbstractTokenRequestHandler
 {
+
     private Flow tokenUrlCallFlow;
     private Flow refreshTokenFlow;
 

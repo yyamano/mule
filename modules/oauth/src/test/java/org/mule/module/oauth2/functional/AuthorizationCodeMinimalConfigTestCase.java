@@ -18,7 +18,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-import org.mule.api.MuleEvent;
 import org.mule.module.http.HttpRequestConfig;
 import org.mule.module.http.request.HttpRequesterBuilder;
 import org.mule.module.oauth2.asserter.AuthorizationRequestAsserter;
@@ -79,8 +78,12 @@ public class AuthorizationCodeMinimalConfigTestCase extends AbstractAuthorizatio
         wireMockRule.stubFor(get(urlMatching(AUTHORIZE_PATH + ".*")).willReturn(aResponse().withStatus(200)));
 
         final HttpRequestConfig requestConfig = muleContext.getRegistry().get("httpsRequestConfig");
-        final MuleEvent response = new HttpRequesterBuilder(muleContext).setAddress(localAuthorizationUrl.getValue()).setMethod("GET").setConfig(requestConfig).build().process(getTestEvent(NullPayload.getInstance()));
-        //Request.Get(localAuthorizationUrl.getValue()).execute();
+
+        new HttpRequesterBuilder(muleContext)
+                .setAddress(localAuthorizationUrl.getValue())
+                .setMethod("GET")
+                .setConfig(requestConfig)
+                .build().process(getTestEvent(NullPayload.getInstance()));
 
         final List<LoggedRequest> requests = findAll(getRequestedFor(urlMatching(AUTHORIZE_PATH + ".*")));
         assertThat(requests.size(), is(1));
@@ -95,14 +98,12 @@ public class AuthorizationCodeMinimalConfigTestCase extends AbstractAuthorizatio
     @Test
     public void hitRedirectUrlAndGetToken() throws Exception
     {
-        wireMockRule.stubFor(post(urlEqualTo(TOKEN_PATH))
-                     .willReturn(aResponse()
-                                         .withBody("{" +
-                                                   "\"" + OAuthConstants.ACCESS_TOKEN_PARAMETER + "\":\"" + ACCESS_TOKEN + "\"," +
-                                                   "\"" + OAuthConstants.EXPIRES_IN_PARAMETER + "\":" + EXPIRES_IN + "," +
-                                                   "\"" + OAuthConstants.REFRESH_TOKEN_PARAMETER + "\":\"" + REFRESH_TOKEN + "\"}")));
+        configureWireMockToExpectTokenPathRequestAndReturnJsonResponse();
 
-        Request.Get(redirectUrl.getValue() + "?" + OAuthConstants.CODE_PARAMETER + "=" + AUTHENTICATION_CODE).socketTimeout(1000).execute();
+        Request.Get(redirectUrl.getValue() + "?" + OAuthConstants.CODE_PARAMETER + "=" + AUTHENTICATION_CODE)
+                .connectTimeout(REQUEST_TIMEOUT)
+                .socketTimeout(REQUEST_TIMEOUT)
+                .execute();
 
         wireMockRule.verify(postRequestedFor(urlEqualTo(TOKEN_PATH))
                                     .withRequestBody(containing(OAuthConstants.CLIENT_ID_PARAMETER + "=" + URLEncoder.encode(clientId.getValue(), StandardCharsets.UTF_8.name())))
@@ -114,6 +115,16 @@ public class AuthorizationCodeMinimalConfigTestCase extends AbstractAuthorizatio
         OAuthStateFunctionAsserter.createFrom(muleContext.getExpressionLanguage(), "minimalConfig")
                 .assertAccessTokenIs(ACCESS_TOKEN)
                 .assertRefreshTokenIs(REFRESH_TOKEN);
+    }
+
+    protected void configureWireMockToExpectTokenPathRequestAndReturnJsonResponse()
+    {
+        wireMockRule.stubFor(post(urlEqualTo(TOKEN_PATH))
+                                     .willReturn(aResponse()
+                                                         .withBody("{" +
+                                                                   "\"" + OAuthConstants.ACCESS_TOKEN_PARAMETER + "\":\"" + ACCESS_TOKEN + "\"," +
+                                                                   "\"" + OAuthConstants.EXPIRES_IN_PARAMETER + "\":" + EXPIRES_IN + "," +
+                                                                   "\"" + OAuthConstants.REFRESH_TOKEN_PARAMETER + "\":\"" + REFRESH_TOKEN + "\"}")));
     }
 
 }
