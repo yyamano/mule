@@ -12,14 +12,18 @@ import static org.junit.Assert.assertThat;
 
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
+import org.mule.util.lock.LockFactory;
 
 import org.junit.Test;
+import org.mockito.Mockito;
 
 @SmallTest
 public class OAuthStateRegistryTestCase extends AbstractMuleTestCase
 {
 
     public static final String TEST_CONFIG_NAME = "testConfigName";
+    private LockFactory mockLockFactory = Mockito.mock(LockFactory.class);
+
 
     @Test
     public void nonRegisteredConfigReturnsNull()
@@ -31,7 +35,7 @@ public class OAuthStateRegistryTestCase extends AbstractMuleTestCase
     public void registerConfig()
     {
         final OAuthStateRegistry oAuthStateRegistry = new OAuthStateRegistry();
-        final ConfigOAuthState registeredConfigState = new ConfigOAuthState();
+        final ConfigOAuthState registeredConfigState = new ConfigOAuthState(mockLockFactory, TEST_CONFIG_NAME);
         oAuthStateRegistry.registerOAuthState(TEST_CONFIG_NAME, registeredConfigState);
         assertThat(oAuthStateRegistry.getStateForConfig(TEST_CONFIG_NAME), is(registeredConfigState));
     }
@@ -40,7 +44,7 @@ public class OAuthStateRegistryTestCase extends AbstractMuleTestCase
     public void unregisterConfig()
     {
         final OAuthStateRegistry oAuthStateRegistry = new OAuthStateRegistry();
-        final ConfigOAuthState registeredConfigState = new ConfigOAuthState();
+        final ConfigOAuthState registeredConfigState = new ConfigOAuthState(mockLockFactory, TEST_CONFIG_NAME);
         oAuthStateRegistry.registerOAuthState(TEST_CONFIG_NAME, registeredConfigState);
         oAuthStateRegistry.unregisterOAuthState(TEST_CONFIG_NAME);
         assertThat(oAuthStateRegistry.getStateForConfig(TEST_CONFIG_NAME), nullValue());

@@ -25,6 +25,10 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Handles the call to the localAuthorizationUrl and redirects the user to the oauth authentication
+ * server authorization url so the user can grant access to the resources to the mule application.
+ */
 public class AuthorizationRequestHandler implements MuleContextAware
 {
 
@@ -43,22 +47,22 @@ public class AuthorizationRequestHandler implements MuleContextAware
     private AttributeEvaluator oauthStateIdEvaluator;
     private AttributeEvaluator stateEvaluator;
 
-    public void setScopes(String scopes)
+    public void setScopes(final String scopes)
     {
         this.scopes = scopes;
     }
 
-    public void setState(String state)
+    public void setState(final String state)
     {
         this.state = state;
     }
 
-    public void setLocalAuthorizationUrl(String localAuthorizationUrl)
+    public void setLocalAuthorizationUrl(final String localAuthorizationUrl)
     {
         this.localAuthorizationUrl = localAuthorizationUrl;
     }
 
-    public void setAuthorizationUrl(String authorizationUrl)
+    public void setAuthorizationUrl(final String authorizationUrl)
     {
         this.authorizationUrl = authorizationUrl;
     }
@@ -68,7 +72,7 @@ public class AuthorizationRequestHandler implements MuleContextAware
         return customParameters;
     }
 
-    public void setCustomParameters(Map<String, String> customParameters)
+    public void setCustomParameters(final Map<String, String> customParameters)
     {
         this.customParameters = customParameters;
     }
@@ -124,12 +128,12 @@ public class AuthorizationRequestHandler implements MuleContextAware
     }
 
     @Override
-    public void setMuleContext(MuleContext muleContext)
+    public void setMuleContext(final MuleContext muleContext)
     {
         this.muleContext = muleContext;
     }
 
-    public void setOauthConfig(AuthorizationCodeConfig oauthConfig)
+    public void setOauthConfig(final AuthorizationCodeConfig oauthConfig)
     {
         this.oauthConfig = oauthConfig;
     }

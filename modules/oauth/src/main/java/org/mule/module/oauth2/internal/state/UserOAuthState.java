@@ -8,6 +8,7 @@ package org.mule.module.oauth2.internal.state;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
 
 /**
  * OAuth state for a particular user.
@@ -16,12 +17,20 @@ public class UserOAuthState
 {
 
     public static final String DEFAULT_USER_ID = "default";
+    private final Lock refreshUserOAuthStateLock;
+    private final String userId;
 
     private String accessToken;
     private String refreshToken;
     private String state;
     private String expiresIn;
     private Map<String, Object> tokenResponseParameters = new HashMap<String, Object>();
+
+    public UserOAuthState(final Lock refreshUserOAuthStateLock, final String userId)
+    {
+        this.refreshUserOAuthStateLock = refreshUserOAuthStateLock;
+        this.userId = userId;
+    }
 
     /**
      * @return access token of the oauth state retrieved by the token request
@@ -47,27 +56,30 @@ public class UserOAuthState
         return state;
     }
 
-    public void setAccessToken(String accessToken)
+    public void setAccessToken(final String accessToken)
     {
         this.accessToken = accessToken;
     }
 
-    public void setRefreshToken(String refreshToken)
+    public void setRefreshToken(final String refreshToken)
     {
         this.refreshToken = refreshToken;
     }
 
-    public void setExpiresIn(String expiresIn)
+    public void setExpiresIn(final String expiresIn)
     {
         this.expiresIn = expiresIn;
     }
 
+    /**
+     * @return expires in value retrieved by the token request.
+     */
     public String getExpiresIn()
     {
         return expiresIn;
     }
 
-    public void setState(String state)
+    public void setState(final String state)
     {
         this.state = state;
     }
@@ -80,8 +92,24 @@ public class UserOAuthState
         return tokenResponseParameters;
     }
 
-    public void setTokenResponseParameters(Map<String, Object> tokenResponseParameters)
+    public void setTokenResponseParameters(final Map<String, Object> tokenResponseParameters)
     {
         this.tokenResponseParameters = tokenResponseParameters;
+    }
+
+    /**
+     * @return a lock that can be used to avoid concurrency problems trying to update oauth state.
+     */
+    public Lock getRefreshUserOAuthStateLock()
+    {
+        return refreshUserOAuthStateLock;
+    }
+
+    /**
+     * @return id for the oauth state.
+     */
+    public String getUserId()
+    {
+        return userId;
     }
 }

@@ -32,7 +32,7 @@ public class StoreAuthenticationCodeStateMessageProcessorTestCase extends Abstra
     public ExpectedException expectedException = ExpectedException.none();
     private MuleContext mockMuleContext = Mockito.mock(MuleContext.class, Answers.RETURNS_DEEP_STUBS.get());
     private AuthorizationCodeGrantType mockOauthConfig = Mockito.mock(AuthorizationCodeGrantType.class, Answers.RETURNS_DEEP_STUBS.get());
-    private MuleEvent mockMuleEvent = Mockito.mock(MuleEvent.class, Answers.RETURNS_DEEP_STUBS.get());;
+    private MuleEvent mockMuleEvent = Mockito.mock(MuleEvent.class, Answers.RETURNS_DEEP_STUBS.get());
 
     @Test
     public void failIfNoAccessTokenIsSet() throws InitialisationException

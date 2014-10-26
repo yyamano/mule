@@ -15,28 +15,28 @@ import java.util.List;
 public class TokenResponseConfiguration
 {
 
-    private String accessToken = OAuthUtils.ACCESS_TOKEN_EXPRESSION;
-    private String refreshToken = OAuthUtils.REFRESH_TOKEN_EXPRESSION;
-    private String expiresIn = OAuthUtils.EXPIRATION_TIME_EXPRESSION;
+    private String accessToken = OAuthConstants.ACCESS_TOKEN_EXPRESSION;
+    private String refreshToken = OAuthConstants.REFRESH_TOKEN_EXPRESSION;
+    private String expiresIn = OAuthConstants.EXPIRATION_TIME_EXPRESSION;
 
     private List<ParameterExtractor> parameterExtractors = Collections.emptyList();
 
-    public void setParameterExtractors(List<ParameterExtractor> parameterExtractors)
+    public void setParameterExtractors(final List<ParameterExtractor> parameterExtractors)
     {
         this.parameterExtractors = parameterExtractors;
     }
 
-    public void setAccessToken(String accessToken)
+    public void setAccessToken(final String accessToken)
     {
         this.accessToken = accessToken;
     }
 
-    public void setRefreshToken(String refreshToken)
+    public void setRefreshToken(final String refreshToken)
     {
         this.refreshToken = refreshToken;
     }
 
-    public void setExpiresIn(String expiresIn)
+    public void setExpiresIn(final String expiresIn)
     {
         this.expiresIn = expiresIn;
     }

@@ -15,12 +15,12 @@ public class ParameterExtractor
     private String paramName;
     private String value;
 
-    public void setParamName(String paramName)
+    public void setParamName(final String paramName)
     {
         this.paramName = paramName;
     }
 
-    public void setValue(String value)
+    public void setValue(final String value)
     {
         this.value = value;
     }

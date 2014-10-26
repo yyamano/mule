@@ -44,7 +44,7 @@ public class OAuthStateRegistry
      * @param oauthConfigName name of the oauth state config to retrieve
      * @return null if there's no state register for that config, otherwise the oauth config state.
      */
-    public ConfigOAuthState getStateForConfig(String oauthConfigName)
+    public ConfigOAuthState getStateForConfig(final String oauthConfigName)
     {
         return oauthStatePerConfig.get(oauthConfigName);
     }

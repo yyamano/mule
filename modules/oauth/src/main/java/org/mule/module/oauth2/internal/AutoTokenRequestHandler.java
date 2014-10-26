@@ -36,12 +36,12 @@ public class AutoTokenRequestHandler extends AbstractTokenRequestHandler
     private TokenResponseConfiguration tokenResponseConfiguration = new TokenResponseConfiguration();
     private HttpRequester httpRequester;
 
-    public void setTokenUrl(String tokenUrl)
+    public void setTokenUrl(final String tokenUrl)
     {
         this.tokenUrl = tokenUrl;
     }
 
-    public void setTokenResponseConfiguration(TokenResponseConfiguration tokenResponseConfiguration)
+    public void setTokenResponseConfiguration(final TokenResponseConfiguration tokenResponseConfiguration)
     {
         this.tokenResponseConfiguration = tokenResponseConfiguration;
     }
@@ -82,7 +82,7 @@ public class AutoTokenRequestHandler extends AbstractTokenRequestHandler
         };
     }
 
-    private void setMapPayloadWithTokenRequestParameters(MuleEvent event, String authorizationCode)
+    private void setMapPayloadWithTokenRequestParameters(final MuleEvent event, final String authorizationCode)
     {
         final HashMap<String, String> formData = new HashMap<String, String>();
         formData.put(OAuthConstants.CODE_PARAMETER, authorizationCode);
@@ -93,7 +93,7 @@ public class AutoTokenRequestHandler extends AbstractTokenRequestHandler
         event.getMessage().setPayload(formData);
     }
 
-    private void setMapPayloadWithRefreshTokenRequestParameters(MuleEvent event, String refreshToken)
+    private void setMapPayloadWithRefreshTokenRequestParameters(final MuleEvent event, final String refreshToken)
     {
         final HashMap<String, String> formData = new HashMap<String, String>();
         formData.put(OAuthConstants.REFRESH_TOKEN_PARAMETER, refreshToken);
@@ -104,7 +104,7 @@ public class AutoTokenRequestHandler extends AbstractTokenRequestHandler
         event.getMessage().setPayload(formData);
     }
 
-    private MuleEvent invokeTokenUrl(MuleEvent event) throws MuleException
+    private MuleEvent invokeTokenUrl(final MuleEvent event) throws MuleException
     {
         return httpRequester.process(event);
     }
@@ -114,14 +114,14 @@ public class AutoTokenRequestHandler extends AbstractTokenRequestHandler
         String decodedState = StateEncoder.decodeOriginalState(originalState);
         String encodedOauthStateId = StateEncoder.decodeOAuthStateId(originalState);
         String oauthStateId = encodedOauthStateId == null ? UserOAuthState.DEFAULT_USER_ID : encodedOauthStateId;
-        updateOAuthUserState(tokenUrlResponse, decodedState, oauthStateId);
+        updateOAuthUserState(tokenUrlResponse, decodedState, getOauthConfig().getOAuthState().getStateForUser(oauthStateId));
     }
 
-    private void updateOAuthUserState(MuleEvent tokenUrlResponse, String state, String oauthStateId) throws RegistrationException
+    private void updateOAuthUserState(final MuleEvent tokenUrlResponse, final String state, final UserOAuthState userOAuthState) throws RegistrationException
     {
         if (logger.isDebugEnabled())
         {
-            logger.debug("Update OAuth State for oauthStateId %s", oauthStateId);
+            logger.debug("Update OAuth State for oauthStateId %s", userOAuthState.getUserId());
         }
         final ExpressionManager expressionManager = getMuleContext().getExpressionManager();
         final String accessToken = expressionManager.parse(tokenResponseConfiguration.getAccessToken(), tokenUrlResponse);
@@ -130,10 +130,9 @@ public class AutoTokenRequestHandler extends AbstractTokenRequestHandler
 
         if (logger.isDebugEnabled())
         {
-            logger.debug("New OAuth State for oauthStateId %s is: accessToken(%s), refreshToken(%s), expiresIn(%s), state(%s)", oauthStateId, accessToken, refreshToken, expiresIn, state);
+            logger.debug("New OAuth State for oauthStateId %s is: accessToken(%s), refreshToken(%s), expiresIn(%s), state(%s)", userOAuthState.getUserId(), accessToken, refreshToken, expiresIn, state);
         }
 
-        final UserOAuthState userOAuthState = getOauthConfig().getOAuthState().getStateForUser(oauthStateId);
         userOAuthState.setAccessToken(accessToken);
         userOAuthState.setRefreshToken(refreshToken);
         userOAuthState.setExpiresIn(expiresIn);
@@ -159,27 +158,22 @@ public class AutoTokenRequestHandler extends AbstractTokenRequestHandler
      * and provide the refresh token to get a new access token.
      *
      * @param currentEvent the event being processed when the refresh token was required.
-     * @param oauthStateId the id of the user for who we need to update the access token.
+     * @param userOAuthState oauth state for who we need to update the access token.
      */
-    public void refreshToken(final MuleEvent currentEvent, String oauthStateId)
+    public void doRefreshToken(final MuleEvent currentEvent, final UserOAuthState userOAuthState)
     {
         try
         {
-            if (logger.isDebugEnabled())
-            {
-                logger.debug("Executing refresh token for user " + oauthStateId);
-            }
-            final UserOAuthState userOAuthState = getOauthConfig().getOAuthState().getStateForUser(oauthStateId);
             final MuleEvent muleEvent = DefaultMuleEvent.copy(currentEvent);
             muleEvent.getMessage().clearProperties(PropertyScope.OUTBOUND);
             final String userRefreshToken = userOAuthState.getRefreshToken();
             if (userRefreshToken == null)
             {
-                throw new DefaultMuleException(CoreMessages.createStaticMessage("The user with user id %s has no refresh token in his OAuth state so we can't execute the refresh token call", oauthStateId));
+                throw new DefaultMuleException(CoreMessages.createStaticMessage("The user with user id %s has no refresh token in his OAuth state so we can't execute the refresh token call", userOAuthState.getUserId()));
             }
             setMapPayloadWithRefreshTokenRequestParameters(muleEvent, userRefreshToken);
             final MuleEvent refreshTokenResponse = invokeTokenUrl(muleEvent);
-            updateOAuthUserState(refreshTokenResponse, null, oauthStateId);
+            updateOAuthUserState(refreshTokenResponse, null, userOAuthState);
         }
         catch (Exception e)
         {

@@ -40,13 +40,13 @@ public class OAuthExpressionLanguageExtension implements ExpressionLanguageExten
     }
 
     @Override
-    public void configureContext(ExpressionLanguageContext context)
+    public void configureContext(final ExpressionLanguageContext context)
     {
         context.declareFunction("oauthState", oauthStateFunction);
     }
 
     @Override
-    public void setMuleContext(MuleContext context)
+    public void setMuleContext(final MuleContext context)
     {
         this.muleContext = context;
     }

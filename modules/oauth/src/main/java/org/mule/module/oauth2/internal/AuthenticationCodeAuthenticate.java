@@ -33,7 +33,7 @@ public class AuthenticationCodeAuthenticate implements HttpAuth, MuleContextAwar
     private AttributeEvaluator oauthStateIdEvaluator;
 
     @Override
-    public void authenticate(MuleEvent muleEvent) throws MuleException
+    public void authenticate(final MuleEvent muleEvent) throws MuleException
     {
         final String oauthStateId = oauthStateIdEvaluator.resolveStringValue(muleEvent);
         if (oauthStateId == null)
@@ -61,7 +61,7 @@ public class AuthenticationCodeAuthenticate implements HttpAuth, MuleContextAwar
     }
 
     @Override
-    public boolean shouldRetry(MuleEvent firstAttemptResponseEvent)
+    public boolean shouldRetry(final MuleEvent firstAttemptResponseEvent)
     {
         final String refreshTokenWhen = config.getRefreshTokenWhen();
         if (!StringUtils.isBlank(refreshTokenWhen))
@@ -89,17 +89,17 @@ public class AuthenticationCodeAuthenticate implements HttpAuth, MuleContextAwar
     }
 
     @Override
-    public void setMuleContext(MuleContext context)
+    public void setMuleContext(final MuleContext context)
     {
         this.muleContext = context;
     }
 
-    public void setConfig(AuthorizationCodeConfig config)
+    public void setConfig(final AuthorizationCodeConfig config)
     {
         this.config = config;
     }
 
-    public void setOauthStateId(String oauthStateId)
+    public void setOauthStateId(final String oauthStateId)
     {
         oauthStateIdEvaluator = new AttributeEvaluator(oauthStateId);
     }

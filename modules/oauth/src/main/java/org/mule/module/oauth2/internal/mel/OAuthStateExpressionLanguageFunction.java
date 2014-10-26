@@ -23,7 +23,7 @@ public class OAuthStateExpressionLanguageFunction implements ExpressionLanguageF
     private org.mule.module.oauth2.internal.state.OAuthStateRegistry oauthStateRegistry;
 
     @Override
-    public Object call(Object[] params, ExpressionLanguageContext context)
+    public Object call(final Object[] params, final ExpressionLanguageContext context)
     {
         int numParams = params.length;
         if (numParams < 1 || numParams > 2)

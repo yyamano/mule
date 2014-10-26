@@ -25,7 +25,7 @@ public class StateEncoder
      * @param oauthStateId  the oauthStateId to encode
      * @return an updated state with the original content plus the oath state id.
      */
-    public static final String encodeOAuthStateIdInState(String originalState, String oauthStateId)
+    public static final String encodeOAuthStateIdInState(final String originalState, final String oauthStateId)
     {
         Preconditions.checkArgument(oauthStateId != null, "oauthStateId parameter cannot be null");
         String newState;
@@ -35,8 +35,7 @@ public class StateEncoder
         }
         else if (oauthStateId != null)
         {
-            final String stateValue = originalState;
-            newState = (stateValue == null ? StringUtils.EMPTY : stateValue) + OAUTH_STATE_ID_PARAM_ASSIGN + oauthStateId;
+            newState = (originalState == null ? StringUtils.EMPTY : originalState) + OAUTH_STATE_ID_PARAM_ASSIGN + oauthStateId;
         }
         else
         {
@@ -75,7 +74,7 @@ public class StateEncoder
      * @param state the encoded state
      * @return the oauth state id, null if there's no oauth state id encoded in it.
      */
-    public static String decodeOAuthStateId(String state)
+    public static String decodeOAuthStateId(final String state)
     {
         String oauthStateId = null;
         if (state != null && state.contains(OAUTH_STATE_ID_PARAM_ASSIGN))

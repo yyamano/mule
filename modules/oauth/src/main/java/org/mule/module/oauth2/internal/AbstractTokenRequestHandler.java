@@ -15,6 +15,7 @@ import org.mule.api.processor.MessageProcessor;
 import org.mule.construct.Flow;
 import org.mule.module.http.listener.HttpListener;
 import org.mule.module.http.listener.HttpListenerBuilder;
+import org.mule.module.oauth2.internal.state.UserOAuthState;
 
 import java.net.MalformedURLException;
 
@@ -59,7 +60,48 @@ public abstract class AbstractTokenRequestHandler implements MuleContextAware
      * @param currentEvent the event at the moment of the failure.
      * @param oauthStateId the oauth state id to update
      */
-    public abstract void refreshToken(final MuleEvent currentEvent, String oauthStateId) throws MuleException;
+    public void refreshToken(final MuleEvent currentEvent, String oauthStateId) throws MuleException
+    {
+        if (logger.isDebugEnabled())
+        {
+            logger.debug("Executing refresh token for user " + oauthStateId);
+        }
+        final UserOAuthState userOAuthState = getOauthConfig().getOAuthState().getStateForUser(oauthStateId);
+        final boolean lockWasAcquired = userOAuthState.getRefreshUserOAuthStateLock().tryLock();
+        try
+        {
+            if (lockWasAcquired)
+            {
+                doRefreshToken(currentEvent, userOAuthState);
+            }
+        }
+        finally
+        {
+            if (lockWasAcquired)
+            {
+                userOAuthState.getRefreshUserOAuthStateLock().unlock();
+            }
+        }
+        if (!lockWasAcquired)
+        {
+            //if we couldn't acquire the lock then we wait until the other thread updates the token.
+            waitUntilLockGetsReleased(userOAuthState);
+        }
+    }
+
+    /**
+     * ThreadSafe refresh token operation to be implemented by subclasses
+     *
+     * @param currentEvent the event at the moment of the failure.
+     * @param userOAuthState user oauth state object.
+     */
+    protected abstract void doRefreshToken(final MuleEvent currentEvent, final UserOAuthState userOAuthState);
+
+    private void waitUntilLockGetsReleased(UserOAuthState userOAuthState)
+    {
+        userOAuthState.getRefreshUserOAuthStateLock().lock();
+        userOAuthState.getRefreshUserOAuthStateLock().unlock();
+    }
 
     /**
      * @param oauthConfig oauth config for this token request handler.

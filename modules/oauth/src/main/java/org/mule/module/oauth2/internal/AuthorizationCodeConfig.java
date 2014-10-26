@@ -39,46 +39,46 @@ public class AuthorizationCodeConfig implements Initialisable, Disposable, Start
     private HttpListenerConfig listenerConfig;
     private AuthorizationRequestHandler authorizationRequestHandler;
     private AbstractTokenRequestHandler tokenRequestHandler;
-    private ConfigOAuthState configOAuthState = new ConfigOAuthState();
+    private ConfigOAuthState configOAuthState;
     private MuleContext muleContext;
     private OAuthStateRegistry oauthStateRegistry;
 
-    public void setName(String name)
+    public void setName(final String name)
     {
         this.name = name;
     }
 
-    public void setClientId(String clientId)
+    public void setClientId(final String clientId)
     {
         this.clientId = clientId;
     }
 
-    public void setClientSecret(String clientSecret)
+    public void setClientSecret(final String clientSecret)
     {
         this.clientSecret = clientSecret;
     }
 
-    public void setRedirectionUrl(String redirectionUrl)
+    public void setRedirectionUrl(final String redirectionUrl)
     {
         this.redirectionUrl = redirectionUrl;
     }
 
-    public void setAuthorizationRequestHandler(AuthorizationRequestHandler authorizationRequestHandler)
+    public void setAuthorizationRequestHandler(final AuthorizationRequestHandler authorizationRequestHandler)
     {
         this.authorizationRequestHandler = authorizationRequestHandler;
     }
 
-    public void setTokenRequestHandler(AbstractTokenRequestHandler tokenRequestHandler)
+    public void setTokenRequestHandler(final AbstractTokenRequestHandler tokenRequestHandler)
     {
         this.tokenRequestHandler = tokenRequestHandler;
     }
 
-    public void setRequestConfig(HttpRequestConfig requestConfig)
+    public void setRequestConfig(final HttpRequestConfig requestConfig)
     {
         this.requestConfig = requestConfig;
     }
 
-    public void setListenerConfig(HttpListenerConfig listenerConfig)
+    public void setListenerConfig(final HttpListenerConfig listenerConfig)
     {
         this.listenerConfig = listenerConfig;
     }
@@ -165,6 +165,7 @@ public class AuthorizationCodeConfig implements Initialisable, Disposable, Start
     {
         try
         {
+            configOAuthState = new ConfigOAuthState(muleContext.getLockFactory(), getConfigName());
             oauthStateRegistry = this.muleContext.getRegistry().lookupObject(OAuthStateRegistry.class);
             oauthStateRegistry.registerOAuthState(getConfigName(), configOAuthState);
         }
@@ -175,7 +176,7 @@ public class AuthorizationCodeConfig implements Initialisable, Disposable, Start
     }
 
     @Override
-    public void setMuleContext(MuleContext context)
+    public void setMuleContext(final MuleContext context)
     {
         this.muleContext = context;
     }

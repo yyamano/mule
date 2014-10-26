@@ -6,6 +6,8 @@
  */
 package org.mule.module.oauth2.internal.state;
 
+import org.mule.util.lock.LockFactory;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,7 +17,15 @@ import java.util.Map;
 public class ConfigOAuthState
 {
 
+    private final LockFactory updateOAuthStateLockFactory;
+    private final String configName;
     private Map<String, UserOAuthState> oauthStatePerUser = new HashMap<String, UserOAuthState>();
+
+    public ConfigOAuthState(final LockFactory lockFactory, final String configName)
+    {
+        updateOAuthStateLockFactory = lockFactory;
+        this.configName = configName;
+    }
 
     /**
      * Retrieves the oauth state for a particular user. If there's no state for that user a new state is retrieve so never returns null.
@@ -23,11 +33,11 @@ public class ConfigOAuthState
      * @param userId id of the user.
      * @return oauth state
      */
-    public UserOAuthState getStateForUser(String userId)
+    public UserOAuthState getStateForUser(final String userId)
     {
         if (!oauthStatePerUser.containsKey(userId))
         {
-            oauthStatePerUser.put(userId, new UserOAuthState());
+            oauthStatePerUser.put(userId, new UserOAuthState(updateOAuthStateLockFactory.createLock(configName + "-" + userId), userId));
         }
         return oauthStatePerUser.get(userId);
     }

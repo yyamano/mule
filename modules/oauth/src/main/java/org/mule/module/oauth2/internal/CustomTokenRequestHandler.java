@@ -24,17 +24,17 @@ public class CustomTokenRequestHandler extends AbstractTokenRequestHandler
     private Flow refreshTokenFlow;
 
     @Override
-    public void refreshToken(MuleEvent currentEvent, String oauthStateId) throws MuleException
+    public void refreshToken(final MuleEvent currentEvent, final String oauthStateId) throws MuleException
     {
         this.refreshTokenFlow.process(currentEvent);
     }
 
-    public void setTokenUrlCallFlow(Flow tokenUrlCallFlow)
+    public void setTokenUrlCallFlow(final Flow tokenUrlCallFlow)
     {
         this.tokenUrlCallFlow = tokenUrlCallFlow;
     }
 
-    public void setRefreshTokenFlow(Flow refreshTokenFlow)
+    public void setRefreshTokenFlow(final Flow refreshTokenFlow)
     {
         this.refreshTokenFlow = refreshTokenFlow;
     }

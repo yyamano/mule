@@ -10,6 +10,7 @@ import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
 import org.mule.api.processor.MessageProcessor;
+import org.mule.module.oauth2.internal.state.UserOAuthState;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
@@ -41,8 +42,9 @@ public class AbstractTokenRequestHandlerTestCase extends AbstractMuleTestCase
         return new AbstractTokenRequestHandler()
         {
             @Override
-            public void refreshToken(MuleEvent currentEvent, String oauthStateId) throws MuleException
+            protected void doRefreshToken(MuleEvent currentEvent, UserOAuthState userOAuthState)
             {
+
             }
 
             @Override

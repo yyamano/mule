@@ -31,7 +31,7 @@ public class StoreAuthenticationCodeStateMessageProcessor implements MessageProc
     private AttributeEvaluator refreshTokenEvaluator;
     private AttributeEvaluator expiresInEvaluator;
 
-    public void setConfig(AuthorizationCodeGrantType config)
+    public void setConfig(final AuthorizationCodeGrantType config)
     {
         this.config = config;
     }
@@ -39,7 +39,7 @@ public class StoreAuthenticationCodeStateMessageProcessor implements MessageProc
     /**
      * @param oauthStateId static value or expression that resolved an oauth state id
      */
-    public void setOauthStateId(String oauthStateId)
+    public void setOauthStateId(final String oauthStateId)
     {
         this.oauthStateIdEvaluator = new AttributeEvaluator(oauthStateId);
     }
@@ -47,7 +47,7 @@ public class StoreAuthenticationCodeStateMessageProcessor implements MessageProc
     /**
      * @param accessToken a valid access token to use for authentication
      */
-    public void setAccessToken(String accessToken)
+    public void setAccessToken(final String accessToken)
     {
         this.accessTokenEvaluator = new AttributeEvaluator(accessToken);
     }
@@ -55,7 +55,7 @@ public class StoreAuthenticationCodeStateMessageProcessor implements MessageProc
     /**
      * @param refreshToken a valid refresh token to use for retrieving a new access token
      */
-    public void setRefreshToken(String refreshToken)
+    public void setRefreshToken(final String refreshToken)
     {
         this.refreshTokenEvaluator = new AttributeEvaluator(refreshToken);
     }
@@ -63,13 +63,13 @@ public class StoreAuthenticationCodeStateMessageProcessor implements MessageProc
     /**
      * @param expiresIn time expiration for the access token
      */
-    public void setExpiresIn(String expiresIn)
+    public void setExpiresIn(final String expiresIn)
     {
         this.expiresInEvaluator = new AttributeEvaluator(expiresIn);
     }
 
     @Override
-    public MuleEvent process(MuleEvent event) throws MuleException
+    public MuleEvent process(final MuleEvent event) throws MuleException
     {
         final String oauthStateId = oauthStateIdEvaluator.resolveStringValue(event);
         if (oauthStateId == null)
@@ -115,7 +115,7 @@ public class StoreAuthenticationCodeStateMessageProcessor implements MessageProc
         initialiseAttributeEvaluator(expiresInEvaluator);
     }
 
-    private void initialiseAttributeEvaluator(AttributeEvaluator attributeEvaluator)
+    private void initialiseAttributeEvaluator(final AttributeEvaluator attributeEvaluator)
     {
         if (attributeEvaluator != null)
         {
@@ -124,7 +124,7 @@ public class StoreAuthenticationCodeStateMessageProcessor implements MessageProc
     }
 
     @Override
-    public void setMuleContext(MuleContext context)
+    public void setMuleContext(final MuleContext context)
     {
         this.muleContext = context;
     }
