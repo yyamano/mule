@@ -10,7 +10,7 @@
        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
        http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
 
-    <oauth2:authentication-code name="customConfig"
+    <oauth2:authorization-code-config name="customConfig"
                                 clientId="${client.id}"
                                 clientSecret="${client.secret}"
                                 redirectionUrl="${redirect.url}">
@@ -18,7 +18,7 @@
                 refreshTokenWhen="#[http.statusCode == 403]"
                 tokenUrlCallFlow="oauthTokenAcquicitionFlow"
                 refreshTokenFlow="oauthRefreshTokenFlow"/>
-    </oauth2:authentication-code>
+    </oauth2:authorization-code-config>
 
     <flow name="oauthRefreshTokenFlow">
         <logger/>
@@ -32,7 +32,7 @@
         </expression-component>
         <http:request host="${token.host}" port="${token.port}" path="${token.path}" method="POST"/>
         <json:json-to-object-transformer returnClass="java.lang.Object"/>
-        <oauth2:store-authentication-code-state config="customConfig"
+        <oauth2:store-authorization-code-state config="customConfig"
                                                 accessToken="#[payload['access_token']]"
                                                 refreshToken="#[payload['refresh_token']]"
                                                 expiresIn="#[payload['expires_in']]"/>

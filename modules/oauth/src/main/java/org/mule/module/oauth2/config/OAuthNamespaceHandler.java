@@ -26,10 +26,10 @@ public class OAuthNamespaceHandler extends MuleNamespaceHandler
 
     public void init()
     {
-        final MuleOrphanDefinitionParser authenticationCodeParser = new MuleOrphanDefinitionParser(AuthorizationCodeConfig.class, true);
-        authenticationCodeParser.addReference("requestConfig");
-        authenticationCodeParser.addReference("listenerConfig");
-        registerMuleBeanDefinitionParser("authentication-code", authenticationCodeParser);
+        final MuleOrphanDefinitionParser authorizationCodeConfigParser = new MuleOrphanDefinitionParser(AuthorizationCodeConfig.class, true);
+        authorizationCodeConfigParser.addReference("requestConfig");
+        authorizationCodeConfigParser.addReference("listenerConfig");
+        registerMuleBeanDefinitionParser("authorization-code-config", authorizationCodeConfigParser);
         registerMuleBeanDefinitionParser("authorization-request", new ChildDefinitionParser("authorizationRequestHandler", AuthorizationRequestHandler.class));
         registerMuleBeanDefinitionParser("token-request", new ChildDefinitionParser("tokenRequestHandler", AutoTokenRequestHandler.class));
         final ChildDefinitionParser customTokenRequest = new ChildDefinitionParser("tokenRequestHandler", CustomTokenRequestHandler.class);
@@ -41,10 +41,10 @@ public class OAuthNamespaceHandler extends MuleNamespaceHandler
         registerMuleBeanDefinitionParser("custom-parameter-extractor", new ChildDefinitionParser("parameterExtractor", ParameterExtractor.class));
         final ChildDefinitionParser authenticationDefinitionParser = new ChildDefinitionParser("auth", AuthenticationCodeAuthenticate.class);
         authenticationDefinitionParser.addReference("config");
-        registerMuleBeanDefinitionParser("authentication-code-auth", authenticationDefinitionParser);
+        registerMuleBeanDefinitionParser("authorization-code-authentication", authenticationDefinitionParser);
         final MessageProcessorDefinitionParser storeAuthorizationCodeState = new MessageProcessorDefinitionParser(StoreAuthenticationCodeStateMessageProcessor.class);
         storeAuthorizationCodeState.addReference("config");
-        registerMuleBeanDefinitionParser("store-authentication-code-state", storeAuthorizationCodeState);
+        registerMuleBeanDefinitionParser("store-authorization-code-state", storeAuthorizationCodeState);
     }
 
 }

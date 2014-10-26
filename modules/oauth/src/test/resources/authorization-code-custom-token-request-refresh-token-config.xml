@@ -10,14 +10,14 @@
        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
        http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
 
-    <oauth2:authentication-code name="oauthConfig"
+    <oauth2:authorization-code-config name="oauthConfig"
                                 clientId="${client.id}"
                                 clientSecret="${client.secret}"
                                 redirectionUrl="${redirect.url}">
         <oauth2:custom-token-request
                 tokenUrlCallFlow="oauthTokenAcquicitionFlow"
                 refreshTokenFlow="oauthRefreshTokenFlowOAuthConfig"/>
-    </oauth2:authentication-code>
+    </oauth2:authorization-code-config>
 
     <flow name="oauthTokenAcquicitionFlow">
         <logger/>
@@ -31,14 +31,14 @@
         </expression-component>
         <http:request host="${token.host}" port="${token.port}" path="${token.path}" method="POST"/>
         <json:json-to-object-transformer returnClass="java.lang.Object"/>
-        <oauth2:store-authentication-code-state config="oauthConfig"
+        <oauth2:store-authorization-code-state config="oauthConfig"
                                                 accessToken="#[payload['access_token']]"
                                                 refreshToken="#[payload['refresh_token']]"
                                                 expiresIn="#[payload['expires_in']]"/>
     </flow>
 
     <http:request-config name="requestConfig">
-        <oauth2:authentication-code-auth config="oauthConfig"/>
+        <oauth2:authorization-code-authentication config="oauthConfig"/>
     </http:request-config>
 
     <flow name="testFlow">
@@ -46,7 +46,7 @@
                       config-ref="requestConfig"/>
     </flow>
 
-    <oauth2:authentication-code name="multitenantOauthConfig"
+    <oauth2:authorization-code-config name="multitenantOauthConfig"
                                 clientId="${client.id}"
                                 clientSecret="${client.secret}"
                                 redirectionUrl="${redirect.url}"
@@ -55,7 +55,7 @@
                 refreshTokenWhen="#[message.inboundProperties['http.status'] == 500]"
                 tokenUrlCallFlow="oauthTokenAcquicitionFlow"
                 refreshTokenFlow="oauthRefreshTokenFlowMultitenantOAuthConfig"/>
-    </oauth2:authentication-code>
+    </oauth2:authorization-code-config>
 
     <flow name="oauthRefreshTokenFlowMultitenantOAuthConfig">
         <expression-component>
@@ -65,7 +65,7 @@
         </expression-component>
         <http:request host="${token.host}" port="${token.port}" path="${token.path}" method="POST"/>
         <json:json-to-object-transformer returnClass="java.lang.Object"/>
-        <oauth2:store-authentication-code-state config="multitenantOauthConfig"
+        <oauth2:store-authorization-code-state config="multitenantOauthConfig"
                                                 oauthStateId="#[flowVars['userId']]"
                                                 accessToken="#[payload['access_token']]"
                                                 refreshToken="#[payload['refresh_token']]"
@@ -73,7 +73,7 @@
     </flow>
 
     <http:request-config name="multitenantRequestConfig">
-        <oauth2:authentication-code-auth config="multitenantOauthConfig" oauthStateId="#[flowVars['userId']]"/>
+        <oauth2:authorization-code-authentication config="multitenantOauthConfig" oauthStateId="#[flowVars['userId']]"/>
     </http:request-config>
 
     <flow name="testMultitenantFlow">

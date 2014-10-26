@@ -8,7 +8,7 @@
        http://www.mulesoft.org/schema/mule/oauth2 http://www.mulesoft.org/schema/mule/oauth2/current/mule-oauth2.xsd
        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 
-    <oauth2:authentication-code name="oauthConfig"
+    <oauth2:authorization-code-config name="oauthConfig"
                                 clientId="${client.id}"
                                 clientSecret="${client.secret}"
                                 redirectionUrl="${redirect.url}">
@@ -18,10 +18,10 @@
         </oauth2:authorization-request>
         <oauth2:token-request
                 tokenUrl="${token.url}"/>
-    </oauth2:authentication-code>
+    </oauth2:authorization-code-config>
 
     <http:request-config name="requestConfig">
-        <oauth2:authentication-code-auth config="oauthConfig"/>
+        <oauth2:authorization-code-authentication config="oauthConfig"/>
     </http:request-config>
 
     <flow name="testFlow">
@@ -29,7 +29,7 @@
                       config-ref="requestConfig"/>
     </flow>
 
-    <oauth2:authentication-code name="multitenantOauthConfig"
+    <oauth2:authorization-code-config name="multitenantOauthConfig"
                                 clientId="${client.id}"
                                 clientSecret="${client.secret}"
                                 redirectionUrl="${redirect.url}"
@@ -41,10 +41,10 @@
         <oauth2:token-request
                 refreshTokenWhen="#[message.inboundProperties['http.status'] == 500]"
                 tokenUrl="${token.url}"/>
-    </oauth2:authentication-code>
+    </oauth2:authorization-code-config>
 
     <http:request-config name="multitenantRequestConfig">
-        <oauth2:authentication-code-auth config="multitenantOauthConfig" oauthStateId="#[flowVars['userId']]"/>
+        <oauth2:authorization-code-authentication config="multitenantOauthConfig" oauthStateId="#[flowVars['userId']]"/>
     </http:request-config>
 
     <flow name="testMultitenantFlow">

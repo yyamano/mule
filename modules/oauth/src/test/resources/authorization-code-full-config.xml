@@ -6,7 +6,7 @@
        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
        http://www.mulesoft.org/schema/mule/oauth2 http://www.mulesoft.org/schema/mule/oauth2/current/mule-oauth2.xsd">
 
-    <oauth2:authentication-code name="fullConfig"
+    <oauth2:authorization-code-config name="fullConfig"
                                 clientId="${client.id}"
                                 clientSecret="${client.secret}"
                                 redirectionUrl="${redirect.url}">
@@ -31,6 +31,6 @@
                                                    value="#[payload['${custom.param.extractor2}']]"/>
             </oauth2:token-response>
         </oauth2:token-request>
-    </oauth2:authentication-code>
+    </oauth2:authorization-code-config>
 
 </mule>
