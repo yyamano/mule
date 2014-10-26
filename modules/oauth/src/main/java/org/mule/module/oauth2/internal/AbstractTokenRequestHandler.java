@@ -95,7 +95,7 @@ public abstract class AbstractTokenRequestHandler implements MuleContextAware
      * @param currentEvent the event at the moment of the failure.
      * @param userOAuthState user oauth state object.
      */
-    protected abstract void doRefreshToken(final MuleEvent currentEvent, final UserOAuthState userOAuthState);
+    protected abstract void doRefreshToken(final MuleEvent currentEvent, final UserOAuthState userOAuthState) throws MuleException;
 
     private void waitUntilLockGetsReleased(UserOAuthState userOAuthState)
     {

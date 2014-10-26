@@ -12,6 +12,7 @@ import org.mule.api.MuleException;
 import org.mule.api.processor.MessageProcessor;
 import org.mule.config.i18n.CoreMessages;
 import org.mule.construct.Flow;
+import org.mule.module.oauth2.internal.state.UserOAuthState;
 
 /**
  * Token request handler that allows to customize the token url call and refresh token call by using
@@ -23,8 +24,9 @@ public class CustomTokenRequestHandler extends AbstractTokenRequestHandler
     private Flow tokenUrlCallFlow;
     private Flow refreshTokenFlow;
 
+
     @Override
-    public void refreshToken(final MuleEvent currentEvent, final String oauthStateId) throws MuleException
+    protected void doRefreshToken(MuleEvent currentEvent, UserOAuthState userOAuthState) throws MuleException
     {
         this.refreshTokenFlow.process(currentEvent);
     }

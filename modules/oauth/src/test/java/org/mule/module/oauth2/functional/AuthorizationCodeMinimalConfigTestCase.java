@@ -58,12 +58,6 @@ public class AuthorizationCodeMinimalConfigTestCase extends AbstractAuthorizatio
         return "http";
     }
 
-    @Override
-    protected int getTimeoutSystemProperty()
-    {
-        return 999999;
-    }
-
     @Test
     public void localAuthorizationUrlRedirectsToOAuthAuthorizationUrl() throws Exception
     {
