@@ -133,6 +133,11 @@ public class DefaultMuleCoreExtensionManager implements MuleCoreExtensionManager
                 ((PluginClassLoaderManagerAware) extension).setPluginClassLoaderManager(pluginClassLoaderManager);
             }
 
+            if (extension instanceof CoreExtensionAware)
+            {
+                ((CoreExtensionAware) extension).setCoreExtensions(orderedCoreExtensions);
+            }
+
             extension.initialise();
         }
     }

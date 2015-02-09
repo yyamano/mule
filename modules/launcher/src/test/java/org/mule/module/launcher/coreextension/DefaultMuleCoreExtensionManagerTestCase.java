@@ -10,6 +10,7 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 import org.mule.MuleCoreExtension;
 import org.mule.module.launcher.DeploymentListener;
 import org.mule.module.launcher.DeploymentService;
@@ -90,6 +91,57 @@ public class DefaultMuleCoreExtensionManagerTestCase extends AbstractMuleTestCas
         coreExtensionManager.initialise();
 
         verify(extension).setPluginClassLoaderManager(pluginClassLoaderManager);
+    }
+
+    @Test
+    public void injectsCoreExtensionAwareCoreExtension() throws Exception
+    {
+        List<MuleCoreExtension> extensions = new LinkedList<MuleCoreExtension>();
+        TestCoreExtensionAwareExtension coreExtensionAwareExtension = mock(TestCoreExtensionAwareExtension.class);
+        extensions.add(coreExtensionAwareExtension);
+        TestDeploymentServiceAwareExtension deploymentServiceAwareExtension = mock(TestDeploymentServiceAwareExtension.class);
+        extensions.add(deploymentServiceAwareExtension);
+        TestPluginClassLoaderManagerAwareExtension pluginClassLoaderManagerAwareExtension = mock(TestPluginClassLoaderManagerAwareExtension.class);
+        extensions.add(pluginClassLoaderManagerAwareExtension);
+        TestDeploymentListenerExtension deploymentListenerExtension = mock(TestDeploymentListenerExtension.class);
+        extensions.add(deploymentListenerExtension);
+
+        when(coreExtensionDiscoverer.discover()).thenReturn(extensions);
+        when(coreExtensionDependencyResolver.resolveDependencies(extensions)).thenReturn(extensions);
+
+        DeploymentService deploymentService = mock(DeploymentService.class);
+        coreExtensionManager.setDeploymentService(deploymentService);
+
+        coreExtensionManager.initialise();
+
+        verify(coreExtensionAwareExtension).setCoreExtensions(extensions);
+    }
+
+    @Test
+    public void injectsMultipleCoreExtensionAwareCoreExtensions() throws Exception
+    {
+        List<MuleCoreExtension> extensions = new LinkedList<MuleCoreExtension>();
+        TestCoreExtensionAwareExtension coreExtensionAwareExtension1 = mock(TestCoreExtensionAwareExtension.class);
+        extensions.add(coreExtensionAwareExtension1);
+        TestCoreExtensionAwareExtension coreExtensionAwareExtension2 = mock(TestCoreExtensionAwareExtension.class);
+        extensions.add(coreExtensionAwareExtension2);
+        TestDeploymentServiceAwareExtension deploymentServiceAwareExtension = mock(TestDeploymentServiceAwareExtension.class);
+        extensions.add(deploymentServiceAwareExtension);
+        TestPluginClassLoaderManagerAwareExtension pluginClassLoaderManagerAwareExtension = mock(TestPluginClassLoaderManagerAwareExtension.class);
+        extensions.add(pluginClassLoaderManagerAwareExtension);
+        TestDeploymentListenerExtension deploymentListenerExtension = mock(TestDeploymentListenerExtension.class);
+        extensions.add(deploymentListenerExtension);
+
+        when(coreExtensionDiscoverer.discover()).thenReturn(extensions);
+        when(coreExtensionDependencyResolver.resolveDependencies(extensions)).thenReturn(extensions);
+
+        DeploymentService deploymentService = mock(DeploymentService.class);
+        coreExtensionManager.setDeploymentService(deploymentService);
+
+        coreExtensionManager.initialise();
+
+        verify(coreExtensionAwareExtension1).setCoreExtensions(extensions);
+        verify(coreExtensionAwareExtension2).setCoreExtensions(extensions);
     }
 
     @Test
@@ -207,6 +259,11 @@ public class DefaultMuleCoreExtensionManagerTestCase extends AbstractMuleTestCas
     }
 
     public static interface TestPluginClassLoaderManagerAwareExtension extends MuleCoreExtension, PluginClassLoaderManagerAware
+    {
+
+    }
+
+    public static interface TestCoreExtensionAwareExtension extends MuleCoreExtension, CoreExtensionAware
     {
 
     }
