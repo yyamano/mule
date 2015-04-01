@@ -14,7 +14,7 @@
     </description>
 
     <properties>
-        <licensePath>../../../LICENSE_HEADER.txt</licensePath>
+        <licensePath>../../LICENSE_HEADER.txt</licensePath>
     </properties>
 
     <dependencies>
