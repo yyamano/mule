@@ -50,7 +50,7 @@
     </flow>
 
     <flow name="time">
-        <validation:is-time time="#[payload]" pattern="#[pattern]" locale="#[java.util.Locale.getDefault().getLanguage()]" config-ref="validation"/>
+        <validation:is-time time="#[payload]" pattern="#[pattern]" locale="#[locale]" config-ref="validation"/>
     </flow>
 
     <flow name="date">
@@ -90,6 +90,10 @@
         <validation:is-long value="#[payload]" minValue="#[minValue]" maxValue="#[maxValue]" config-ref="validation"/>
     </flow>
 
+    <flow name="full-long">
+        <validation:is-long value="#[payload]" pattern="#[pattern]" message="#[exceptionMessage]" exceptionClass="#[exceptionClass]" locale="#[locale]" minValue="#[minValue]" maxValue="#[maxValue]" config-ref="validation"/>
+    </flow>
+
     <flow name="integer">
         <validation:is-integer value="#[payload]" minValue="#[minValue]" maxValue="#[maxValue]"
                                config-ref="validation"/>
@@ -118,6 +122,14 @@
 
     <flow name="customValidationByClass">
         <validation:custom-validator class="org.mule.extension.validation.BasicValidationTestCase$TestCustomValidator" config-ref="validation" />
+    </flow>
+
+    <flow name="customValidationSuccess">
+        <validation:custom-validator class="org.mule.extension.validation.BasicValidationTestCase$SuccessfulCustomValidator" config-ref="validation" />
+    </flow>
+
+    <flow name="customValidationFailure">
+        <validation:custom-validator class="org.mule.extension.validation.BasicValidationTestCase$FailingCustomValidator" config-ref="validation" />
     </flow>
 
     <flow name="customValidationByRef">

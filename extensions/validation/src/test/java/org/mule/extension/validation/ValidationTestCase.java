@@ -32,7 +32,7 @@ abstract class ValidationTestCase extends ExtensionsFunctionalTestCase
     static final String VALID_CREDIT_CARD_NUMBER = "5555555555554444";
     static final String INVALID_CREDIT_CARD_NUMBER = "5555444433332222";
 
-    static final RuntimeException CUSTOM_VALIDATOR_EXCEPTION = new RuntimeException();
+    static final RuntimeException CUSTOM_VALIDATOR_EXCEPTION = new ArrayIndexOutOfBoundsException();
 
     protected ValidationMessages messages;
 

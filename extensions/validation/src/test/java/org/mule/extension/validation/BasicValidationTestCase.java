@@ -7,6 +7,7 @@
 package org.mule.extension.validation;
 
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
@@ -16,6 +17,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mule.extension.validation.internal.ValidationExtension.DEFAULT_LOCALE;
+
+import org.mule.api.MessagingException;
 import org.mule.api.MuleEvent;
 import org.mule.config.i18n.Message;
 import org.mule.extension.validation.api.MultipleValidationException;
@@ -23,21 +26,32 @@ import org.mule.extension.validation.api.MultipleValidationResult;
 import org.mule.extension.validation.api.ValidationException;
 import org.mule.extension.validation.api.ValidationResult;
 import org.mule.extension.validation.api.Validator;
+import org.mule.extension.validation.internal.ImmutableValidationResult;
 import org.mule.extension.validation.internal.validator.CreditCardType;
 import org.mule.mvel2.compiler.BlankLiteral;
+import org.mule.transport.NullPayload;
 import org.mule.util.ExceptionUtils;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matchers;
 import org.junit.Test;
 
 public class BasicValidationTestCase extends ValidationTestCase
 {
+
+    private String DOMAIN_NAME_255_CHARS = "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345";
+    private String DOMAIN_NAME_256_CHARS = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456";
 
     @Override
     protected String getConfigFile()
@@ -49,13 +63,31 @@ public class BasicValidationTestCase extends ValidationTestCase
     public void domain() throws Exception
     {
         assertValid("domain", getTestEvent("mulesoft.com"));
+        assertValid("domain", getTestEvent("mulesoft.COM"));
+        //assertValid("domain", getTestEvent("mulesoft.com."));
         assertInvalid("domain", getTestEvent("xxx.yy"), messages.invalidDomain("xxx.yy"));
+        assertInvalid("domain", getTestEvent(""), messages.invalidDomain(""));
+        assertInvalid("domain", getTestEvent(null), messages.invalidDomain("null"));
+        assertValid("domain", getTestEvent("1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa"));
+        //assertValid("domain", getTestEvent("iesmartinezmonta�es.es"));
+        //assertValid("domain", getTestEvent("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~"));
+        //assertValid("domain", getTestEvent(DOMAIN_NAME_255_CHARS));
+        assertInvalid("domain", getTestEvent(DOMAIN_NAME_256_CHARS), messages.invalidDomain(DOMAIN_NAME_256_CHARS));
+        assertInvalid("domain", getTestEvent(1), messages.invalidDomain(Long.toString(1)));
+        //assertValid("domain", getTestEvent("localhost"));
+        Object object = new Object();
+        assertInvalid("domain", getTestEvent(object), messages.invalidDomain(object.toString()));
     }
 
     @Test
     public void topLevelDomain() throws Exception
     {
-        assertValid("topLevelDomain", getTestEvent("com"));
+        List<String> domains = ImmutableList.of("com", "org", "net", "int", "edu", "gov", "mil", "arpa", "COM");
+        for (String domain : domains)
+        {
+            assertValid("topLevelDomain", getTestEvent(domain));
+        }
+        assertInvalid("topLevelDomain", getTestEvent(""), messages.invalidTopLevelDomain(""));
         assertInvalid("topLevelDomain", getTestEvent("abc"), messages.invalidTopLevelDomain("abc"));
     }
 
@@ -63,6 +95,10 @@ public class BasicValidationTestCase extends ValidationTestCase
     public void toplevelDomainCountryCode() throws Exception
     {
         assertValid("toplevelDomainCountryCode", getTestEvent("ar"));
+        assertValid("toplevelDomainCountryCode", getTestEvent("ac"));
+        //assertValid("toplevelDomainCountryCode", getTestEvent("??")); // Russia domain
+        //assertValid("toplevelDomainCountryCode", getTestEvent("xn--p1ai")); // ASCII DNS name for Russia domain
+        assertInvalid("toplevelDomainCountryCode", getTestEvent("com"), messages.invalidDomainCountryCode("com"));
         assertInvalid("toplevelDomainCountryCode", getTestEvent("ppp"), messages.invalidDomainCountryCode("ppp"));
     }
 
@@ -71,26 +107,66 @@ public class BasicValidationTestCase extends ValidationTestCase
     {
         assertValid("creditCardNumber", getTestEvent(VALID_CREDIT_CARD_NUMBER));
         assertInvalid("creditCardNumber", getTestEvent(INVALID_CREDIT_CARD_NUMBER), messages.invalidCreditCard("5555444433332222", CreditCardType.MASTERCARD));
+        //assertValid("creditCardNumber", getTestEvent("4650970405116574"));
+        //assertValid("creditCardNumber", getTestEvent("5310008936084612"));
+        //assertValid("creditCardNumber", getTestEvent("6011639518666994"));
+        //assertValid("creditCardNumber", getTestEvent("342396490153995"));
     }
 
     @Test
     public void email() throws Exception
     {
         assertValid("email", getTestEvent(VALID_EMAIL));
+        assertValid("email", getTestEvent("a.b+c@mail.com"));
+        assertValid("email", getTestEvent("a.b-c@mail.com"));
+        assertValid("email", getTestEvent("\"a.@-c\"@mail.com"));
+        //assertValid("email", getTestEvent("admin@mailserver1"));
+        assertValid("email", getTestEvent("#!$%&'*+-/=?^_`{}|~@example.org"));
+        assertValid("email", getTestEvent("\" \"@example.org"));
+        //assertValid("email", getTestEvent("�������@example.com"));
+        //assertValid("email", getTestEvent("�������@�������.com"));
         assertInvalid("email", getTestEvent(INVALID_EMAIL), messages.invalidEmail("@mulesoft.com"));
+
+
+        List<String> invalidEmails = ImmutableList.of(
+                "Abc.example.com",
+                "A@b@c@example.com",
+                "john..doe@example.com",
+                "john.doe@example..com"
+                //, " a@a.com",
+                //"a@a.com "
+        );
+        for (String invalidEmail : invalidEmails)
+        {
+            assertInvalid("email", getTestEvent(invalidEmail), messages.invalidEmail(invalidEmail));
+        }
+
     }
 
     @Test
     public void ip() throws Exception
     {
         assertValid("ip", getTestEvent("127.0.0.1"));
+        assertValid("ip", getTestEvent("0.0.0.0"));
+        assertValid("ip", getTestEvent("0.0.0.1"));
+        assertValid("ip", getTestEvent("10.0.0.0"));
+        assertValid("ip", getTestEvent("192.168.0.0"));
+        assertValid("ip", getTestEvent("172.16.0.0"));
+        //assertValid("ip", getTestEvent("2001:0db8:85a3:0042:1000:8a2e:0370:7334"));
+        assertInvalid("ip", getTestEvent("1.1.256.0"), messages.invalidIp("1.1.256.0"));
+        assertInvalid("ip", getTestEvent("0.0.0.a"), messages.invalidIp("0.0.0.a"));
         assertInvalid("ip", getTestEvent("12.1.2"), messages.invalidIp("12.1.2"));
+        assertInvalid("ip", getTestEvent("12.1.2."), messages.invalidIp("12.1.2."));
+        assertInvalid("ip", getTestEvent("192.168.100.0/24"), messages.invalidIp("192.168.100.0/24"));
+        assertInvalid("ip", getTestEvent(0), messages.invalidIp("0"));
     }
 
     @Test
     public void isbn10() throws Exception
     {
         assertValid("isbn10", getTestEvent(VALID_ISBN10));
+        assertValid("isbn10", getTestEvent("1566199093"));
+        //assertValid("isbn10", getTestEvent("3-04-013341-X")); // X = 10
         assertInvalid("isbn10", getTestEvent(INVALID_ISBN10), messages.invalidISBN10("88"));
     }
 
@@ -105,56 +181,150 @@ public class BasicValidationTestCase extends ValidationTestCase
     public void url() throws Exception
     {
         assertValid("url", getTestEvent(VALID_URL));
+        assertValid("url", getTestEvent("https://www.example.com/foo/?bar=baz&inga=42&quux"));
+        //assertValid("url", getTestEvent("http://?df.ws/123"));
+        //assertValid("url", getTestEvent("foo://username:password@example.com:8042/over/there/index.dtb?type=animal&name=narwhal#nose"));
+        assertValid("url", getTestEvent("http://foo.com/blah_(wikipedia)_blah#cite-1"));
+        //assertValid("url", getTestEvent("http://userid:password@example.com:8080/"));
+        assertValid("url", getTestEvent("https://freewebs.com/accumsan/odio/curabitur/convallis/duis/consequat.xml?dis=hac&parturient=habitasse&montes=platea&nascetur=dictumst&ridiculus=morbi&mus=vestibulum&etiam=velit&vel=id&augue=pretium&vestibulum=iaculis&rutrum=diam&rutrum=erat&neque=fermentum&aenean=justo&auctor=nec&gravida=condimentum&sem=neque&praesent=sapien&id=placerat&massa=ante&id=nulla&nisl=justo&venenatis=aliquam&lacinia=quis&aenean=turpis&sit=eget&amet=elit&justo=sodales&morbi=scelerisque&ut=mauris&odio=sit&cras=amet&mi=eros&pede=suspendisse&malesuada=accumsan&in=tortor&imperdiet=quis&et=turpis&commodo=sed&vulputate=ante&justo=vivamus&in=tortor&blandit=duis&ultrices=mattis&enim=egestas&lorem=metus&ipsum=aenean&dolor=fermentum&sit=donec&amet=ut&consectetuer=mauris&adipiscing=eget&elit=massa&proin=tempor&interdum=convallis&mauris=nulla&non=neque&ligula=libero&pellentesque=convallis&ultrices=eget&phasellus=eleifend&id=luctus&sapien=ultricies&in=eu&sapien=nibh&iaculis=quisque&congue=id&vivamus=justo&metus=sit&arcu=amet&adipiscing=sapien&molestie=dignissim&hendrerit=vestibulum&at=vestibulum&vulputate=ante&vitae=ipsum&nisl=primis&aenean=in&lectus=faucibus&pellentesque=orci&eget=luctus&nunc=et&donec=ultrices&quis=posuere&orci=cubilia&eget=curae&orci=nulla&vehicula=dapibus&condimentum=dolor,Alan,Kelly,akelly3@globo.com,China,255.132.0.180"));
         assertInvalid("url", getTestEvent(INVALID_URL), messages.invalidUrl("here"));
+        assertInvalid("url", getTestEvent(""), messages.invalidUrl(""));
+        assertInvalid("url", getTestEvent("http://"), messages.invalidUrl("http://"));
+        //assertInvalid("url", getTestEvent("http://hola.com "), messages.invalidUrl("http://hola.com "));
+        //assertInvalid("url", getTestEvent("http://hola. com"), messages.invalidUrl("http://hola. com"));
+        assertInvalid("url", getTestEvent("hola.com"), messages.invalidUrl("hola.com"));
     }
 
     @Test
     public void time() throws Exception
     {
-        final String time = "12:08 PM";
-        MuleEvent event = getTestEvent(time);
-        event.setFlowVariable("pattern", "h:mm a");
-        assertValid("time", event);
+        String locale = Locale.getDefault().getLanguage();
+        Map<String, String> values = new HashMap<>();
+        values.put("h:mm a", "12:08 PM");
+        values.put("yyyy.MM.dd G 'at' HH:mm:ss z", "1960.07.04 AD at 12:08:56 PDT");
+        values.put("EEE, MMM d, ''yy", "Wed, Jul 4, '01");
+        values.put("hh 'o''clock' a, zzzz", "12 o'clock PM, Pacific Daylight Time");
+        values.put("yyyyy.MMMMM.dd GGG hh:mm aaa", "02001.July.04 AD 12:08 PM");
+        values.put("EEE, d MMM yyyy HH:mm:ss Z", "Wed, 4 Jul 2001 12:08:56 -0700");
+        values.put("K:mm a, z", "0:08 PM, PDT");
+
+        for (Map.Entry<String, String> entry : values.entrySet())
+        {
+            assertValidTime(entry.getKey(), locale, entry.getValue());
+            assertInvalidTime(entry.getKey(), Locale.CHINESE.getLanguage(), entry.getValue());
+        }
+
+        values.clear();
+        values.put("yyyy-MM-dd'T'HH:mm:ss.SSSZ", "2001-07-04T12:08:56.235-0700");
+        values.put("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", "2001-07-04T12:08:56.235-07:00");
+        values.put("yyMMddHHmmssZ", "010704120856-0700");
+        values.put("YYYY-'W'ww-u", "2001-W27-3");
+        for (Map.Entry<String, String> entry : values.entrySet())
+        {
+            assertValidTime(entry.getKey(), locale, entry.getValue());
+        }
 
         final String invalidPattern = "yyMMddHHmmssZ";
+        MuleEvent event = getTestEvent("12:08 PM");
         event.setFlowVariable("pattern", invalidPattern);
-        assertInvalid("time", event, messages.invalidTime(time, DEFAULT_LOCALE.toString(), invalidPattern));
+        event.setFlowVariable("locale", locale);
+        assertInvalid("time", event, messages.invalidTime("12:08 PM", DEFAULT_LOCALE, invalidPattern));
     }
 
-    @Test
-    public void date() throws Exception
+    private void assertInvalidTime(String pattern, String locale, String string) throws Exception
     {
-        final String pattern = "yyyy-MM-dd";
-        MuleEvent event = getTestEvent("1983-04-20");
+        MuleEvent event = getTestEvent(string);
         event.setFlowVariable("pattern", pattern);
+        event.setFlowVariable("locale", locale);
+        assertInvalid("time", event, messages.invalidTime(string, locale, pattern));
+    }
 
-        assertValid("date", event);
+    private void assertValidTime(String pattern, String locale, String string) throws Exception
+    {
+        MuleEvent event = getTestEvent(string);
+        event.setFlowVariable("pattern", pattern);
+        event.setFlowVariable("locale", locale);
+        assertValid("time", event);
+    }
 
-        final String invalidDate = "Wed, Jul 4, '01";
-        event.getMessage().setPayload(invalidDate);
-        assertInvalid("date", event, messages.invalidDate(invalidDate, DEFAULT_LOCALE.toString(), pattern));
+    private void assertValidRegex(String regex, String value, boolean caseSensitive) throws Exception
+    {
+        MuleEvent event = getTestEvent(value);
+        event.setFlowVariable("regexp", regex);
+        event.setFlowVariable("caseSensitive", caseSensitive);
+        assertValid("matchesRegex", event);
+    }
+
+    private void assertInvalidRegex(String regex, String value, boolean caseSensitive) throws Exception
+    {
+        MuleEvent event = getTestEvent(value);
+        event.setFlowVariable("regexp", regex);
+        event.setFlowVariable("caseSensitive", caseSensitive);
+        assertInvalid("matchesRegex", event, messages.regexDoesNotMatch(value, regex));
     }
 
     @Test
     public void matchesRegex() throws Exception
     {
-        final String regex = "[tT]rue";
-        MuleEvent event = getTestEvent("true");
-        event.setFlowVariable("regexp", regex);
-        event.setFlowVariable("caseSensitive", false);
+        assertValidRegex("[tT]rue", "true", false);
+        assertValidRegex("[tT]rue", "true", true);
+        assertValidRegex("[tT]rue", "TRUE", false);
+        assertValidRegex("(a.*b)(c)(d)", "alafjajbcd", true);
+        assertValidRegex("�", "�", true);
+        assertInvalidRegex("[tT]rue", "TRUE", true);
+        assertInvalidRegex("[tT]rue", "tTrue", false);
+        assertInvalidRegex("[tT]rue", "", false);
+        assertInvalidRegex("[tT]rue", " ", false);
+        assertInvalidRegex("[tT]rue", "[tT]rue", false);
+    }
 
-        assertValid("matchesRegex", event);
 
-        String testValue = "TRUE";
-        event.getMessage().setPayload(testValue);
-        assertValid("matchesRegex", event);
+    @Test(expected = ValidationException.class)
+    public void flowFailsWithNullValue() throws Throwable
+    {
+        try
+        {
+            MuleEvent event = getTestEvent(null);
+            event.setFlowVariable("regexp", ".*");
+            event.setFlowVariable("caseSensitive", "false");
+            runFlow("matchesRegex", event);
+        }
+        catch (Exception e)
+        {
+            throw ExceptionUtils.getRootCause(e);
+        }
+    }
 
-        event.setFlowVariable("caseSensitive", true);
-        assertInvalid("matchesRegex", event, messages.regexDoesNotMatch(testValue, regex));
+    @Test(expected = IllegalArgumentException.class)
+    public void flowFailsWithNullRegex() throws Throwable
+    {
+        try
+        {
+            MuleEvent event = getTestEvent("a");
+            event.setFlowVariable("regexp", null);
+            event.setFlowVariable("caseSensitive", "false");
+            runFlow("matchesRegex", event);
+        }
+        catch (Exception e)
+        {
+            throw ExceptionUtils.getRootCause(e);
+        }
+    }
 
-        testValue = "tTrue";
-        event.getMessage().setPayload(testValue);
-        assertInvalid("matchesRegex", event, messages.regexDoesNotMatch(testValue, regex));
+    @Test(expected = IllegalArgumentException.class)
+    public void flowFailsWithEmptyRegex() throws Throwable
+    {
+        try
+        {
+            MuleEvent event = getTestEvent("a");
+            event.setFlowVariable("regexp", "");
+            event.setFlowVariable("caseSensitive", "false");
+            runFlow("matchesRegex", event);
+        }
+        catch (Exception e)
+        {
+            throw ExceptionUtils.getRootCause(e);
+        }
     }
 
     @Test
@@ -163,13 +333,46 @@ public class BasicValidationTestCase extends ValidationTestCase
         assertSize("abc");
         assertSize(Arrays.asList("a", "b", "c"));
         assertSize(new String[] {"a", "b", "c"});
+        assertSize(ImmutableMap.of("a", 1, "b", 2, "c", 3));
+    }
 
-        Map<String, String> map = new HashMap<>();
-        map.put("a", "a");
-        map.put("b", "b");
-        map.put("c", "c");
+    @Test
+    public void otherIsLong() throws Exception
+    {
+        assertIsNumber("400%", "###%", Locale.US.toString(), null, null, "wrong pattern", ArrayIndexOutOfBoundsException.class);
+        //assertIsNumber("400%", "###%", null, null, null, "wrong pattern", ArrayIndexOutOfBoundsException.class);
+        assertIsNumber("400%", "###%", "", null, null, "wrong pattern", ArrayIndexOutOfBoundsException.class);
+        //assertIsNumber("420%", "###%", "", "4", "5", "wrong pattern", ArrayIndexOutOfBoundsException.class);
+        //assertIsNumberFails("620%", "###%", "", "4", "5", "wrong pattern", ArrayIndexOutOfBoundsException.class);
+        assertIsNumberFails("6", "###%", "", null, null, "wrong pattern", ArrayIndexOutOfBoundsException.class);
+    }
 
-        assertSize(map);
+    private void assertIsNumberFails(String value, String pattern, String locale, Object min, Object max, String message, Class<? extends Throwable> exception) throws Exception
+    {
+        try
+        {
+            assertIsNumber(value, pattern, locale, min, max, message, exception);
+            fail();
+        }
+        catch (Throwable e)
+        {
+            assertThat(e, Matchers.instanceOf(MessagingException.class));
+            assertThat(e.getCause(), Matchers.instanceOf(exception));
+            assertThat(e.getCause().getMessage(), Matchers.equalTo(message));
+        }
+
+    }
+
+    private void assertIsNumber(String value, String pattern, String locale, Object min, Object max, String message, Class<? extends Throwable> exception) throws Exception
+    {
+        MuleEvent event = getTestEvent(value);
+        event.setFlowVariable("pattern", pattern);
+        event.setFlowVariable("locale", locale);
+        event.setFlowVariable("minValue", min);
+        event.setFlowVariable("maxValue", max);
+        event.setFlowVariable("exceptionMessage", message);
+        event.setFlowVariable("exceptionClass", exception);
+        runFlow("full-long", event);
     }
 
     @Test
@@ -207,6 +410,12 @@ public class BasicValidationTestCase extends ValidationTestCase
     {
         assertValid("isTrue", getTestEvent(true));
         assertInvalid("isTrue", getTestEvent(false), messages.failedBooleanValidation(false, true));
+        assertInvalid("isTrue", getTestEvent(Boolean.FALSE), messages.failedBooleanValidation(false, true));
+        assertInvalid("isTrue", getTestEvent(null), IllegalArgumentException.class);
+        assertInvalid("isTrue", getTestEvent(new Object()), IllegalArgumentException.class);
+        assertInvalid("isTrue", getTestEvent(1), IllegalArgumentException.class);
+        assertInvalid("isTrue", getTestEvent(NullPayload.getInstance()), IllegalArgumentException.class);
+        //assertInvalid("isTrue", getTestEvent("hello"), IllegalArgumentException.class);
     }
 
     @Test
@@ -214,6 +423,12 @@ public class BasicValidationTestCase extends ValidationTestCase
     {
         assertValid("isFalse", getTestEvent(false));
         assertInvalid("isFalse", getTestEvent(true), messages.failedBooleanValidation(true, false));
+        assertInvalid("isFalse", getTestEvent(Boolean.TRUE), messages.failedBooleanValidation(true, false));
+        assertInvalid("isFalse", getTestEvent(null), IllegalArgumentException.class);
+        assertInvalid("isFalse", getTestEvent(new Object()), IllegalArgumentException.class);
+        assertInvalid("isFalse", getTestEvent(1), IllegalArgumentException.class);
+        assertInvalid("isFalse", getTestEvent(NullPayload.getInstance()), IllegalArgumentException.class);
+        //assertInvalid("isFalse", getTestEvent("hello"), IllegalArgumentException.class);
     }
 
     @Test
@@ -222,20 +437,17 @@ public class BasicValidationTestCase extends ValidationTestCase
         final String flowName = "notEmpty";
 
         assertValid(flowName, getTestEvent("a"));
-        assertValid(flowName, getTestEvent(Arrays.asList("a")));
+        assertValid(flowName, getTestEvent(Collections.singletonList("a")));
         assertValid(flowName, getTestEvent(new String[] {"a"}));
-        Map<String, String> map = new HashMap<>();
-        map.put("a", "A");
-        assertValid(flowName, getTestEvent(map));
+        assertValid(flowName, getTestEvent(ImmutableMap.of("a", "A")));
 
-        map.clear();
         assertInvalid(flowName, getTestEvent(null), messages.valueIsNull());
         assertInvalid(flowName, getTestEvent(""), messages.stringIsBlank());
         assertInvalid(flowName, getTestEvent(ImmutableList.of()), messages.collectionIsEmpty());
         assertInvalid(flowName, getTestEvent(new String[] {}), messages.arrayIsEmpty());
         assertInvalid(flowName, getTestEvent(new Object[] {}), messages.arrayIsEmpty());
         assertInvalid(flowName, getTestEvent(new int[] {}), messages.arrayIsEmpty());
-        assertInvalid(flowName, getTestEvent(map), messages.mapIsEmpty());
+        assertInvalid(flowName, getTestEvent(ImmutableMap.of()), messages.mapIsEmpty());
         assertInvalid(flowName, getTestEvent(BlankLiteral.INSTANCE), messages.valueIsBlankLiteral());
     }
 
@@ -245,18 +457,17 @@ public class BasicValidationTestCase extends ValidationTestCase
         final String flowName = "empty";
 
         assertValid(flowName, getTestEvent(""));
+        assertValid(flowName, getTestEvent(""));
         assertValid(flowName, getTestEvent(ImmutableList.of()));
         assertValid(flowName, getTestEvent(new String[] {}));
-        Map<String, String> map = new HashMap<>();
-        assertValid(flowName, getTestEvent(map));
+        assertValid(flowName, getTestEvent(ImmutableMap.of()));
 
         assertInvalid(flowName, getTestEvent("a"), messages.stringIsNotBlank());
-        assertInvalid(flowName, getTestEvent(Arrays.asList("a")), messages.collectionIsNotEmpty());
+        assertInvalid(flowName, getTestEvent(Collections.singletonList("a")), messages.collectionIsNotEmpty());
         assertInvalid(flowName, getTestEvent(new String[] {"a"}), messages.arrayIsNotEmpty());
         assertInvalid(flowName, getTestEvent(new Object[] {new Object()}), messages.arrayIsNotEmpty());
         assertInvalid(flowName, getTestEvent(new int[] {0}), messages.arrayIsNotEmpty());
-        map.put("a", "a");
-        assertInvalid(flowName, getTestEvent(map), messages.mapIsNotEmpty());
+        assertInvalid(flowName, getTestEvent(ImmutableMap.of("a", "a")), messages.mapIsNotEmpty());
     }
 
     @Test
@@ -331,6 +542,28 @@ public class BasicValidationTestCase extends ValidationTestCase
         assertCustomValidator("customValidationByRef");
     }
 
+    @Test
+    public void customSuccessfulValidator() throws Exception
+    {
+        MuleEvent result = runFlow("customValidationSuccess", "hello");
+        assertThat(result.getMessage().getPayload(), CoreMatchers.<Object>equalTo("hello"));
+    }
+
+    @Test
+    public void customFailingValidator() throws Exception
+    {
+        try
+        {
+            runFlow("customValidationFailure", "hello");
+            //fail();
+        }
+        catch (MessagingException e)
+        {
+            assertThat(e.getCause(), is(instanceOf(ValidationException.class)));
+            assertThat(e.getCause().getMessage(), equalTo(TEST_MESSAGE));
+        }
+    }
+
     private void assertCustomValidator(String flowName) throws Exception
     {
         try
@@ -379,6 +612,8 @@ public class BasicValidationTestCase extends ValidationTestCase
         int maxLength = 3;
 
         assertValid(flowName, getSizeValidationEvent(value, minLength, maxLength));
+        minLength = 3;
+        assertValid(flowName, getSizeValidationEvent(value, minLength, maxLength));
 
         maxLength = 2;
         assertInvalid(flowName, getSizeValidationEvent(value, minLength, maxLength), messages.greaterThanMaxSize(value, maxLength, expectedSize));
@@ -412,6 +647,26 @@ public class BasicValidationTestCase extends ValidationTestCase
         assertThat(responseEvent.getMessage().getExceptionPayload(), is(nullValue()));
     }
 
+    @Override
+    protected boolean isStartContext()
+    {
+        return super.isStartContext();
+    }
+
+    private void assertInvalid(String flowName, MuleEvent event, Class<? extends Throwable> type) throws Exception
+    {
+        try
+        {
+            runFlow(flowName, event);
+            fail("Was expecting a failure");
+        }
+        catch (Exception e)
+        {
+            Throwable rootCause = ExceptionUtils.getRootCause(e);
+            assertThat(rootCause, is(instanceOf(type)));
+        }
+    }
+
     private void assertInvalid(String flowName, MuleEvent event, Message expectedMessage) throws Exception
     {
         try
@@ -426,6 +681,26 @@ public class BasicValidationTestCase extends ValidationTestCase
             assertThat(rootCause.getMessage(), is(expectedMessage.getMessage()));
             // assert that all placeholders were replaced in message
             assertThat(rootCause.getMessage(), not(containsString("${")));
+        }
+    }
+
+    public static class SuccessfulCustomValidator implements Validator
+    {
+
+        @Override
+        public ValidationResult validate(MuleEvent event)
+        {
+            return ImmutableValidationResult.ok();
+        }
+    }
+
+    public static class FailingCustomValidator implements Validator
+    {
+
+        @Override
+        public ValidationResult validate(MuleEvent event)
+        {
+            return ImmutableValidationResult.error(TEST_MESSAGE);
         }
     }
 
