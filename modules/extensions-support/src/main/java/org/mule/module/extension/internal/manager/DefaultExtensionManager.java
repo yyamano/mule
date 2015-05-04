@@ -22,6 +22,7 @@ import org.mule.extension.ExtensionManager;
 import org.mule.extension.introspection.Configuration;
 import org.mule.extension.introspection.Extension;
 import org.mule.extension.introspection.Operation;
+import org.mule.extension.runtime.ConfigurationInstanceProvider;
 import org.mule.extension.runtime.OperationExecutor;
 import org.mule.module.extension.internal.introspection.DefaultExtensionFactory;
 import org.mule.module.extension.internal.introspection.ExtensionDiscoverer;
@@ -114,15 +115,16 @@ public final class DefaultExtensionManager implements ExtensionManager, MuleCont
      * {@inheritDoc}
      */
     @Override
-    public <C> void registerConfigurationInstance(Configuration configuration, String configurationInstanceName, C configurationInstance)
+    public void registerConfigurationInstance(Configuration configuration, String configurationInstanceName, ConfigurationInstanceProvider configurationInstanceProvider)
     {
         ExtensionStateTracker extensionStateTracker = register.getExtensionState(configuration);
-        extensionStateTracker.registerConfigurationInstance(configurationInstanceName, configuration, configurationInstance);
+        extensionStateTracker.registerConfigurationInstanceProvider(configurationInstanceName, configuration, configurationInstanceProvider);
 
-        if (initialised)
-        {
-            putInRegistryAndApplyLifecycle(configurationInstanceName, configurationInstance);
-        }
+        //TODO: What about this?
+        //if (initialised)
+        //{
+        //    putInRegistryAndApplyLifecycle(configurationInstanceName, configurationInstance);
+        //}
     }
 
     private <C> void putInRegistryAndApplyLifecycle(String configurationInstanceName, C configurationInstance)

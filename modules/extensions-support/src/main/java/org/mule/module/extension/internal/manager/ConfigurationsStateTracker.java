@@ -10,6 +10,7 @@ import static org.mule.util.Preconditions.checkState;
 import org.mule.extension.introspection.Configuration;
 import org.mule.extension.introspection.Extension;
 import org.mule.extension.introspection.Operation;
+import org.mule.extension.runtime.ConfigurationInstanceProvider;
 import org.mule.extension.runtime.OperationExecutor;
 import org.mule.util.CollectionUtils;
 
@@ -33,7 +34,7 @@ final class ConfigurationsStateTracker
     private final Multimap<Configuration, ConfigurationInstanceWrapper<?>> configurationInstances =
             Multimaps.synchronizedSetMultimap(LinkedHashMultimap.<Configuration, ConfigurationInstanceWrapper<?>>create());
 
-    <C> void registerInstance(Configuration configuration, final String instanceName, final C configurationInstance)
+    void registerInstance(Configuration configuration, final String instanceName, final ConfigurationInstanceProvider configurationInstanceProvider)
     {
         configurationInstances.put(configuration, new ConfigurationInstanceWrapper<>(instanceName, configurationInstance));
     }

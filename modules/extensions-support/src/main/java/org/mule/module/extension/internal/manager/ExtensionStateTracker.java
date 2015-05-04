@@ -9,6 +9,7 @@ package org.mule.module.extension.internal.manager;
 import org.mule.extension.introspection.Configuration;
 import org.mule.extension.introspection.Extension;
 import org.mule.extension.introspection.Operation;
+import org.mule.extension.runtime.ConfigurationInstanceProvider;
 import org.mule.extension.runtime.OperationExecutor;
 
 import com.google.common.collect.Multimap;
@@ -33,9 +34,9 @@ final class ExtensionStateTracker
      * @param configurationInstance an instance which is compliant with the {@code configuration} model
      * @param <C>                   the type of the configuration instance
      */
-    <C> void registerConfigurationInstance(String instanceName, Configuration configuration, C configurationInstance)
+    void registerConfigurationInstanceProvider(String instanceName, Configuration configuration, ConfigurationInstanceProvider configurationInstanceProvider)
     {
-        configurationsState.registerInstance(configuration, instanceName, configurationInstance);
+        configurationsState.registerInstance(configuration, instanceName, configurationInstanceProvider);
     }
 
     Multimap<Configuration, ConfigurationInstanceWrapper<?>> getConfigurationInstances()
