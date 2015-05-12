@@ -23,6 +23,8 @@ import org.mule.api.MuleContext;
 import org.mule.extension.introspection.Configuration;
 import org.mule.extension.introspection.Extension;
 import org.mule.extension.introspection.Operation;
+import org.mule.extension.runtime.ConfigurationInstanceProvider;
+import org.mule.extension.runtime.OperationContext;
 import org.mule.extension.runtime.OperationExecutor;
 import org.mule.extension.introspection.capability.XmlCapability;
 import org.mule.module.extension.internal.introspection.ExtensionDiscoverer;
@@ -273,11 +275,18 @@ public class DefaultExtensionManagerTestCase extends AbstractMuleTestCase
         when(executor.getExecutorDelegate()).thenReturn(executorDelegate);
 
         when(extension1Operation.getExecutor(configInstance)).thenReturn(executor);
-        OperationExecutor managedExecutor = extensionsManager.getOperationExecutor(extension1Operation, configInstance);
+
+        OperationContext operationContext = mock(OperationContext.class);
+
+        ConfigurationInstanceProvider<Object> configurationInstanceProvider = mock(ConfigurationInstanceProvider.class);
+        when(configurationInstanceProvider.getConfiguration()).thenReturn(extension1Configuration);
+        when(configurationInstanceProvider.get(operationContext)).thenReturn(configInstance);
+
+        OperationExecutor managedExecutor = extensionsManager.getOperationExecutor(configurationInstanceProvider, operationContext);
         assertThat(managedExecutor, is(sameInstance((OperationExecutor) executor)));
 
         // ask for the same executor again and check that it's still the same instance
-        managedExecutor = extensionsManager.getOperationExecutor(extension1Operation, configInstance);
+        managedExecutor = extensionsManager.getOperationExecutor(configurationInstanceProvider, operationContext);
         assertThat(managedExecutor, is(sameInstance((OperationExecutor) executor)));
 
         verify(muleContext.getRegistry()).registerObject(anyString(), same(executorDelegate));
@@ -285,10 +294,10 @@ public class DefaultExtensionManagerTestCase extends AbstractMuleTestCase
     }
 
     @Test(expected = IllegalStateException.class)
-    public void getOperationExecutorForUnregisteredConfigurationInstance() throws Exception
+    public void getOperationExecutorForUnregisteredConfigurationInstanceProvider() throws Exception
     {
         discover();
-        extensionsManager.getOperationExecutor(extension1Operation, new Object());
+        extensionsManager.getOperationExecutor(mock(ConfigurationInstanceProvider.class), mock(OperationContext.class));
     }
 
     private List<Extension> getTestExtensions()

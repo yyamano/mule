@@ -4,46 +4,48 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.module.extension.internal.runtime.resolver;
+package org.mule.module.extension.internal.runtime;
 
+import static org.mule.util.Preconditions.checkArgument;
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
-import org.mule.api.MuleException;
-import org.mule.extension.ExtensionManager;
+import org.mule.api.MuleRuntimeException;
 import org.mule.extension.introspection.Configuration;
-import org.mule.module.extension.internal.runtime.ConfigurationObjectBuilder;
+import org.mule.extension.runtime.ConfigurationInstanceProvider;
+import org.mule.extension.runtime.OperationContext;
+import org.mule.module.extension.internal.manager.ExtensionManagerAdapter;
+import org.mule.module.extension.internal.runtime.resolver.ResolverSet;
+import org.mule.module.extension.internal.runtime.resolver.ResolverSetResult;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
 /**
- * A {@link ValueResolver} which continuously evaluates the same
+ * A {@link ConfigurationInstanceProvider} which continuously evaluates the same
  * {@link ResolverSet} and then uses the resulting {@link ResolverSetResult}
  * to build an instance of a given type.
  * <p/>
- * Although each invocation to {@link #resolve(MuleEvent)} is guaranteed to end up
+ * Although each invocation to {@link #get(OperationContext)} is guaranteed to end up
  * in an invocation to {@link #resolverSet#resolve(MuleEvent)}, the resulting
  * {@link ResolverSetResult} might not end up generating a new instance. This is so because
  * {@link ResolverSetResult} instances are put in a cache to
  * guarantee that equivalent evaluations of the {@code resolverSet} return the same
- * instance. That cache will automatically expire entries that are not used for
- * an interval configured using {@code expirationInterval}
- * and {@code expirationTimeUnit}.
+ * instance.
  * <p/>
- * The generated instances will be registered with the {@code extensionManager}
- * through {@link ExtensionManager#registerConfigurationInstance(Configuration, String, Object)}
+ * The generated instances will be registered with the {@link #extensionManager}
+ * through {@link ExtensionManagerAdapter#registerConfigurationInstance(Configuration, String, Object)}
  *
  * @since 3.7.0
  */
-public class DynamicConfigurationValueResolver implements ValueResolver<Object>
+public class DynamicConfigurationInstanceProvider implements ConfigurationInstanceProvider<Object>
 {
 
     private final String name;
     private final Configuration configuration;
     private final ConfigurationObjectBuilder configurationObjectBuilder;
     private final ResolverSet resolverSet;
-    private final ExtensionManager extensionManager;
+    private final ExtensionManagerAdapter extensionManager;
 
     private LoadingCache<ResolverSetResult, Object> cache;
 
@@ -56,17 +58,17 @@ public class DynamicConfigurationValueResolver implements ValueResolver<Object>
      * @param resolverSet                the {@link ResolverSet} that's going to be evaluated
      * @param muleContext                the current {@link MuleContext}
      */
-    public DynamicConfigurationValueResolver(String name,
-                                             Configuration configuration,
-                                             ConfigurationObjectBuilder configurationObjectBuilder,
-                                             ResolverSet resolverSet,
-                                             MuleContext muleContext)
+    public DynamicConfigurationInstanceProvider(String name,
+                                                Configuration configuration,
+                                                ConfigurationObjectBuilder configurationObjectBuilder,
+                                                ResolverSet resolverSet,
+                                                ExtensionManagerAdapter extensionManager)
     {
         this.name = name;
         this.configuration = configuration;
         this.configurationObjectBuilder = configurationObjectBuilder;
         this.resolverSet = resolverSet;
-        extensionManager = muleContext.getExtensionManager();
+        this.extensionManager = extensionManager;
         buildCache();
     }
 
@@ -95,18 +97,37 @@ public class DynamicConfigurationValueResolver implements ValueResolver<Object>
      * @return the resolved value
      */
     @Override
-    public Object resolve(MuleEvent event) throws MuleException
+    public Object get(OperationContext operationContext)
     {
-        ResolverSetResult result = resolverSet.resolve(event);
-        return cache.getUnchecked(result);
+        validateOperationContext(operationContext);
+
+        try
+        {
+            ResolverSetResult result = resolverSet.resolve(((DefaultOperationContext) operationContext).getEvent());
+            return cache.getUnchecked(result);
+        }
+        catch (Exception e)
+        {
+            throw new MuleRuntimeException(e);
+        }
     }
 
     /**
-     * Whether or not {@link #resolverSet} is dynamic
+     * {@inheritDoc}
      */
     @Override
-    public boolean isDynamic()
+    public Configuration getConfiguration()
     {
-        return resolverSet.isDynamic();
+        return configuration;
+    }
+
+    private void validateOperationContext(OperationContext operationContext)
+    {
+        checkArgument(operationContext != null, "operationContext cannot be null");
+        if (!(operationContext instanceof DefaultOperationContext))
+        {
+            throw new IllegalArgumentException(String.format("operationContext was expected to be an instance of %s but got %s instead",
+                                                             DefaultOperationContext.class.getName(), operationContext.getClass().getName()));
+        }
     }
 }

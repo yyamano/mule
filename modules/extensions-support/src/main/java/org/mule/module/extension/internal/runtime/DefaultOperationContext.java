@@ -7,6 +7,7 @@
 package org.mule.module.extension.internal.runtime;
 
 import org.mule.api.MuleEvent;
+import org.mule.extension.introspection.Operation;
 import org.mule.extension.introspection.Parameter;
 import org.mule.extension.runtime.OperationContext;
 import org.mule.module.extension.internal.runtime.resolver.ResolverSetResult;
@@ -21,9 +22,10 @@ import java.util.Map;
  *
  * @since 3.7.0
  */
-public final class DefaultOperationContext implements OperationContext
+public class DefaultOperationContext implements OperationContext
 {
 
+    private final Operation operation;
     private final Map<Parameter, Object> parameters;
     private final Map<String, Object> parametersByName;
 
@@ -32,16 +34,25 @@ public final class DefaultOperationContext implements OperationContext
      */
     private final MuleEvent event;
 
-    public DefaultOperationContext(ResolverSetResult parameters, MuleEvent event)
+
+
+    public DefaultOperationContext(Operation operation, ResolverSetResult parameters, MuleEvent event)
     {
+        this.operation = operation;
+        this.event = event;
+
         this.parameters = parameters.asMap();
         parametersByName = new HashMap<>(this.parameters.size());
         for (Map.Entry<Parameter, Object> parameter : this.parameters.entrySet())
         {
             parametersByName.put(parameter.getKey().getName(), parameter.getValue());
         }
+    }
 
-        this.event = event;
+    @Override
+    public Operation getOperation()
+    {
+        return operation;
     }
 
     @Override

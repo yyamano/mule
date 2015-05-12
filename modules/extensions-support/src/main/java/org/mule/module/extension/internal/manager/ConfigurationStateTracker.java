@@ -11,13 +11,17 @@ import org.mule.extension.introspection.Configuration;
 import org.mule.extension.introspection.Extension;
 import org.mule.extension.introspection.Operation;
 import org.mule.extension.runtime.ConfigurationInstanceProvider;
+import org.mule.extension.runtime.OperationContext;
 import org.mule.extension.runtime.OperationExecutor;
 import org.mule.util.CollectionUtils;
 
-import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.collections.Predicate;
 
@@ -28,30 +32,57 @@ import org.apache.commons.collections.Predicate;
  *
  * @since 3.7.0
  */
-final class ConfigurationsStateTracker
+final class ConfigurationStateTracker
 {
 
-    private final Multimap<Configuration, ConfigurationInstanceWrapper<?>> configurationInstances =
-            Multimaps.synchronizedSetMultimap(LinkedHashMultimap.<Configuration, ConfigurationInstanceWrapper<?>>create());
-
-    void registerInstance(Configuration configuration, final String instanceName, final ConfigurationInstanceProvider configurationInstanceProvider)
+    private static <K, V> Multimap<K, V> newMultimap()
     {
-        configurationInstances.put(configuration, new ConfigurationInstanceWrapper<>(instanceName, configurationInstance));
+        return Multimaps.synchronizedSetMultimap(LinkedHashMultimap.<K, V>create());
+    }
+
+    private final Map<String, ConfigurationInstanceWrapper<?>> configurationInstances = new ConcurrentHashMap<>();
+    private final Map<String, ConfigurationInstanceProvider> configurationInstanceProviders = new ConcurrentHashMap<>();
+
+    <C> void registerInstanceProvider(String providerName, ConfigurationInstanceProvider<C> configurationInstanceProvider)
+    {
+        configurationInstanceProviders.put(providerName, configurationInstanceProvider);
+    }
+
+    <C> void registerInstance(String instanceName, C configurationInstance)
+    {
+        configurationInstances.put(instanceName, new ConfigurationInstanceWrapper<>(instanceName, configurationInstance));
+    }
+
+    <C> C getConfigurationInstance(String instanceProviderName, OperationContext operationContext)
+    {
+        ConfigurationInstanceProvider<C> configurationInstanceProvider = configurationInstanceProviders.get(instanceProviderName);
+        return configurationInstanceProvider.get(operationContext);
+    }
+
+    public Map<String, Object> getConfigurationInstances()
+    {
+        ImmutableMap.Builder<String, Object> instances = ImmutableMap.builder();
+        for (Map.Entry<String, ConfigurationInstanceWrapper<?>> instanceWrapperEntry : configurationInstances.entrySet())
+        {
+            instances.put(instanceWrapperEntry.getKey(), instanceWrapperEntry.getValue().getConfigurationInstance());
+        }
+
+        return instances.build();
     }
 
     /**
      * Returns an {@link OperationExecutor} that was previously registered
      * through {@link #registerOperationExecutor(Operation, Object, OperationExecutor)}
      *
-     * @param operation             a {@link Operation} model
      * @param configurationInstance a previously registered configuration instance
+     * @param operation             a {@link Operation} model
      * @param <C>                   the type of the configuration instance
      * @return a {@link OperationExecutor}
      */
-    <C> OperationExecutor getOperationExecutor(Operation operation, C configurationInstance)
+    <C> OperationExecutor getOperationExecutor(C configurationInstance, OperationContext operationContext)
     {
         ConfigurationInstanceWrapper<C> wrapper = locateConfigurationInstanceWrapper(configurationInstance);
-        return wrapper.getOperationExecutor(operation);
+        return wrapper.getOperationExecutor(operationContext.getOperation());
     }
 
     /**
@@ -67,11 +98,6 @@ final class ConfigurationsStateTracker
     {
         ConfigurationInstanceWrapper<C> wrapper = locateConfigurationInstanceWrapper(configurationInstance);
         wrapper.registerOperationExecutor(operation, executor);
-    }
-
-    Multimap<Configuration, ConfigurationInstanceWrapper<?>> getConfigurationInstances()
-    {
-        return ImmutableMultimap.copyOf(configurationInstances);
     }
 
     private <C> ConfigurationInstanceWrapper<C> locateConfigurationInstanceWrapper(final C configurationInstance)

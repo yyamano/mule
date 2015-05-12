@@ -10,9 +10,22 @@ import org.mule.extension.introspection.Configuration;
 import org.mule.extension.introspection.Extension;
 import org.mule.extension.introspection.Operation;
 import org.mule.extension.runtime.ConfigurationInstanceProvider;
+import org.mule.extension.runtime.OperationContext;
 import org.mule.extension.runtime.OperationExecutor;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.LinkedHashMultiset;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.SetMultimap;
+
+import java.util.Map;
 
 /**
  * Holds state regarding the use that the platform is doing of a
@@ -23,52 +36,84 @@ import com.google.common.collect.Multimap;
 final class ExtensionStateTracker
 {
 
-    private final ConfigurationsStateTracker configurationsState = new ConfigurationsStateTracker();
+    private final LoadingCache<Configuration, ConfigurationStateTracker> configurationsStates = CacheBuilder.newBuilder()
+            .build(new CacheLoader<Configuration, ConfigurationStateTracker>()
+            {
+                @Override
+                public ConfigurationStateTracker load(Configuration configuration) throws Exception
+                {
+                    return new ConfigurationStateTracker();
+                }
+            });
+
+    <C> void registerConfigurationInstanceProvider(Configuration configuration,
+                                                   String providerName,
+                                                   ConfigurationInstanceProvider<C> configurationInstanceProvider)
+    {
+
+        getStateTracker(configuration).registerInstanceProvider(providerName, configurationInstanceProvider);
+    }
+
+    <C> C getConfigurationInstance(String instanceProviderName, OperationContext operationContext) {
+        //return getStateTracker(operationContext.getConfiguration()).getConfigurationInstance(instanceProviderName, operationContext);
+        return null;
+    }
 
     /**
      * Registers a {@code configurationInstance} which is a realization of a {@link Configuration}
      * model defined by {@code configuration}
      *
-     * @param instanceName                  the name of the instance
      * @param configuration         a {@link Configuration}
+     * @param instanceName          the name of the instance
      * @param configurationInstance an instance which is compliant with the {@code configuration} model
      * @param <C>                   the type of the configuration instance
      */
-    void registerConfigurationInstanceProvider(String instanceName, Configuration configuration, ConfigurationInstanceProvider configurationInstanceProvider)
+    <C> void registerConfigurationInstance(Configuration configuration, String instanceName, C configurationInstance)
     {
-        configurationsState.registerInstance(configuration, instanceName, configurationInstanceProvider);
+        getStateTracker(configuration).registerInstance(instanceName, configurationInstance);
     }
 
-    Multimap<Configuration, ConfigurationInstanceWrapper<?>> getConfigurationInstances()
+    Multimap<Configuration, Object> getConfigurationInstances()
     {
-        return configurationsState.getConfigurationInstances();
+        LinkedHashMultimap<Configuration, Object> configurationInstances = LinkedHashMultimap.create();
+        for (Map.Entry<Configuration, ConfigurationStateTracker> stateTrackerEntry : configurationsStates.asMap().entrySet()) {
+            configurationInstances.putAll(stateTrackerEntry.getKey(), stateTrackerEntry.getValue().getConfigurationInstances().values());
+        }
+
+        return ImmutableSetMultimap.copyOf(configurationInstances);
     }
 
     /**
      * Returns an {@link OperationExecutor} that was previously registered
-     * through {@link #registerOperationExecutor(Operation, Object, OperationExecutor)}
+     * through {@link #registerOperationExecutor(Configuration, Operation, Object, OperationExecutor)}
      *
+     * @param configuration         a {@link Configuration}
      * @param operation             a {@link Operation} model
      * @param configurationInstance a previously registered configuration instance
      * @param <C>                   the type of the configuration instance
      * @return a {@link OperationExecutor}
      */
-    <C> OperationExecutor getOperationExecutor(Operation operation, C configurationInstance)
+    <C> OperationExecutor getOperationExecutor(Configuration configuration, C configurationInstance, OperationContext operationContext)
     {
-        return configurationsState.getOperationExecutor(operation, configurationInstance);
+        return getStateTracker(configuration).getOperationExecutor(configurationInstance, operationContext);
     }
 
     /**
      * Registers a {@link OperationExecutor} for the {@code operation}|{@code configurationInstance}
      * pair.
      *
+     * @param configuration         a {@link Configuration}
      * @param operation             a {@link Operation} model
      * @param configurationInstance a previously registered configuration instance
      * @param executor              a {@link OperationExecutor}
      * @param <C>                   the type of the configuration instance
      */
-    <C> void registerOperationExecutor(Operation operation, C configurationInstance, OperationExecutor executor)
+    <C> void registerOperationExecutor(Configuration configuration, Operation operation, C configurationInstance, OperationExecutor executor)
     {
-        configurationsState.registerOperationExecutor(operation, configurationInstance, executor);
+        getStateTracker(configuration).registerOperationExecutor(operation, configurationInstance, executor);
+    }
+
+    private ConfigurationStateTracker getStateTracker(Configuration configuration) {
+        return configurationsStates.getUnchecked(configuration);
     }
 }

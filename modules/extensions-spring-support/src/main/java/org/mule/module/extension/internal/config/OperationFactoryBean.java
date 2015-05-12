@@ -12,10 +12,11 @@ import org.mule.api.MuleContext;
 import org.mule.api.MuleRuntimeException;
 import org.mule.api.processor.MessageProcessor;
 import org.mule.api.registry.RegistrationException;
+import org.mule.extension.introspection.Configuration;
 import org.mule.extension.introspection.Operation;
+import org.mule.extension.runtime.ConfigurationInstanceProvider;
 import org.mule.module.extension.internal.runtime.processor.OperationMessageProcessor;
 import org.mule.module.extension.internal.runtime.resolver.ResolverSet;
-import org.mule.module.extension.internal.runtime.resolver.ValueResolver;
 import org.mule.util.ObjectNameHelper;
 
 import java.util.List;
@@ -31,18 +32,21 @@ import org.springframework.beans.factory.FactoryBean;
 public class OperationFactoryBean implements FactoryBean<OperationMessageProcessor>
 {
 
-    private final ValueResolver<Object> configurationValueResolver;
+    private final ConfigurationInstanceProvider<Object> configurationInstanceProvider;
+    private final Configuration configuration;
     private final Operation operation;
     private final ElementDescriptor element;
     private final Map<String, List<MessageProcessor>> nestedOperations;
 
-    public OperationFactoryBean(ValueResolver<Object> configurationValueResolver,
+    public OperationFactoryBean(ConfigurationInstanceProvider<Object> configurationInstanceProvider,
+                                Configuration configuration,
                                 Operation operation,
                                 ElementDescriptor element,
                                 Map<String, List<MessageProcessor>> nestedOperations,
                                 MuleContext muleContext)
     {
-        this.configurationValueResolver = configurationValueResolver;
+        this.configurationInstanceProvider = configurationInstanceProvider;
+        this.configuration = configuration;
         this.operation = operation;
         this.element = element;
         this.nestedOperations = nestedOperations;
@@ -55,7 +59,7 @@ public class OperationFactoryBean implements FactoryBean<OperationMessageProcess
     public OperationMessageProcessor getObject() throws Exception
     {
         ResolverSet resolverSet = getResolverSet(element, operation.getParameters(), nestedOperations);
-        return new OperationMessageProcessor(configurationValueResolver, operation, resolverSet);
+        return new OperationMessageProcessor(configuration, operation, configurationInstanceProvider, resolverSet);
     }
 
     /**

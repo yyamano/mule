@@ -15,12 +15,12 @@ import org.mule.api.context.MuleContextAware;
 import org.mule.api.processor.MessageProcessor;
 import org.mule.config.i18n.MessageFactory;
 import org.mule.extension.introspection.Operation;
+import org.mule.extension.runtime.ConfigurationInstanceProvider;
 import org.mule.extension.runtime.OperationContext;
 import org.mule.extension.runtime.OperationExecutor;
 import org.mule.module.extension.internal.runtime.DefaultOperationContext;
 import org.mule.module.extension.internal.runtime.resolver.ResolverSet;
 import org.mule.module.extension.internal.runtime.resolver.ResolverSetResult;
-import org.mule.module.extension.internal.runtime.resolver.ValueResolver;
 
 import java.util.concurrent.Future;
 
@@ -35,26 +35,32 @@ import java.util.concurrent.Future;
 public final class OperationMessageProcessor implements MessageProcessor, MuleContextAware
 {
 
-    private final ValueResolver<Object> configuration;
+    private final ConfigurationInstanceProvider<Object> configurationInstanceProvider;
     private final Operation operation;
     private final ResolverSet resolverSet;
 
     private MuleContext muleContext;
 
-    public OperationMessageProcessor(ValueResolver<Object> configuration, Operation operation, ResolverSet resolverSet)
+    public OperationMessageProcessor(Operation operation,
+                                     ConfigurationInstanceProvider<Object> configurationInstanceProvider,
+                                     ResolverSet resolverSet)
     {
-        this.configuration = configuration;
         this.operation = operation;
+        this.configurationInstanceProvider = configurationInstanceProvider;
         this.resolverSet = resolverSet;
+    }
+
+    private OperationContext createOperationContext(MuleEvent event) throws MuleException {
+        ResolverSetResult parameters = resolverSet.resolve(event);
+        return new DefaultOperationContext(operation, parameters, event);
     }
 
     @Override
     public MuleEvent process(MuleEvent event) throws MuleException
     {
-        Object configInstance = configuration.resolve(event);
-        ResolverSetResult parameters = resolverSet.resolve(event);
+        OperationContext operationContext = createOperationContext(event);
 
-        Future<Object> future = executeOperation(event, configInstance, parameters);
+        Future<Object> future = executeOperation(operationContext);
         Object result = extractResult(event, future);
 
         if (result instanceof MuleEvent)
@@ -87,18 +93,19 @@ public final class OperationMessageProcessor implements MessageProcessor, MuleCo
         }
     }
 
-    private Future<Object> executeOperation(MuleEvent event, Object configInstance, ResolverSetResult parameters) throws MuleException
+    private Future<Object> executeOperation(OperationContext operationContext) throws MuleException
     {
-        OperationExecutor executor = muleContext.getExtensionManager().getOperationExecutor(operation, configInstance);
-        OperationContext context = new DefaultOperationContext(parameters, event);
+        OperationExecutor executor = muleContext.getExtensionManager().getOperationExecutor(configurationInstanceProvider, operationContext);
 
         try
         {
-            return executor.execute(context);
+            return executor.execute(operationContext);
         }
         catch (Exception e)
         {
-            throw handledException(String.format("Operation %s threw exception", operation.getName()), event, e);
+            throw handledException(String.format("Operation %s threw exception", operation.getName()),
+                                   ((DefaultOperationContext) operationContext).getEvent(),
+                                   e);
         }
     }
 
