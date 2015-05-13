@@ -91,7 +91,7 @@ public class DynamicConfigurationInstanceProviderTestCase extends AbstractMuleTe
         when(operationContext.getEvent()).thenReturn(event);
 
         configurationObjectBuilder = new ConfigurationObjectBuilder(configuration, resolverSet);
-        instanceProvider = new DynamicConfigurationInstanceProvider(CONFIGURATION_NAME, configuration, configurationObjectBuilder, resolverSet, extensionManager);
+        instanceProvider = new DynamicConfigurationInstanceProvider(CONFIGURATION_NAME, configuration, configurationObjectBuilder, resolverSet);
     }
 
     @Test

@@ -16,14 +16,10 @@ import org.mule.extension.runtime.OperationExecutor;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.LinkedHashMultiset;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.MultimapBuilder;
-import com.google.common.collect.Multimaps;
-import com.google.common.collect.SetMultimap;
 
 import java.util.Map;
 
@@ -54,9 +50,18 @@ final class ExtensionStateTracker
         getStateTracker(configuration).registerInstanceProvider(providerName, configurationInstanceProvider);
     }
 
+    <C> boolean isConfigurationInstanceProviderRegistered(ConfigurationInstanceProvider<C> configurationInstanceProvider)
+    {
+        return getStateTracker(configurationInstanceProvider.getConfiguration()).isInstanceProviderRegistered(configurationInstanceProvider);
+    }
+
     <C> C getConfigurationInstance(String instanceProviderName, OperationContext operationContext) {
         //return getStateTracker(operationContext.getConfiguration()).getConfigurationInstance(instanceProviderName, operationContext);
         return null;
+    }
+
+    Map<String, ConfigurationInstanceProvider> getConfigurationInstanceProviders(Configuration configuration) {
+        return ImmutableMap.copyOf(getStateTracker(configuration).getConfigurationInstanceProviders());
     }
 
     /**
@@ -71,16 +76,6 @@ final class ExtensionStateTracker
     <C> void registerConfigurationInstance(Configuration configuration, String instanceName, C configurationInstance)
     {
         getStateTracker(configuration).registerInstance(instanceName, configurationInstance);
-    }
-
-    Multimap<Configuration, Object> getConfigurationInstances()
-    {
-        LinkedHashMultimap<Configuration, Object> configurationInstances = LinkedHashMultimap.create();
-        for (Map.Entry<Configuration, ConfigurationStateTracker> stateTrackerEntry : configurationsStates.asMap().entrySet()) {
-            configurationInstances.putAll(stateTrackerEntry.getKey(), stateTrackerEntry.getValue().getConfigurationInstances().values());
-        }
-
-        return ImmutableSetMultimap.copyOf(configurationInstances);
     }
 
     /**

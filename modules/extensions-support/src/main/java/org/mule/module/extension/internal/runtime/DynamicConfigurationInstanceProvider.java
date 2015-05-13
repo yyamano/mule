@@ -32,9 +32,6 @@ import com.google.common.cache.LoadingCache;
  * {@link ResolverSetResult} instances are put in a cache to
  * guarantee that equivalent evaluations of the {@code resolverSet} return the same
  * instance.
- * <p/>
- * The generated instances will be registered with the {@link #extensionManager}
- * through {@link ExtensionManagerAdapter#registerConfigurationInstance(Configuration, String, Object)}
  *
  * @since 3.7.0
  */
@@ -45,7 +42,6 @@ public class DynamicConfigurationInstanceProvider implements ConfigurationInstan
     private final Configuration configuration;
     private final ConfigurationObjectBuilder configurationObjectBuilder;
     private final ResolverSet resolverSet;
-    private final ExtensionManagerAdapter extensionManager;
 
     private LoadingCache<ResolverSetResult, Object> cache;
 
@@ -61,14 +57,12 @@ public class DynamicConfigurationInstanceProvider implements ConfigurationInstan
     public DynamicConfigurationInstanceProvider(String name,
                                                 Configuration configuration,
                                                 ConfigurationObjectBuilder configurationObjectBuilder,
-                                                ResolverSet resolverSet,
-                                                ExtensionManagerAdapter extensionManager)
+                                                ResolverSet resolverSet)
     {
         this.name = name;
         this.configuration = configuration;
         this.configurationObjectBuilder = configurationObjectBuilder;
         this.resolverSet = resolverSet;
-        this.extensionManager = extensionManager;
         buildCache();
     }
 
@@ -79,10 +73,7 @@ public class DynamicConfigurationInstanceProvider implements ConfigurationInstan
             @Override
             public Object load(ResolverSetResult key) throws Exception
             {
-                Object config = configurationObjectBuilder.build(key);
-                extensionManager.registerConfigurationInstance(configuration, name, config);
-
-                return config;
+                return configurationObjectBuilder.build(key);
             }
         });
     }
@@ -119,6 +110,12 @@ public class DynamicConfigurationInstanceProvider implements ConfigurationInstan
     public Configuration getConfiguration()
     {
         return configuration;
+    }
+
+    @Override
+    public String getName()
+    {
+        return name;
     }
 
     private void validateOperationContext(OperationContext operationContext)

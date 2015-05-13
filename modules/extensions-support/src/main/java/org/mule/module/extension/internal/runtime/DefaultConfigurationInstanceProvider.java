@@ -18,7 +18,6 @@ import org.mule.api.construct.FlowConstruct;
 import org.mule.extension.introspection.Configuration;
 import org.mule.extension.runtime.ConfigurationInstanceProvider;
 import org.mule.extension.runtime.OperationContext;
-import org.mule.module.extension.internal.manager.ExtensionManagerAdapter;
 import org.mule.module.extension.internal.runtime.resolver.ResolverSet;
 import org.mule.module.extension.internal.runtime.resolver.ResolverSetResult;
 
@@ -38,10 +37,6 @@ import org.mule.module.extension.internal.runtime.resolver.ResolverSetResult;
  * It also implements {@link NamedObject} since configurations are named and unique from a user's
  * point of view. Notice however that the named object is this provider and in the case of
  * dynamic configurations instances are not likely to be unique
- * <p/>
- * The generated instance will be registered with the {@code extensionManager}
- * through {@link ExtensionManagerAdapter#registerConfigurationInstance(Configuration, String, Object)}
- *
  *
  * @since 3.7.0
  */
@@ -53,22 +48,20 @@ public class DefaultConfigurationInstanceProvider implements ConfigurationInstan
     public DefaultConfigurationInstanceProvider(String name,
                                                 Configuration configuration,
                                                 ResolverSet resolverSet,
-                                                ExtensionManagerAdapter extensionManager,
                                                 MuleContext muleContext)
     {
         ConfigurationObjectBuilder configurationObjectBuilder = new ConfigurationObjectBuilder(configuration, resolverSet);
 
         if (resolverSet.isDynamic())
         {
-            delegate = new DynamicConfigurationInstanceProvider(name, configuration, configurationObjectBuilder, resolverSet, extensionManager);
+            delegate = new DynamicConfigurationInstanceProvider(name, configuration, configurationObjectBuilder, resolverSet);
         }
         else
         {
             try
             {
                 Object config = configurationObjectBuilder.build(getInitialiserEvent(muleContext));
-                extensionManager.registerConfigurationInstance(configuration, name, config);
-                delegate = new StaticConfigurationInstanceProvider<>(configuration, config);
+                delegate = new StaticConfigurationInstanceProvider<>(name, configuration, config);
             }
             catch (MuleException e)
             {
@@ -92,6 +85,12 @@ public class DefaultConfigurationInstanceProvider implements ConfigurationInstan
         return delegate.getConfiguration();
     }
 
+    @Override
+    public String getName()
+    {
+        return delegate.getName();
+    }
+
     private MuleEvent getInitialiserEvent(MuleContext muleContext)
     {
         return new DefaultMuleEvent(new DefaultMuleMessage(null, muleContext), REQUEST_RESPONSE, (FlowConstruct) null);
@@ -100,11 +99,13 @@ public class DefaultConfigurationInstanceProvider implements ConfigurationInstan
     private class StaticConfigurationInstanceProvider<T> implements ConfigurationInstanceProvider<T>
     {
 
+        private final String name;
         private final Configuration configuration;
         private final T configurationInstance;
 
-        public StaticConfigurationInstanceProvider(Configuration configuration, T configurationInstance)
+        public StaticConfigurationInstanceProvider(String name, Configuration configuration, T configurationInstance)
         {
+            this.name = name;
             this.configuration = configuration;
             this.configurationInstance = configurationInstance;
         }
@@ -119,6 +120,12 @@ public class DefaultConfigurationInstanceProvider implements ConfigurationInstan
         public Configuration getConfiguration()
         {
             return configuration;
+        }
+
+        @Override
+        public String getName()
+        {
+            return name;
         }
     }
 }

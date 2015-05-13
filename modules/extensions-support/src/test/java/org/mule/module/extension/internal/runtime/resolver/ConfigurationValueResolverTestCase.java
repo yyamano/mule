@@ -166,6 +166,6 @@ public class ConfigurationValueResolverTestCase extends AbstractMuleTestCase
 
     private ConfigurationInstanceProvider<Object> getConfigResolver() throws Exception
     {
-        return new DefaultConfigurationInstanceProvider(CONFIG_NAME, configuration, resolverSet, extensionManager, muleContext);
+        return new DefaultConfigurationInstanceProvider(CONFIG_NAME, configuration, resolverSet, muleContext);
     }
 }

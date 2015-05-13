@@ -59,7 +59,7 @@ public class OperationFactoryBean implements FactoryBean<OperationMessageProcess
     public OperationMessageProcessor getObject() throws Exception
     {
         ResolverSet resolverSet = getResolverSet(element, operation.getParameters(), nestedOperations);
-        return new OperationMessageProcessor(configuration, operation, configurationInstanceProvider, resolverSet);
+        return new OperationMessageProcessor(operation, configurationInstanceProvider, resolverSet);
     }
 
     /**

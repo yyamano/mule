@@ -10,11 +10,13 @@ import org.mule.extension.exception.NoSuchExtensionException;
 import org.mule.extension.introspection.Configuration;
 import org.mule.extension.introspection.Extension;
 import org.mule.extension.introspection.Operation;
+import org.mule.extension.runtime.ConfigurationInstanceProvider;
 import org.mule.util.CollectionUtils;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Map;
@@ -155,6 +157,20 @@ final class ExtensionRegister
     ExtensionStateTracker getExtensionState(Configuration configuration)
     {
         return getExtensionState(getExtension(configuration));
+    }
+
+    Map<String, ConfigurationInstanceProvider> getConfigurationInstanceProviders()
+    {
+        ImmutableMap.Builder<String, ConfigurationInstanceProvider> providers = ImmutableMap.builder();
+        for (Extension extension : extensions.values())
+        {
+            for (Configuration configuration : extension.getConfigurations())
+            {
+                providers.putAll(getExtensionState(configuration).getConfigurationInstanceProviders(configuration));
+            }
+        }
+
+        return providers.build();
     }
 
     /**

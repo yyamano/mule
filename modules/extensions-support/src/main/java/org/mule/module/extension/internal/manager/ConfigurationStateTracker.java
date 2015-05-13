@@ -16,9 +16,6 @@ import org.mule.extension.runtime.OperationExecutor;
 import org.mule.util.CollectionUtils;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,17 +32,17 @@ import org.apache.commons.collections.Predicate;
 final class ConfigurationStateTracker
 {
 
-    private static <K, V> Multimap<K, V> newMultimap()
-    {
-        return Multimaps.synchronizedSetMultimap(LinkedHashMultimap.<K, V>create());
-    }
-
     private final Map<String, ConfigurationInstanceWrapper<?>> configurationInstances = new ConcurrentHashMap<>();
     private final Map<String, ConfigurationInstanceProvider> configurationInstanceProviders = new ConcurrentHashMap<>();
 
     <C> void registerInstanceProvider(String providerName, ConfigurationInstanceProvider<C> configurationInstanceProvider)
     {
         configurationInstanceProviders.put(providerName, configurationInstanceProvider);
+    }
+
+    <C> boolean isInstanceProviderRegistered(ConfigurationInstanceProvider<C> configurationInstanceProvider)
+    {
+        return configurationInstanceProviders.containsValue(configurationInstanceProvider);
     }
 
     <C> void registerInstance(String instanceName, C configurationInstance)
@@ -59,16 +56,14 @@ final class ConfigurationStateTracker
         return configurationInstanceProvider.get(operationContext);
     }
 
-    public Map<String, Object> getConfigurationInstances()
-    {
-        ImmutableMap.Builder<String, Object> instances = ImmutableMap.builder();
-        for (Map.Entry<String, ConfigurationInstanceWrapper<?>> instanceWrapperEntry : configurationInstances.entrySet())
-        {
-            instances.put(instanceWrapperEntry.getKey(), instanceWrapperEntry.getValue().getConfigurationInstance());
-        }
-
-        return instances.build();
+    Map<String, ConfigurationInstanceProvider> getConfigurationInstanceProviders() {
+        return ImmutableMap.copyOf(configurationInstanceProviders);
     }
+
+    //public Map<String, ConfigurationInstanceWrapper<?>> getConfigurationInstances()
+    //{
+    //    return ImmutableMap.copyOf(configurationInstances);
+    //}
 
     /**
      * Returns an {@link OperationExecutor} that was previously registered

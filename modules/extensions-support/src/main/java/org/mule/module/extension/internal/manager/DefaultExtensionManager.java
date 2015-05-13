@@ -32,7 +32,6 @@ import org.mule.util.ObjectNameHelper;
 
 import com.google.common.collect.ImmutableList;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,7 +52,6 @@ public final class DefaultExtensionManager implements ExtensionManagerAdapter, M
     private final ExtensionRegister register = new ExtensionRegister();
     private final ServiceRegistry serviceRegistry = new SPIServiceRegistry();
 
-    private boolean initialised = false;
     private MuleContext muleContext;
     private ObjectNameHelper objectNameHelper;
     private ExtensionDiscoverer extensionDiscoverer = new DefaultExtensionDiscoverer(new DefaultExtensionFactory(serviceRegistry), serviceRegistry);
@@ -61,16 +59,10 @@ public final class DefaultExtensionManager implements ExtensionManagerAdapter, M
     @Override
     public void initialise() throws InitialisationException
     {
-        for (Extension extension : getExtensions())
+        for (Map.Entry<String, ConfigurationInstanceProvider> provider : register.getConfigurationInstanceProviders().entrySet())
         {
-            ExtensionStateTracker extensionState = register.getExtensionState(extension);
-            for (Map.Entry<String, Object> instanceWrapper : extensionState.getConfigurationInstances().entries())
-            {
-                putInRegistryAndApplyLifecycle(instanceWrapper.getKey(), instanceWrapper.getValue());
-            }
+            putInRegistryAndApplyLifecycle(provider.getKey(), provider.getValue());
         }
-
-        initialised = true;
     }
 
     @Override
@@ -133,11 +125,7 @@ public final class DefaultExtensionManager implements ExtensionManagerAdapter, M
         ExtensionStateTracker extensionStateTracker = register.getExtensionState(configuration);
         extensionStateTracker.registerConfigurationInstance(configuration, configurationInstanceName, configurationInstance);
 
-        //TODO: what was this if for
-        //if (initialised)
-        //{
-            putInRegistryAndApplyLifecycle(configurationInstanceName, configurationInstance);
-        //}
+        putInRegistryAndApplyLifecycle(configurationInstanceName, configurationInstance);
     }
 
     private <C> void putInRegistryAndApplyLifecycle(String configurationInstanceName, C configurationInstance)
@@ -158,6 +146,8 @@ public final class DefaultExtensionManager implements ExtensionManagerAdapter, M
     public OperationExecutor getOperationExecutor(ConfigurationInstanceProvider configurationInstanceProvider, OperationContext operationContext)
     {
         ExtensionStateTracker extensionStateTracker = register.getExtensionState(operationContext.getOperation());
+        checkArgument(extensionStateTracker.isConfigurationInstanceProviderRegistered(configurationInstanceProvider), "the provided configurationInstanceProvider is not registered");
+
         Object configurationInstance = configurationInstanceProvider.get(operationContext);
         OperationExecutor executor;
 
