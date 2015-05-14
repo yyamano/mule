@@ -12,8 +12,8 @@ import org.mule.api.MuleEvent;
 import org.mule.api.MuleRuntimeException;
 import org.mule.extension.introspection.Configuration;
 import org.mule.extension.runtime.ConfigurationInstanceProvider;
+import org.mule.extension.runtime.ConfigurationInstanceRegistrationCallback;
 import org.mule.extension.runtime.OperationContext;
-import org.mule.module.extension.internal.manager.ExtensionManagerAdapter;
 import org.mule.module.extension.internal.runtime.resolver.ResolverSet;
 import org.mule.module.extension.internal.runtime.resolver.ResolverSetResult;
 
@@ -35,7 +35,7 @@ import com.google.common.cache.LoadingCache;
  *
  * @since 3.7.0
  */
-public class DynamicConfigurationInstanceProvider implements ConfigurationInstanceProvider<Object>
+public final class DynamicConfigurationInstanceProvider<T> implements ConfigurationInstanceProvider<T>
 {
 
     private final String name;
@@ -43,7 +43,7 @@ public class DynamicConfigurationInstanceProvider implements ConfigurationInstan
     private final ConfigurationObjectBuilder configurationObjectBuilder;
     private final ResolverSet resolverSet;
 
-    private LoadingCache<ResolverSetResult, Object> cache;
+    private LoadingCache<CacheKey, T> cache;
 
     /**
      * Creates a new instance
@@ -68,12 +68,16 @@ public class DynamicConfigurationInstanceProvider implements ConfigurationInstan
 
     private void buildCache()
     {
-        cache = CacheBuilder.newBuilder().build(new CacheLoader<ResolverSetResult, Object>()
+        cache = CacheBuilder.newBuilder().build(new CacheLoader<CacheKey, T>()
         {
             @Override
-            public Object load(ResolverSetResult key) throws Exception
+            public T load(CacheKey key) throws Exception
             {
-                return configurationObjectBuilder.build(key);
+                T configurationInstance = (T) configurationObjectBuilder.build(key.resolverSetResult);
+                key.registrationCallback.registerConfigurationInstance(DynamicConfigurationInstanceProvider.this,
+                                                                       configurationInstance);
+
+                return configurationInstance;
             }
         });
     }
@@ -88,14 +92,14 @@ public class DynamicConfigurationInstanceProvider implements ConfigurationInstan
      * @return the resolved value
      */
     @Override
-    public Object get(OperationContext operationContext)
+    public T get(OperationContext operationContext, ConfigurationInstanceRegistrationCallback registrationCallback)
     {
         validateOperationContext(operationContext);
 
         try
         {
             ResolverSetResult result = resolverSet.resolve(((DefaultOperationContext) operationContext).getEvent());
-            return cache.getUnchecked(result);
+            return cache.getUnchecked(new CacheKey(result, registrationCallback));
         }
         catch (Exception e)
         {
@@ -125,6 +129,36 @@ public class DynamicConfigurationInstanceProvider implements ConfigurationInstan
         {
             throw new IllegalArgumentException(String.format("operationContext was expected to be an instance of %s but got %s instead",
                                                              DefaultOperationContext.class.getName(), operationContext.getClass().getName()));
+        }
+    }
+
+    private static class CacheKey
+    {
+
+        private final ResolverSetResult resolverSetResult;
+        private final ConfigurationInstanceRegistrationCallback registrationCallback;
+
+        private CacheKey(ResolverSetResult resolverSetResult, ConfigurationInstanceRegistrationCallback registrationCallback)
+        {
+            this.resolverSetResult = resolverSetResult;
+            this.registrationCallback = registrationCallback;
+        }
+
+        @Override
+        public boolean equals(Object obj)
+        {
+            if (obj instanceof CacheKey)
+            {
+                return resolverSetResult.equals(((CacheKey) obj).resolverSetResult);
+            }
+
+            return false;
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return resolverSetResult.hashCode();
         }
     }
 }

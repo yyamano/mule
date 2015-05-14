@@ -15,7 +15,6 @@ import org.mule.api.context.MuleContextAware;
 import org.mule.api.processor.MessageProcessor;
 import org.mule.config.i18n.MessageFactory;
 import org.mule.extension.introspection.Operation;
-import org.mule.extension.runtime.ConfigurationInstanceProvider;
 import org.mule.extension.runtime.OperationContext;
 import org.mule.extension.runtime.OperationExecutor;
 import org.mule.module.extension.internal.runtime.DefaultOperationContext;
@@ -35,18 +34,18 @@ import java.util.concurrent.Future;
 public final class OperationMessageProcessor implements MessageProcessor, MuleContextAware
 {
 
-    private final ConfigurationInstanceProvider<Object> configurationInstanceProvider;
+    private final String configurationInstanceProviderName;
     private final Operation operation;
     private final ResolverSet resolverSet;
 
     private MuleContext muleContext;
 
     public OperationMessageProcessor(Operation operation,
-                                     ConfigurationInstanceProvider<Object> configurationInstanceProvider,
+                                     String configurationInstanceProviderName,
                                      ResolverSet resolverSet)
     {
         this.operation = operation;
-        this.configurationInstanceProvider = configurationInstanceProvider;
+        this.configurationInstanceProviderName = configurationInstanceProviderName;
         this.resolverSet = resolverSet;
     }
 
@@ -95,7 +94,7 @@ public final class OperationMessageProcessor implements MessageProcessor, MuleCo
 
     private Future<Object> executeOperation(OperationContext operationContext) throws MuleException
     {
-        OperationExecutor executor = muleContext.getExtensionManager().getOperationExecutor(configurationInstanceProvider, operationContext);
+        OperationExecutor executor = muleContext.getExtensionManager().getOperationExecutor(configurationInstanceProviderName, operationContext);
 
         try
         {

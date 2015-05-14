@@ -6,29 +6,18 @@
  */
 package org.mule.module.extension.internal.runtime.resolver;
 
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
-import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mule.module.extension.internal.util.ExtensionsTestUtils.getParameter;
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
+import org.mule.extension.ExtensionManager;
 import org.mule.extension.introspection.Configuration;
 import org.mule.extension.introspection.Parameter;
-import org.mule.extension.runtime.ConfigurationInstanceProvider;
 import org.mule.module.extension.HeisenbergExtension;
-import org.mule.module.extension.internal.manager.ExtensionManagerAdapter;
-import org.mule.module.extension.internal.runtime.DefaultConfigurationInstanceProvider;
-import org.mule.module.extension.internal.runtime.DefaultOperationContext;
 import org.mule.module.extension.internal.util.ExtensionsTestUtils;
-import org.mule.tck.junit4.AbstractMuleTestCase;
+import org.mule.module.extension.internal.util.MuleExtensionUtils;
 import org.mule.tck.size.SmallTest;
 
 import java.util.HashMap;
@@ -37,7 +26,6 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -45,7 +33,7 @@ import org.mockito.stubbing.Answer;
 
 @SmallTest
 @RunWith(MockitoJUnitRunner.class)
-public class ConfigurationValueResolverTestCase extends AbstractMuleTestCase
+public class ConfigurationValueResolverTestCase extends AbstractConfigurationInstanceProviderTestCase
 {
 
     private static final String CONFIG_NAME = "myConfig";
@@ -69,12 +57,7 @@ public class ConfigurationValueResolverTestCase extends AbstractMuleTestCase
     private ResolverSetResult resolverSetResult;
 
     @Mock
-    private ExtensionManagerAdapter extensionManager;
-
-    @Mock
-    private DefaultOperationContext operationContext;
-
-    private ConfigurationInstanceProvider<Object> instanceProvider;
+    private ExtensionManager extensionManager;
 
     @Before
     public void before() throws Exception
@@ -99,73 +82,15 @@ public class ConfigurationValueResolverTestCase extends AbstractMuleTestCase
         parameters.put(getParameter("myName", String.class), new StaticValueResolver(MY_NAME));
         parameters.put(getParameter("age", Integer.class), new StaticValueResolver(AGE));
         when(resolverSet.getResolvers()).thenReturn(parameters);
+        when(resolverSet.isDynamic()).thenReturn(false);
+
+        instanceProvider = MuleExtensionUtils.createConfigurationInstanceProvider(CONFIG_NAME, configuration, resolverSet);
     }
 
     @Test
     public void resolveStaticConfig() throws Exception
     {
-        instanceProvider = getStaticConfigResolver();
-        assertSameInstancesResolved();
-        assertConfigInstanceRegistered(instanceProvider.get(operationContext));
-    }
-
-    @Test
-    public void resolveDynamicConfigWithEquivalentEvent() throws Exception
-    {
-        instanceProvider = getDynamicConfigResolver();
         assertSameInstancesResolved();
     }
 
-    @Test
-    public void resolveDynamicConfigWithDifferentEvent() throws Exception
-    {
-        instanceProvider = getDynamicConfigResolver();
-        Object config1 = instanceProvider.get(operationContext);
-
-        when(resolverSet.resolve(event)).thenReturn(mock(ResolverSetResult.class));
-        Object config2 = instanceProvider.get(operationContext);
-
-        assertThat(config1, is(not(sameInstance(config2))));
-        assertConfigInstanceRegistered(config1);
-        assertConfigInstanceRegistered(config2);
-    }
-
-    private void assertConfigInstanceRegistered(Object instance)
-    {
-        ArgumentCaptor<String> key = ArgumentCaptor.forClass(String.class);
-        verify(extensionManager).registerConfigurationInstance(same(configuration), key.capture(), same(instance));
-        assertThat(key.getValue(), containsString(CONFIG_NAME));
-    }
-
-    private void assertSameInstancesResolved() throws Exception
-    {
-        final int count = 10;
-        Object config = instanceProvider.get(operationContext);
-
-        for (int i = 1; i < count; i++)
-        {
-            assertThat(instanceProvider.get(operationContext), is(sameInstance(config)));
-        }
-
-        assertConfigInstanceRegistered(config);
-    }
-
-    private ConfigurationInstanceProvider<Object> getStaticConfigResolver() throws Exception
-    {
-        when(resolverSet.isDynamic()).thenReturn(false);
-        return getConfigResolver();
-    }
-
-    private ConfigurationInstanceProvider<Object> getDynamicConfigResolver() throws Exception
-    {
-        when(resolverSet.isDynamic()).thenReturn(true);
-        when(resolverSet.resolve(event)).thenReturn(mock(ResolverSetResult.class));
-
-        return getConfigResolver();
-    }
-
-    private ConfigurationInstanceProvider<Object> getConfigResolver() throws Exception
-    {
-        return new DefaultConfigurationInstanceProvider(CONFIG_NAME, configuration, resolverSet, muleContext);
-    }
 }

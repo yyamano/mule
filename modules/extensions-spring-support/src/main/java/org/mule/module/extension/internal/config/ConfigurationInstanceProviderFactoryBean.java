@@ -7,11 +7,12 @@
 package org.mule.module.extension.internal.config;
 
 import static org.mule.module.extension.internal.config.XmlExtensionParserUtils.getResolverSet;
-import org.mule.api.MuleContext;
 import org.mule.extension.introspection.Configuration;
 import org.mule.extension.runtime.ConfigurationInstanceProvider;
-import org.mule.module.extension.internal.manager.ExtensionManagerAdapter;
-import org.mule.module.extension.internal.runtime.DefaultConfigurationInstanceProvider;
+import org.mule.module.extension.internal.runtime.ConfigurationObjectBuilder;
+import org.mule.module.extension.internal.runtime.DynamicConfigurationInstanceProvider;
+import org.mule.module.extension.internal.runtime.StaticConfigurationInstanceProvider;
+import org.mule.module.extension.internal.runtime.resolver.ResolverSet;
 
 import org.springframework.beans.factory.FactoryBean;
 
@@ -29,14 +30,19 @@ final class ConfigurationInstanceProviderFactoryBean implements FactoryBean<Conf
 
     ConfigurationInstanceProviderFactoryBean(String name,
                                              Configuration configuration,
-                                             ElementDescriptor element,
-                                             MuleContext muleContext)
+                                             ElementDescriptor element)
     {
-        configurationInstanceProvider = new DefaultConfigurationInstanceProvider(name,
-                                                                                 configuration,
-                                                                                 getResolverSet(element, configuration.getParameters()),
-                                                                                 (ExtensionManagerAdapter) muleContext.getExtensionManager(),
-                                                                                 muleContext);
+        ResolverSet resolverSet = getResolverSet(element, configuration.getParameters());
+        ConfigurationObjectBuilder configurationObjectBuilder = new ConfigurationObjectBuilder(configuration, resolverSet);
+
+        if (resolverSet.isDynamic())
+        {
+            configurationInstanceProvider = new DynamicConfigurationInstanceProvider(name, configuration, configurationObjectBuilder, resolverSet);
+        }
+        else
+        {
+            configurationInstanceProvider = new StaticConfigurationInstanceProvider<>(name, configuration, configurationObjectBuilder);
+        }
     }
 
     @Override

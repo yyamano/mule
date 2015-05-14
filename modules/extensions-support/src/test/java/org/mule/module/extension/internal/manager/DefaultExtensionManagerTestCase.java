@@ -13,6 +13,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.mock;
@@ -27,6 +28,7 @@ import org.mule.extension.introspection.Extension;
 import org.mule.extension.introspection.Operation;
 import org.mule.extension.introspection.capability.XmlCapability;
 import org.mule.extension.runtime.ConfigurationInstanceProvider;
+import org.mule.extension.runtime.ConfigurationInstanceRegistrationCallback;
 import org.mule.extension.runtime.OperationContext;
 import org.mule.extension.runtime.OperationExecutor;
 import org.mule.module.extension.internal.introspection.ExtensionDiscoverer;
@@ -270,7 +272,7 @@ public class DefaultExtensionManagerTestCase extends AbstractMuleTestCase
         discover();
 
         Object configurationInstance = new Object();
-        when(extension1ConfigurationInstanceProvider.get(extension1OperationContext)).thenReturn(configurationInstance);
+        when(extension1ConfigurationInstanceProvider.get(extension1OperationContext, any(ConfigurationInstanceRegistrationCallback.class))).thenReturn(configurationInstance);
 
         extensionsManager.registerConfigurationInstanceProvider(extension1Configuration, EXTENSION1_CONFIG_INSTANCE_NAME, extension1ConfigurationInstanceProvider);
         initialiseIfNeeded(extensionsManager);
@@ -283,7 +285,7 @@ public class DefaultExtensionManagerTestCase extends AbstractMuleTestCase
         discover();
 
         final Object configInstance = new Object();
-        when(extension1ConfigurationInstanceProvider.get(extension1OperationContext)).thenReturn(configInstance);
+        when(extension1ConfigurationInstanceProvider.get(same(extension1OperationContext), any(ConfigurationInstanceRegistrationCallback.class))).thenReturn(configInstance);
 
         extensionsManager.registerConfigurationInstanceProvider(extension1Configuration, EXTENSION1_CONFIG_INSTANCE_NAME, extension1ConfigurationInstanceProvider);
 
@@ -293,11 +295,11 @@ public class DefaultExtensionManagerTestCase extends AbstractMuleTestCase
 
         when(extension1Operation.getExecutor(configInstance)).thenReturn(executor);
 
-        OperationExecutor managedExecutor = extensionsManager.getOperationExecutor(extension1ConfigurationInstanceProvider, extension1OperationContext);
+        OperationExecutor managedExecutor = extensionsManager.getOperationExecutor(EXTENSION1_CONFIG_INSTANCE_NAME, extension1OperationContext);
         assertThat(managedExecutor, is(sameInstance((OperationExecutor) executor)));
 
         // ask for the same executor again and check that it's still the same instance
-        managedExecutor = extensionsManager.getOperationExecutor(extension1ConfigurationInstanceProvider, extension1OperationContext);
+        managedExecutor = extensionsManager.getOperationExecutor(EXTENSION1_CONFIG_INSTANCE_NAME, extension1OperationContext);
         assertThat(managedExecutor, is(sameInstance((OperationExecutor) executor)));
 
         verify(muleContext.getRegistry()).registerObject(anyString(), same(executorDelegate));
@@ -313,7 +315,7 @@ public class DefaultExtensionManagerTestCase extends AbstractMuleTestCase
         ConfigurationInstanceProvider<?> configurationInstanceProvider = mock(ConfigurationInstanceProvider.class);
         when(configurationInstanceProvider.getConfiguration()).thenReturn(extension1Configuration);
 
-        extensionsManager.getOperationExecutor(configurationInstanceProvider, operationContext);
+        extensionsManager.getOperationExecutor(EXTENSION1_CONFIG_INSTANCE_NAME, operationContext);
     }
 
     private List<Extension> getTestExtensions()

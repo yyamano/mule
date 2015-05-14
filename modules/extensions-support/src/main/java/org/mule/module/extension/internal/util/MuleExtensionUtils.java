@@ -10,6 +10,11 @@ import static org.mule.util.Preconditions.checkArgument;
 import org.mule.extension.introspection.Configuration;
 import org.mule.extension.introspection.Described;
 import org.mule.extension.introspection.Operation;
+import org.mule.extension.runtime.ConfigurationInstanceProvider;
+import org.mule.module.extension.internal.runtime.ConfigurationObjectBuilder;
+import org.mule.module.extension.internal.runtime.DynamicConfigurationInstanceProvider;
+import org.mule.module.extension.internal.runtime.StaticConfigurationInstanceProvider;
+import org.mule.module.extension.internal.runtime.resolver.ResolverSet;
 import org.mule.module.extension.internal.runtime.resolver.ValueResolver;
 import org.mule.util.TemplateParser;
 
@@ -161,6 +166,19 @@ public final class MuleExtensionUtils
 
         Collections.sort(list, new DescribedComparator());
         return list;
+    }
+
+    public static <T> ConfigurationInstanceProvider<T> createConfigurationInstanceProvider(String name, Configuration configuration, ResolverSet resolverSet) {
+        ConfigurationObjectBuilder configurationObjectBuilder = new ConfigurationObjectBuilder(configuration, resolverSet);
+
+        if (resolverSet.isDynamic())
+        {
+            return new DynamicConfigurationInstanceProvider<>(name, configuration, configurationObjectBuilder, resolverSet);
+        }
+        else
+        {
+            return new StaticConfigurationInstanceProvider<>(name, configuration, configurationObjectBuilder);
+        }
     }
 
     private static class DescribedComparator implements Comparator<Described>

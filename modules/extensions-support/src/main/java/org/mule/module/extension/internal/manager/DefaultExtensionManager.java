@@ -23,6 +23,7 @@ import org.mule.extension.introspection.Configuration;
 import org.mule.extension.introspection.Extension;
 import org.mule.extension.introspection.Operation;
 import org.mule.extension.runtime.ConfigurationInstanceProvider;
+import org.mule.extension.runtime.ConfigurationInstanceRegistrationCallback;
 import org.mule.extension.runtime.OperationContext;
 import org.mule.extension.runtime.OperationExecutor;
 import org.mule.module.extension.internal.introspection.DefaultExtensionFactory;
@@ -140,19 +141,31 @@ public final class DefaultExtensionManager implements ExtensionManagerAdapter, M
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public OperationExecutor getOperationExecutor(ConfigurationInstanceProvider configurationInstanceProvider, OperationContext operationContext)
+    @Override
+    public OperationExecutor getOperationExecutor(final String configurationInstanceProviderName, OperationContext operationContext)
     {
-        ExtensionStateTracker extensionStateTracker = register.getExtensionState(operationContext.getOperation());
-        checkArgument(extensionStateTracker.isConfigurationInstanceProviderRegistered(configurationInstanceProvider), "the provided configurationInstanceProvider is not registered");
+        ConfigurationInstanceProvider<Object> configurationInstanceProvider = register.getConfigurationInstanceProviders().get(configurationInstanceProviderName);
+        if (configurationInstanceProvider == null)
+        {
+            throw new IllegalArgumentException("There's no registered ConfigurationInstanceProvider under name" + configurationInstanceProviderName);
+        }
 
-        Object configurationInstance = configurationInstanceProvider.get(operationContext);
+        Object configurationInstance = configurationInstanceProvider.get(operationContext, new ConfigurationInstanceRegistrationCallback()
+        {
+            @Override
+            public <C> void registerConfigurationInstance(ConfigurationInstanceProvider<C> configurationInstanceProvider, C configurationInstance)
+            {
+                DefaultExtensionManager.this.registerConfigurationInstance(configurationInstanceProvider.getConfiguration(),
+                                                                           configurationInstanceProviderName,
+                                                                           configurationInstance);
+            }
+        });
+
         OperationExecutor executor;
 
         synchronized (configurationInstance)
         {
+            ExtensionStateTracker extensionStateTracker = register.getExtensionState(configurationInstanceProvider.getConfiguration());
             executor = extensionStateTracker.getOperationExecutor(configurationInstanceProvider.getConfiguration(), configurationInstance, operationContext);
             if (executor == null)
             {
@@ -166,7 +179,6 @@ public final class DefaultExtensionManager implements ExtensionManagerAdapter, M
 
         return executor;
     }
-
 
     /**
      * {@inheritDoc}

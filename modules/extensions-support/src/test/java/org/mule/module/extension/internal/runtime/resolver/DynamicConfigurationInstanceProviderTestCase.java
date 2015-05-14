@@ -22,12 +22,11 @@ import org.mule.extension.introspection.Configuration;
 import org.mule.module.extension.HeisenbergExtension;
 import org.mule.module.extension.internal.manager.ExtensionManagerAdapter;
 import org.mule.module.extension.internal.runtime.ConfigurationObjectBuilder;
-import org.mule.module.extension.internal.runtime.DefaultOperationContext;
 import org.mule.module.extension.internal.runtime.DynamicConfigurationInstanceProvider;
 import org.mule.module.extension.internal.util.ExtensionsTestUtils;
-import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,7 +38,7 @@ import org.mockito.stubbing.Answer;
 
 @SmallTest
 @RunWith(MockitoJUnitRunner.class)
-public class DynamicConfigurationInstanceProviderTestCase extends AbstractMuleTestCase
+public class DynamicConfigurationInstanceProviderTestCase extends AbstractConfigurationInstanceProviderTestCase
 {
 
     private static final Class MODULE_CLASS = HeisenbergExtension.class;
@@ -62,11 +61,6 @@ public class DynamicConfigurationInstanceProviderTestCase extends AbstractMuleTe
 
     @Mock
     private ExtensionManagerAdapter extensionManager;
-
-    @Mock
-    private DefaultOperationContext operationContext;
-
-    private DynamicConfigurationInstanceProvider instanceProvider;
 
     private ConfigurationObjectBuilder configurationObjectBuilder;
 
@@ -98,10 +92,10 @@ public class DynamicConfigurationInstanceProviderTestCase extends AbstractMuleTe
     public void resolveCached() throws Exception
     {
         final int count = 10;
-        HeisenbergExtension config = (HeisenbergExtension) instanceProvider.get(operationContext);
+        HeisenbergExtension config = (HeisenbergExtension) instanceProvider.get(operationContext, configurationInstanceRegistrationCallback);
         for (int i = 1; i < count; i++)
         {
-            assertThat((HeisenbergExtension) instanceProvider.get(operationContext), is(sameInstance(config)));
+            assertThat((HeisenbergExtension) instanceProvider.get(operationContext, configurationInstanceRegistrationCallback), is(sameInstance(config)));
         }
 
         verify(resolverSet, times(count)).resolve(event);
@@ -110,12 +104,31 @@ public class DynamicConfigurationInstanceProviderTestCase extends AbstractMuleTe
     @Test
     public void resolveDifferentInstances() throws Exception
     {
-        HeisenbergExtension instance1 = (HeisenbergExtension) instanceProvider.get(operationContext);
+        HeisenbergExtension instance1 = (HeisenbergExtension) instanceProvider.get(operationContext, configurationInstanceRegistrationCallback);
 
         ResolverSetResult alternateResult = mock(ResolverSetResult.class, Mockito.RETURNS_DEEP_STUBS);
         when(resolverSet.resolve(event)).thenReturn(alternateResult);
 
-        HeisenbergExtension instance2 = (HeisenbergExtension) instanceProvider.get(operationContext);
+        HeisenbergExtension instance2 = (HeisenbergExtension) instanceProvider.get(operationContext, configurationInstanceRegistrationCallback);
         assertThat(instance2, is(not(sameInstance(instance1))));
+    }
+
+    @Test
+    public void resolveDynamicConfigWithEquivalentEvent() throws Exception
+    {
+        assertSameInstancesResolved();
+    }
+
+    @Test
+    public void resolveDynamicConfigWithDifferentEvent() throws Exception
+    {
+        Object config1 = instanceProvider.get(operationContext, configurationInstanceRegistrationCallback);
+
+        when(resolverSet.resolve(event)).thenReturn(mock(ResolverSetResult.class));
+        Object config2 = instanceProvider.get(operationContext, configurationInstanceRegistrationCallback);
+
+        assertThat(config1, is(not(Matchers.sameInstance(config2))));
+        assertConfigInstanceRegistered(instanceProvider, config1);
+        assertConfigInstanceRegistered(instanceProvider, config2);
     }
 }

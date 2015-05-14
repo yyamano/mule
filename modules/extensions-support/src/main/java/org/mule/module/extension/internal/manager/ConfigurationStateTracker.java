@@ -50,11 +50,11 @@ final class ConfigurationStateTracker
         configurationInstances.put(instanceName, new ConfigurationInstanceWrapper<>(instanceName, configurationInstance));
     }
 
-    <C> C getConfigurationInstance(String instanceProviderName, OperationContext operationContext)
-    {
-        ConfigurationInstanceProvider<C> configurationInstanceProvider = configurationInstanceProviders.get(instanceProviderName);
-        return configurationInstanceProvider.get(operationContext);
-    }
+    //<C> C getConfigurationInstance(String instanceProviderName, OperationContext operationContext)
+    //{
+    //    ConfigurationInstanceProvider<C> configurationInstanceProvider = configurationInstanceProviders.get(instanceProviderName);
+    //    return configurationInstanceProvider.get(operationContext);
+    //}
 
     Map<String, ConfigurationInstanceProvider> getConfigurationInstanceProviders() {
         return ImmutableMap.copyOf(configurationInstanceProviders);
