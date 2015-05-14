@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
  *
  * @since 3.7.0
  */
-public final class DefaultExtensionManager implements ExtensionManagerAdapter, MuleContextAware, Initialisable
+public final class DefaultExtensionManager implements ExtensionManager, MuleContextAware, Initialisable
 {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultExtensionManager.class);
@@ -60,9 +60,10 @@ public final class DefaultExtensionManager implements ExtensionManagerAdapter, M
     @Override
     public void initialise() throws InitialisationException
     {
-        for (Map.Entry<String, ConfigurationInstanceProvider> provider : register.getConfigurationInstanceProviders().entrySet())
+        for (Map.Entry<String, ConfigurationInstanceProvider> instanceProviderEntry : muleContext.getRegistry().lookupByType(ConfigurationInstanceProvider.class).entrySet())
         {
-            putInRegistryAndApplyLifecycle(provider.getKey(), provider.getValue());
+            ConfigurationInstanceProvider<?> instanceProvider = instanceProviderEntry.getValue();
+            registerConfigurationInstanceProvider(instanceProvider.getConfiguration(), instanceProviderEntry.getKey(), instanceProvider);
         }
     }
 
@@ -120,8 +121,7 @@ public final class DefaultExtensionManager implements ExtensionManagerAdapter, M
     /**
      * {@inheritDoc}
      */
-    @Override
-    public <C> void registerConfigurationInstance(Configuration configuration, String configurationInstanceName, C configurationInstance)
+    private <C> void registerConfigurationInstance(Configuration configuration, String configurationInstanceName, C configurationInstance)
     {
         ExtensionStateTracker extensionStateTracker = register.getExtensionState(configuration);
         extensionStateTracker.registerConfigurationInstance(configuration, configurationInstanceName, configurationInstance);
@@ -129,11 +129,11 @@ public final class DefaultExtensionManager implements ExtensionManagerAdapter, M
         putInRegistryAndApplyLifecycle(configurationInstanceName, configurationInstance);
     }
 
-    private <C> void putInRegistryAndApplyLifecycle(String configurationInstanceName, C configurationInstance)
+    private void putInRegistryAndApplyLifecycle(String key, Object object)
     {
         try
         {
-            muleContext.getRegistry().registerObject(objectNameHelper.getUniqueName(configurationInstanceName), configurationInstance);
+            muleContext.getRegistry().registerObject(objectNameHelper.getUniqueName(key), object);
         }
         catch (MuleException e)
         {
@@ -153,11 +153,11 @@ public final class DefaultExtensionManager implements ExtensionManagerAdapter, M
         Object configurationInstance = configurationInstanceProvider.get(operationContext, new ConfigurationInstanceRegistrationCallback()
         {
             @Override
-            public <C> void registerConfigurationInstance(ConfigurationInstanceProvider<C> configurationInstanceProvider, C configurationInstance)
+            public <C> void registerNewConfigurationInstance(ConfigurationInstanceProvider<C> configurationInstanceProvider, C configurationInstance)
             {
-                DefaultExtensionManager.this.registerConfigurationInstance(configurationInstanceProvider.getConfiguration(),
-                                                                           configurationInstanceProviderName,
-                                                                           configurationInstance);
+                registerConfigurationInstance(configurationInstanceProvider.getConfiguration(),
+                                              configurationInstanceProviderName,
+                                              configurationInstance);
             }
         });
 

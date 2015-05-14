@@ -74,8 +74,8 @@ public final class DynamicConfigurationInstanceProvider<T> implements Configurat
             public T load(CacheKey key) throws Exception
             {
                 T configurationInstance = (T) configurationObjectBuilder.build(key.resolverSetResult);
-                key.registrationCallback.registerConfigurationInstance(DynamicConfigurationInstanceProvider.this,
-                                                                       configurationInstance);
+                key.registrationCallback.registerNewConfigurationInstance(DynamicConfigurationInstanceProvider.this,
+                                                                          configurationInstance);
 
                 return configurationInstance;
             }

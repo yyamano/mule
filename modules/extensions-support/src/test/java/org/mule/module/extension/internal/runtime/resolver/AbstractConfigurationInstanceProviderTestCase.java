@@ -30,7 +30,7 @@ abstract class AbstractConfigurationInstanceProviderTestCase extends AbstractMul
 
     protected <T> void assertConfigInstanceRegistered(ConfigurationInstanceProvider<T> configurationInstanceProvider, T configurationInstance)
     {
-        verify(configurationInstanceRegistrationCallback).registerConfigurationInstance(configurationInstanceProvider, configurationInstance);
+        verify(configurationInstanceRegistrationCallback).registerNewConfigurationInstance(configurationInstanceProvider, configurationInstance);
     }
 
     protected void assertSameInstancesResolved() throws Exception

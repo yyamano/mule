@@ -16,12 +16,18 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.runners.Parameterized.Parameter;
 import static org.junit.runners.Parameterized.Parameters;
+import static org.mockito.Mockito.mock;
 import org.mule.api.MuleEvent;
-import org.mule.module.extension.KnockeableDoor;
+import org.mule.extension.introspection.Operation;
+import org.mule.extension.runtime.ConfigurationInstanceProvider;
+import org.mule.extension.runtime.ConfigurationInstanceRegistrationCallback;
+import org.mule.extension.runtime.OperationContext;
 import org.mule.module.extension.HealthStatus;
 import org.mule.module.extension.HeisenbergExtension;
+import org.mule.module.extension.KnockeableDoor;
 import org.mule.module.extension.Ricin;
-import org.mule.module.extension.internal.runtime.resolver.ValueResolver;
+import org.mule.module.extension.internal.runtime.DefaultOperationContext;
+import org.mule.module.extension.internal.runtime.resolver.ResolverSetResult;
 import org.mule.tck.junit4.ExtensionsFunctionalTestCase;
 
 import java.math.BigDecimal;
@@ -102,10 +108,9 @@ public class ConfigParserTestCase extends ExtensionsFunctionalTestCase
     @Test
     public void sameInstanceForEquivalentEvent() throws Exception
     {
-        ValueResolver<HeisenbergExtension> heisenbergResolver = muleContext.getRegistry().lookupObject(testConfig);
         MuleEvent event = getHeisenbergEvent();
-        HeisenbergExtension heisenberg = heisenbergResolver.resolve(event);
-        assertThat(heisenberg, is(sameInstance(heisenbergResolver.resolve(event))));
+        HeisenbergExtension heisenberg = lookupHeisenberg(testConfig, event);
+        assertThat(heisenberg, is(sameInstance(lookupHeisenberg(testConfig, event))));
     }
 
     @Test
@@ -138,9 +143,20 @@ public class ConfigParserTestCase extends ExtensionsFunctionalTestCase
 
     private HeisenbergExtension lookupHeisenberg(String key) throws Exception
     {
-        ValueResolver heisenbergResolver = muleContext.getRegistry().lookupObject(key);
-        return (HeisenbergExtension) heisenbergResolver.resolve(getHeisenbergEvent());
+        return lookupHeisenberg(key, getHeisenbergEvent());
     }
+
+    private HeisenbergExtension lookupHeisenberg(String key, MuleEvent event) throws Exception
+    {
+        ConfigurationInstanceProvider<HeisenbergExtension> heisenbergProvider = muleContext.getRegistry().lookupObject(key);
+        return heisenbergProvider.get(getHeisenbergOperationContext(event), mock(ConfigurationInstanceRegistrationCallback.class));
+    }
+
+    private OperationContext getHeisenbergOperationContext(MuleEvent event) throws Exception
+    {
+        return new DefaultOperationContext(mock(Operation.class), mock(ResolverSetResult.class), event);
+    }
+
 
     private MuleEvent getHeisenbergEvent() throws Exception
     {

@@ -74,7 +74,7 @@ public final class StaticConfigurationInstanceProvider<T> implements Configurati
         {
             T configurationInstance = (T) configurationObjectBuilder.build(((DefaultOperationContext) operationContext).getEvent());
 
-            registrationCallback.registerConfigurationInstance(
+            registrationCallback.registerNewConfigurationInstance(
                     (StaticConfigurationInstanceProvider<T>) StaticConfigurationInstanceProvider.this,
                     configurationInstance);
 

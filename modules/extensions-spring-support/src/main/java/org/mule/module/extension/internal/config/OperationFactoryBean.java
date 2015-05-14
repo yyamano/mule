@@ -14,7 +14,6 @@ import org.mule.api.processor.MessageProcessor;
 import org.mule.api.registry.RegistrationException;
 import org.mule.extension.introspection.Configuration;
 import org.mule.extension.introspection.Operation;
-import org.mule.extension.runtime.ConfigurationInstanceProvider;
 import org.mule.module.extension.internal.runtime.processor.OperationMessageProcessor;
 import org.mule.module.extension.internal.runtime.resolver.ResolverSet;
 import org.mule.util.ObjectNameHelper;
@@ -32,20 +31,20 @@ import org.springframework.beans.factory.FactoryBean;
 public class OperationFactoryBean implements FactoryBean<OperationMessageProcessor>
 {
 
-    private final ConfigurationInstanceProvider<Object> configurationInstanceProvider;
+    private final String configurationInstanceProviderName;
     private final Configuration configuration;
     private final Operation operation;
     private final ElementDescriptor element;
     private final Map<String, List<MessageProcessor>> nestedOperations;
 
-    public OperationFactoryBean(ConfigurationInstanceProvider<Object> configurationInstanceProvider,
+    public OperationFactoryBean(String configurationInstanceProviderName,
                                 Configuration configuration,
                                 Operation operation,
                                 ElementDescriptor element,
                                 Map<String, List<MessageProcessor>> nestedOperations,
                                 MuleContext muleContext)
     {
-        this.configurationInstanceProvider = configurationInstanceProvider;
+        this.configurationInstanceProviderName = configurationInstanceProviderName;
         this.configuration = configuration;
         this.operation = operation;
         this.element = element;
@@ -59,7 +58,7 @@ public class OperationFactoryBean implements FactoryBean<OperationMessageProcess
     public OperationMessageProcessor getObject() throws Exception
     {
         ResolverSet resolverSet = getResolverSet(element, operation.getParameters(), nestedOperations);
-        return new OperationMessageProcessor(operation, configurationInstanceProvider, resolverSet);
+        return new OperationMessageProcessor(operation, configurationInstanceProviderName, resolverSet);
     }
 
     /**

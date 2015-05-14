@@ -18,9 +18,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mule.api.MuleContext;
 import org.mule.api.MuleEvent;
+import org.mule.extension.ExtensionManager;
 import org.mule.extension.introspection.Configuration;
 import org.mule.module.extension.HeisenbergExtension;
-import org.mule.module.extension.internal.manager.ExtensionManagerAdapter;
 import org.mule.module.extension.internal.runtime.ConfigurationObjectBuilder;
 import org.mule.module.extension.internal.runtime.DynamicConfigurationInstanceProvider;
 import org.mule.module.extension.internal.util.ExtensionsTestUtils;
@@ -60,7 +60,7 @@ public class DynamicConfigurationInstanceProviderTestCase extends AbstractConfig
     private MuleEvent event;
 
     @Mock
-    private ExtensionManagerAdapter extensionManager;
+    private ExtensionManager extensionManager;
 
     private ConfigurationObjectBuilder configurationObjectBuilder;
 
