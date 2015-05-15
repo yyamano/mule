@@ -187,17 +187,7 @@ public class SpringRegistry extends AbstractRegistry implements LifecycleRegistr
                 return null;
             }
 
-            maybeApplyLifecycleIfPrototype(key, object);
-            return object;
-        }
-    }
-
-    private void maybeApplyLifecycleIfPrototype(String key, Object object)
-    {
-        if (!applicationContext.isSingleton(key))
-        {
-            if (object instanceof MessageProcessor &&
-                (object instanceof Transformer || object instanceof MessageFilter || object instanceof AbstractFilteringMessageProcessor))
+            if (shouldApplyPrototypeLifecycle(key, object))
             {
                 try
                 {
@@ -208,7 +198,27 @@ public class SpringRegistry extends AbstractRegistry implements LifecycleRegistr
                     throw new MuleRuntimeException(createStaticMessage("Could not apply lifecycle into prototype object " + key), e);
                 }
             }
+
+            return object;
         }
+    }
+
+    private boolean shouldApplyPrototypeLifecycle(String key, Object object)
+    {
+        if (applicationContext.isSingleton(key))
+        {
+            return false;
+        }
+
+        if (object instanceof MessageProcessor)
+        {
+            return
+                    object instanceof Transformer ||
+                    object instanceof MessageFilter ||
+                    object instanceof AbstractFilteringMessageProcessor;
+        }
+
+        return true;
     }
 
     @Override
